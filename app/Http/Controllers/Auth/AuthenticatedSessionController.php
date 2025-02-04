@@ -39,7 +39,7 @@ class AuthenticatedSessionController extends Controller
         }
     
         $user = Auth::user();
-        return redirect()->route($user->role == 'admin' ? 'admin.dashboard' : 'user.dashboard');
+        return redirect()->route($user->role == 'admin' ? 'admin.dashboard' : 'home');
     }
 
     /**

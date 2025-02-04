@@ -21,18 +21,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
-    Route::middleware(AdminMiddleware::class)->group(function () {
-        Route::get('/admin/dashboard', function () {
-            return Inertia::render('Admin/Dashboard'); 
-        })->name('admin.dashboard');
-    });
+Route::middleware(AdminMiddleware::class)->group(function () {
+    Route::get('/admin/dashboard', function () {
+        return Inertia::render('Admin/Dashboard'); 
+    })->name('admin.dashboard');
+});
 
-    Route::middleware(UserMiddleware::class)->group(function () {
-        Route::get('/dashboard', function () {
-            return Inertia::render('User/Dashboard'); 
-        })->name('dashboard');
-    });
+Route::middleware(UserMiddleware::class)->group(function () {
+    Route::get('/home', function () {
+        return Inertia::render('User/Home'); 
+    })->name('home');
 });
 
 require __DIR__.'/auth.php';
