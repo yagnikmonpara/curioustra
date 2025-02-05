@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
-import '../../css/tourly.css';
+import '../../css/welcome.css';
+import { Link } from '@inertiajs/react';
 
 const destinations = [
     {
@@ -38,7 +39,7 @@ const destinations = [
         name: 'SANTORINI',
         location: 'GREECE',
         description: 'Experience the stunning white architecture and blue domes of Santorini.',
-        image: '/images/popular-4.jpg',
+        image: '/images/popular-4.png',
         rating: 5,
         price: '$899',
         duration: '8 Days'
@@ -48,7 +49,7 @@ const destinations = [
         name: 'MACHU PICCHU',
         location: 'PERU',
         description: 'Discover the ancient Incan citadel set high in the Andes Mountains.',
-        image: '/images/popular-5.jpg',
+        image: '/images/popular-5.png',
         rating: 5,
         price: '$1299',
         duration: '10 Days'
@@ -58,7 +59,7 @@ const destinations = [
         name: 'MALDIVES',
         location: 'SOUTH ASIA',
         description: 'Relax in luxury overwater villas in crystal clear turquoise waters.',
-        image: '/images/popular-6.jpg',
+        image: '/images/popular-6.png',
         rating: 5,
         price: '$1499',
         duration: '7 Days'
@@ -301,7 +302,7 @@ export default function PopularDestinations() {
                     transition={{ delay: 0.6 }}
                 >
                     <motion.button 
-                        className="btn btn-primary"
+                        className="btn btn-success"
                         whileHover={{ 
                             scale: 1.05,
                             boxShadow: "0 8px 25px rgba(37, 99, 235, 0.4)"
@@ -309,7 +310,7 @@ export default function PopularDestinations() {
                         whileTap={{ scale: 0.95 }}
                         style={{ marginBottom: "3rem" }}
                     >
-                        MORE DESTINATION
+                        <Link href="#destinations">MORE DESTINATION</Link>
                     </motion.button>
                 </motion.div>
             </div>

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import '../../css/tourly.css';
+import '../../css/welcome.css';
 import { useState, useEffect } from 'react';
 
 export default function Header({ isHeaderActive }) {
@@ -60,7 +60,7 @@ export default function Header({ isHeaderActive }) {
 
                 <nav className={`navbar ${isNavbarActive ? 'active' : ''} ${isMobile ? 'mobile' : 'desktop'}`}>
                     <ul className="navbar-list">
-                        {['home', 'destinations', 'gallery', 'services', 'about', 'contact'].map((item) => (
+                        {['home', 'destinations', 'packages', 'gallery', 'services', 'about', 'contact'].map((item) => (
                             <li key={item}>
                                 <motion.a 
                                     href={`#${item}`}

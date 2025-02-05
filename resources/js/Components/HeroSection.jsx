@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import '../../css/tourly.css';
+import '../../css/welcome.css';
+import { Link } from '@inertiajs/react';
 
-export default function HeroSection() {
+export default function HeroSection( auth ) {
     return (
         <motion.section 
             className="hero" 
@@ -39,7 +40,7 @@ export default function HeroSection() {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.5, duration: 0.8 }}
                 >
-                    Experience seamless travel with CuriousTra
+                    Discover unique destinations, personalized itineraries, and exceptional service that cater to your travel needs. Let us help you create unforgettable memories on your next adventure.
                 </motion.p>
 
                 <motion.div
@@ -47,21 +48,34 @@ export default function HeroSection() {
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.7, duration: 0.8 }}
-                >
-                    <motion.button 
-                        className="btn btn-primary"
+                >   
+                    {auth.user ? (
+                        <motion.button 
+                        className="btn btn-success"
                         whileHover={{ scale: 1.05, boxShadow: "0px 5px 15px rgba(0,0,0,0.2)" }}
                         whileTap={{ scale: 0.95 }}
                     >
-                        Start Your Journey
+                        <Link href="/home">Explore More </Link>
                     </motion.button>
-                    <motion.button 
-                        className="btn btn-secondary"
+                    ) : (
+                        <div className="btn-group flex justify-center items-center">
+                        <motion.button 
+                        className="btn btn-success mr-3"
                         whileHover={{ scale: 1.05, boxShadow: "0px 5px 15px rgba(0,0,0,0.2)" }}
                         whileTap={{ scale: 0.95 }}
-                    >
-                        View Packages
-                    </motion.button>
+                        >
+                        <Link href="/login">Login</Link>
+                        </motion.button>
+                        <motion.button 
+                        className="btn btn-success"
+                        whileHover={{ scale: 1.05, boxShadow: "0px 5px 15px rgba(0,0,0,0.2)" }}
+                        whileTap={{ scale: 0.95 }}
+                        >
+                        <Link href="/register">Register</Link>
+                        </motion.button>
+                    </div>
+                    )}
+                    
                 </motion.div>
             </div>
         </motion.section>

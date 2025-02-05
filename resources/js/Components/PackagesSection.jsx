@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import '../../css/tourly.css';
+import '../../css/welcome.css';
+import { Link } from '@inertiajs/react';
 
 const packages = [
     {
@@ -46,18 +47,18 @@ const packages = [
         highlights: ["Ski Lessons", "Cable Car", "Snow Activities"]
     },
     {
-        id: 3,
-        title: "Alpine Ski Adventure Package",
-        description: "Experience the thrill of skiing in the majestic Alps. Perfect for both beginners and experienced skiers with professional instruction available.",
-        image: "/images/packege-3.jpg",
-        duration: "6D/5N",
-        pax: 6,
-        location: "Switzerland",
-        reviews: 156,
-        rating: 4.9,
-        price: 1899,
-        amenities: ["Ski Equipment", "Spa Access", "Mountain View"],
-        highlights: ["Ski Lessons", "Cable Car", "Snow Activities"]
+        id: 4,
+        title: "Cultural Heritage Tour",
+        description: "Explore the rich history and culture of ancient civilizations. Visit iconic landmarks such as the Acropolis, the Parthenon, and the ancient ruins of Delphi.",
+        image: "/images/package-4.png",
+        duration: "8D/7N",
+        pax: 10,
+        location: "Greece",
+        reviews: 75,
+        rating: 4.7,
+        price: 1999,
+        amenities: ["Guided Tours", "Cultural Experiences", "Local Cuisine"],
+        highlights: ["Acropolis Visit", "Local Festivals", "Cooking Class"]
     }
 ];
 
@@ -162,7 +163,7 @@ const PackageCard = ({ pkg }) => {
 
 const PackagesSection = () => {
     return (
-        <section className="package" id="package">
+        <section className="package" id="packages">
             <div className="container">
                 <motion.div
                     className="section-header"
@@ -192,13 +193,16 @@ const PackagesSection = () => {
                     ))}
                 </ul>
 
-                <motion.button 
-                    className="btn btn-primary"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                >
-                    Explore All Packages
-                </motion.button>
+                <div className="flex justify-center">
+                    <motion.button 
+                        className="btn btn-success mx-auto"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        style={{ marginTop: "3rem" }}
+                    >
+                        <Link href="#packages">Explore All Packages</Link>
+                    </motion.button>
+                </div>
             </div>
         </section>
     );
