@@ -219,26 +219,7 @@ const DestinationCard = ({ destination }) => {
                         >
                             {destination.description}
                         </motion.p>
-                        <motion.div 
-                            className="price-tag"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{
-                                opacity: isHovered ? 1 : 0,
-                                y: isHovered ? 0 : 20
-                            }}
-                            transition={{
-                                delay: 0.1
-                            }}
-                        >
-                            <span className="price">{destination.price}</span>
-                            <motion.button 
-                                className="book-now"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                Book Now
-                            </motion.button>
-                        </motion.div>
+                        
                     </motion.div>
                 </motion.div>
             </motion.div>

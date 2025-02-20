@@ -6,7 +6,7 @@ export default function GuestLayout({ children }) {
             <div className="mb-6 flex items-center space-x-2">
                 <Link href="/">
                     <img src="images/logo.png" alt="logo" className="w-20 h-20" />
-                    <h2 className="text-2xl font-bold text-blue-600">CuriousTravel</h2>
+                    <h2 className="text-2xl font-bold text-blue-600">CuriousTra</h2>
                 </Link>
             </div>
 

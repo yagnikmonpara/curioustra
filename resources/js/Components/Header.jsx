@@ -41,8 +41,9 @@ export default function Header({ isHeaderActive }) {
     return (
         <header className={`header ${isHeaderActive ? 'active' : ''}`}>
             <div className="container header-container">
-                <a href="#home" className="logo" onClick={(e) => handleNavClick(e, 'home')}>
-                    CuriousTra
+                <a href="/" className="logo flex items-center" onClick={(e) => handleNavClick(e, 'home')}>
+                    <img src="images/logo.png" alt="logo" className="w-20 h-20" />
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">CuriousTra</h1>
                 </a>
 
                 {isMobile && (

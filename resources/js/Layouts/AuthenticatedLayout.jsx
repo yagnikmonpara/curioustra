@@ -1,170 +1,269 @@
-import Dropdown from '@/Components/Dropdown';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import Footer from '../Components/Footer';
+import { Head, Link, usePage } from '@inertiajs/react';
 import NavLink from '@/Components/NavLink';
+import Dropdown from '@/Components/Dropdown';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
-import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
 
-export default function AuthenticatedLayout({ children }) {
-    const user = usePage().props.auth.user;
+const AuthenticatedLayout = ({ children }) => {
+    const { user } = usePage().props.auth;
 
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+    const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
+    const [isHeaderActive, setIsHeaderActive] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsHeaderActive(window.scrollY > 50);
+        };
+
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('resize', checkMobile);
+        checkMobile();
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', checkMobile);
+        };
+    }, []);
+
+    const navVariants = {
+        hidden: { opacity: 0, y: -20 },
+        visible: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -20 }
+    };
 
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-            <nav className="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
-                        <div className="flex">
-                            <div className="flex shrink-0 items-center">
-                                <Link href="/">
-                                    <img src="images/logo.png" alt="logo" className="w-20 h-20" />
-                                    <h2 className="text-2xl font-bold">CuriousTra</h2>
-                                </Link>
-                            </div>
+        <>
+        <style jsx>{`
+        .line {
+            display: block;
+            width: 30px; 
+            height: 3px; 
+            background: linear-gradient(135deg, #4A90E2, #50E3C2); /* Updated to a gradient */
+            margin: 6px 0; 
+            transition: all 0.3s ease; 
+        }
 
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('home')}
-                                    active={route().current('home')}
+        .line.active {
+            background: linear-gradient(135deg, #4A90E2, #50E3C2); /* Active state color */
+            transform: rotate(45deg); 
+        }
+
+        .line.active:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .line.active:nth-child(2) {
+            opacity: 0;
+        }
+            
+        .line.active:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        .bg-gradient {
+            background: linear-gradient(135deg, #F5F7FA, #D2E1E8); /* Soft gradient for the main background */
+        }
+
+        .text-primary {
+            color: #2C3E50; /* Darker text color */
+        }
+
+        .hover-bg {
+            background-color: #3498DB; /* Button hover color */
+        }
+        .blur {
+            filter: blur(15px); /* Adjust the blur amount as needed */
+            transition: filter 0.3s ease; /* Smooth transition */
+        }
+        `}</style>
+        <Head>
+            <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js" defer></script>
+            <script noModule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js" defer></script>
+        </Head>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-700">
+            <motion.nav 
+                className={`fixed w-full z-50 transition-all duration-300 ${
+                    isHeaderActive 
+                    ? 'bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700'
+                    : 'bg-transparent'
+                }`}
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="flex h-20 items-center justify-between">
+                        <motion.div 
+                            className="flex items-center gap-2"
+                            whileHover={{ scale: 1.1 }}
+                        >
+                            <Link href="/" className="flex items-center gap-3">
+                                <motion.img 
+                                    src="images/logo.png" 
+                                    alt="logo" 
+                                    className="w-16 h-16 border-1 p-1"
+                                />
+                                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
+                                    CuriousTra
+                                </span>
+                            </Link>
+                        </motion.div>
+
+                        <div className="hidden md:flex items-center gap-8">
+                            {/* {['home', 'destinations', 'packages', 'tours', 'guides', 'gallery', 'reviews'].map((routeName) => ( */}
+                            {['home'].map((routeName) => (
+                                <motion.div
+                                    key={routeName}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
                                 >
-                                    Home    
-                                </NavLink>
-                            </div>
+                                    <NavLink
+                                        href={route(routeName)}
+                                        active={route().current(routeName)}
+                                        className="relative px-3 py-2 text-gray-600 dark:text-gray-300 font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400"
+                                    >
+                                        {routeName.charAt(0).toUpperCase() + routeName.slice(1)}
+                                        {route().current(routeName) && (
+                                            <motion.div
+                                                className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500"
+                                                layoutId="nav-underline"
+                                            />
+                                        )}
+                                    </NavLink>
+                                </motion.div>
+                            ))}
                         </div>
 
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center">
-                            <div className="relative ms-3">
+                        <div className="flex items-center gap-4">
+                            {!isMobile && (
                                 <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
-                                            >
-                                                {user.name}
+                                <Dropdown.Trigger>
+                                    <motion.button
+                                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 rounded-full shadow-sm hover:shadow-md transition-shadow"
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        <span className="text-gray-700 dark:text-gray-200 font-medium">{user.name}</span>
+                                        <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
+                                            {user.name[0]}
+                                        </div>
+                                    </motion.button>
+                                </Dropdown.Trigger>
 
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </Dropdown.Trigger>
-
-                                    <Dropdown.Content>
+                                <Dropdown.Content>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="origin-top-right"
+                                    >
                                         <Dropdown.Link
                                             href={route('profile.edit')}
+                                            className="hover:bg-blue-50 dark:hover:bg-gray-700"
                                         >
-                                            Profile
+                                            <span className="text-blue-600 dark:text-blue-400">👤</span> Profile
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route('logout')}
                                             method="post"
                                             as="button"
+                                            className="hover:bg-red-50 dark:hover:bg-red-900/20"
                                         >
-                                            Log Out
+                                            <span className="text-red-600">🚪</span> Log Out
                                         </Dropdown.Link>
-                                    </Dropdown.Content>
-                                </Dropdown>
-                            </div>
-                        </div>
+                                    </motion.div>
+                                </Dropdown.Content>
+                            </Dropdown>
+                            )}
 
-                        <div className="-me-2 flex items-center sm:hidden">
-                            <button
-                                onClick={() =>
-                                    setShowingNavigationDropdown(
-                                        (previousState) => !previousState,
-                                    )
-                                }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none dark:text-gray-500 dark:hover:bg-gray-900 dark:hover:text-gray-400 dark:focus:bg-gray-900 dark:focus:text-gray-400"
-                            >
-                                <svg
-                                    className="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
+                            {isMobile && (
+                                <motion.button 
+                                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900"
+                                    onClick={() => setShowingNavigationDropdown(!showingNavigationDropdown)}
+                                    whileTap={{ scale: 0.95 }}
+                                    aria-label="Toggle navigation"
                                 >
-                                    <path
-                                        className={
-                                            !showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        className={
-                                            showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
+                                <span className={`line ${showingNavigationDropdown ? 'active' : ''}`}></span>
+                                <span className={`line ${showingNavigationDropdown ? 'active' : ''}`}></span>
+                                <span className={`line ${showingNavigationDropdown ? 'active' : ''}`}></span>
+                            </motion.button>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                <div
-                    className={
-                        (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
-                    }
-                >
-                    <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('home')}
-                            active={route().current('home')}
+                <AnimatePresence>
+                    {showingNavigationDropdown && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
                         >
-                            Home
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <div className="border-t border-gray-200 pb-1 pt-4 dark:border-gray-600">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-gray-800 dark:text-gray-200">
-                                {user.name}
+                            <div className="px-4 pb-4 space-y-4">
+                                {/* {['home', 'destinations', 'packages', 'tours', 'guides', 'gallery', 'reviews'].map((routeName) => ( */}
+                                {['home'].map((routeName) => (
+                                    <motion.div
+                                        key={routeName}
+                                        variants={navVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        exit="exit"
+                                    >
+                                        <ResponsiveNavLink
+                                            href={route(routeName)}
+                                            active={route().current(routeName)}
+                                            className="block px-4 py-3 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700"
+                                        >
+                                            {routeName.charAt(0).toUpperCase() + routeName.slice(1)}
+                                        </ResponsiveNavLink>
+                                    </motion.div>
+                                ))}
+                                
+                                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <div className="px-4 py-3">
+                                        <div className="text-lg font-medium text-gray-800 dark:text-gray-200">
+                                            {user.name}
+                                        </div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                                            {user.email}
+                                        </div>
+                                    </div>
+                                    
+                                    <ResponsiveNavLink 
+                                        href={route('profile.edit')}
+                                        className="hover:bg-blue-50 dark:hover:bg-gray-700"
+                                    >
+                                        Profile
+                                    </ResponsiveNavLink>
+                                    <ResponsiveNavLink
+                                        method="post"
+                                        href={route('logout')}
+                                        as="button"
+                                        className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    >
+                                        Log Out
+                                    </ResponsiveNavLink>
+                                </div>
                             </div>
-                            <div className="text-sm font-medium text-gray-500">
-                                {user.email}
-                            </div>
-                        </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.nav>
 
-                        <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                method="post"
-                                href={route('logout')}
-                                as="button"
-                            >
-                                Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-
-
-            <main>{children}</main>
+            <main className="pt-24">
+                {children}
+            </main>
+            <Footer />
         </div>
+    </>
     );
-}
+};
+
+export default AuthenticatedLayout;

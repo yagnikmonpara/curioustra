@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import '../../css/welcome.css';
 import { Link } from '@inertiajs/react';
 
-export default function HeroSection( auth ) {
+export default function HeroSection( user ) {
     return (
         <motion.section 
             className="hero" 
@@ -49,15 +49,15 @@ export default function HeroSection( auth ) {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.7, duration: 0.8 }}
                 >   
-                    {auth.user ? (
+                    {/* { user ? (
                         <motion.button 
                         className="btn btn-success"
                         whileHover={{ scale: 1.05, boxShadow: "0px 5px 15px rgba(0,0,0,0.2)" }}
                         whileTap={{ scale: 0.95 }}
                     >
-                        <Link href="/home">Explore More </Link>
+                        <Link href="/login">Explore More </Link>
                     </motion.button>
-                    ) : (
+                    ) : ( */}
                         <div className="btn-group flex justify-center items-center">
                         <motion.button 
                         className="btn btn-success mr-3"
@@ -74,7 +74,7 @@ export default function HeroSection( auth ) {
                         <Link href="/register">Register</Link>
                         </motion.button>
                     </div>
-                    )}
+                    {/* )} */}
                     
                 </motion.div>
             </div>

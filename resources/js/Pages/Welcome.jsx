@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Head } from '@inertiajs/react';
-
+import { Head, usePage } from '@inertiajs/react';
 // Import Components
 import Header from '@/Components/Header';
 import HeroSection from '@/Components/HeroSection';
@@ -15,9 +14,10 @@ import Footer from '@/Components/Footer';
 // Import Styles
 import '../../css/welcome.css';
 
-export default function Welcome({ auth }) {
+export default function Welcome() {
+    const { user } = usePage().props.auth;
+    console.log(user);
     const [isHeaderActive, setIsHeaderActive] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
 
     // Handle header state on scroll
@@ -31,21 +31,6 @@ export default function Welcome({ auth }) {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Handle smooth scroll for navigation
-    const handleNavClick = (e, targetId) => {
-        e.preventDefault();
-        const element = document.getElementById(targetId);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
-            setIsMenuOpen(false);
-        }
-    };
-
-    // Scroll to top function
-    const scrollToTop = () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
     return (
         <>
             <Head>
@@ -55,7 +40,7 @@ export default function Welcome({ auth }) {
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
                 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
                 <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js" defer></script>
-<script noModule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js" defer></script>
+                <script noModule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js" defer></script>
             </Head>
 
             {/* Header */}
@@ -63,7 +48,7 @@ export default function Welcome({ auth }) {
 
             {/* Main Content */}
             <main>
-                <HeroSection auth={auth} />
+                <HeroSection user={user} />
                 <PopularDestinations />
                 <PackagesSection />
                 <GallerySection />
