@@ -1,12 +1,30 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\UserMiddleware;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+// Controllers
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PackageController;
+use App\Http\Controllers\PackageBookingController;
+use App\Http\Controllers\HotelController;
+use App\Http\Controllers\HotelBookingController;
+use App\Http\Controllers\DestinationController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CabController;
+use App\Http\Controllers\CabBookingController;
+use App\Http\Controllers\GuideController;
+use App\Http\Controllers\GuideBookingController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\TrainController;
+use App\Http\Controllers\TrainBookingController;
+use App\Http\Controllers\FlightController;
+use App\Http\Controllers\FlightBookingController;
+use App\Http\Controllers\GalleryController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -108,9 +126,9 @@ Route::middleware(UserMiddleware::class)->group(function () {
     Route::post('/packages/{id}/book', [PackageBookingController::class, 'store']);
 
     // Booking Page
-    Route::get('/booking', [PackageBookingController::class, 'index'])->name('booking');
-    Route::get('/booking/{id}', [PackageBookingController::class, 'show'])->name('booking.show');
-    // Route::put('/booking/{id}/pay', [PackageBookingController::class, 'update']);
+    Route::get('/bookings', [PackageBookingController::class, 'index'])->name('bookings');
+    Route::get('/bookings/{id}', [PackageBookingController::class, 'show'])->name('bookings.show');
+    // Route::put('/bookings/{id}/pay', [PackageBookingController::class, 'update']);
 
     // Hotel Page
     Route::get('/hotels', [HotelController::class, 'index'])->name('hotels');

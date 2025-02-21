@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Destination;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class DestinationController extends Controller
 {
@@ -12,7 +13,10 @@ class DestinationController extends Controller
      */
     public function index()
     {
-        //
+        // $destinations = Destination::all();
+        return Inertia::render('User/Destinations/index', [
+            // 'destinations' => $destinations
+        ]);
     }
 
     /**

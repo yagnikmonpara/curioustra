@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Package;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class PackageController extends Controller
 {
@@ -12,9 +13,9 @@ class PackageController extends Controller
      */
     public function index()
     {
-        $packages = Package::all();
-        return Inertia::render('User/Destinations/index', [
-            'packages' => $packages
+        // $packages = Package::all();
+        return Inertia::render('User/Packages/index', [
+            // 'packages' => $packages
         ]);
     }
 

@@ -1,0 +1,136 @@
+/* AdminUsers.css */
+
+.admin-users-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f4f4f4; /* Light background for the page */
+}
+
+header {
+    background-color: #333; /* Dark header background */
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+.users-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping of cards */
+    justify-content: center; /* Center the cards horizontally */
+    padding: 20px;
+    flex: 1; /* Allow the container to expand and fill available space */
+}
+
+.user-card {
+    width: 400px; /* Adjust card width as needed */
+    margin: 10px;
+    border: 1px solid #ddd; /* Light border */
+    border-radius: 8px;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    position: relative; /* For absolute positioning of delete button */
+    transition: transform 0.2s; /* Smooth hover effect */
+}
+
+.user-card:hover {
+    transform: translateY(-5px); /* Move card up slightly on hover */
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15); /* Increase shadow on hover */
+}
+
+
+.user-card p {
+    margin-bottom: 5px;
+}
+
+.button-group { /* Style for the button group */
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    margin-top: 10px; /* Space above the buttons */
+}
+
+.delete-button {
+    background-color: #dc3545; /* Red */
+    color: white;
+    padding: 8px 16px; /* Adjust padding as needed */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+    background-color: #c12a36; /* Darker red on hover */
+}
+
+.view-user-modal { /* Style for the modal or separate section */
+    position: fixed; /* Or relative, depending on your layout */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of other content */
+}
+
+.view-user-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    max-width: 600px; /* Adjust as needed */
+    max-height: 80vh; /* Limit height to prevent overflow */
+    overflow-y: auto; /* Add scroll if content overflows */
+    position: relative; /* For positioning the close button */
+}
+
+.view-user-content h2,
+.view-user-content h3 {
+    margin-bottom: 10px;
+}
+
+.view-user-content p {
+    margin-bottom: 5px;
+}
+
+.view-user-content ul {
+    list-style-type: none; /* Remove bullet points */
+    padding: 0;
+}
+
+.view-user-content li {
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.view-user-content button { /* Style for the close button */
+    background-color: #007bff; /* Blue */
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px; /* Add some space above the button */
+    transition: background-color 0.2s;
+}
+
+.view-user-content button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+footer {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    margin-top: auto;
+    width: 100%;
+}

@@ -1,0 +1,75 @@
+/* AdminBookings.css */
+.admin-bookings-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+.bookings-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping */
+    justify-content: center;
+    padding: 20px;
+    flex: 1;
+}
+
+.booking-card {
+    width: 400px; /* Adjust as needed */
+    margin: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.booking-card p {
+    margin-bottom: 5px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    margin-top: 10px;
+}
+
+.button-group button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.button-group button:disabled {
+    opacity: 0.6; /* Visually indicate disabled state */
+    cursor: default;
+}
+
+.button-group button:first-child { /* Confirm button */
+    background-color: #28a745; /* Green */
+    color: white;
+}
+
+.button-group button:last-child { /* Cancel button */
+    background-color: #dc3545; /* Red */
+    color: white;
+}
+
+footer {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    margin-top: auto;
+    width: 100%;
+}

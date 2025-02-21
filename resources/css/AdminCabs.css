@@ -1,0 +1,61 @@
+/* AdminCabs.css */
+.admin-cabs-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+.cabs-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping */
+    justify-content: center;
+    padding: 20px;
+    flex: 1;
+}
+
+.cab-card {
+    width: 400px; /* Adjust as needed */
+    margin: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.cab-card p {
+    margin-bottom: 5px;
+}
+
+.delete-button {
+    background-color: #dc3545; /* Red */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.delete-button:hover {
+    background-color: #c12a36; /* Darker red on hover */
+}
+
+footer {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    margin-top: auto;
+    width: 100%;
+}

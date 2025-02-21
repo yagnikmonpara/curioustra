@@ -117,8 +117,8 @@ const AuthenticatedLayout = ({ children }) => {
                         </motion.div>
 
                         <div className="hidden md:flex items-center gap-8">
-                            {/* {['home', 'destinations', 'packages', 'tours', 'guides', 'gallery', 'reviews'].map((routeName) => ( */}
-                            {['home'].map((routeName) => (
+                            {['home', 'destinations', 'packages', 'hotels', 'cabs', 'trains', 'flights', 'guides', 'gallery'].map((routeName) => (
+                            // {['home'].map((routeName) => (
                                 <motion.div
                                     key={routeName}
                                     whileHover={{ scale: 1.05 }}
@@ -127,7 +127,7 @@ const AuthenticatedLayout = ({ children }) => {
                                     <NavLink
                                         href={route(routeName)}
                                         active={route().current(routeName)}
-                                        className="relative px-3 py-2 text-gray-600 dark:text-gray-300 font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400"
+                                        className="relative px-0 py-1 text-gray-600 dark:text-gray-300 font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400"
                                     >
                                         {routeName.charAt(0).toUpperCase() + routeName.slice(1)}
                                         {route().current(routeName) && (
@@ -170,6 +170,12 @@ const AuthenticatedLayout = ({ children }) => {
                                             <span className="text-blue-600 dark:text-blue-400">👤</span> Profile
                                         </Dropdown.Link>
                                         <Dropdown.Link
+                                            href={route('bookings')}
+                                            className="hover:bg-blue-50 dark:hover:bg-gray-700"
+                                        >
+                                            <span className="text-blue-600 dark:text-blue-400">📝</span> My Bookings
+                                        </Dropdown.Link>
+                                        <Dropdown.Link
                                             href={route('logout')}
                                             method="post"
                                             as="button"
@@ -206,9 +212,9 @@ const AuthenticatedLayout = ({ children }) => {
                             exit={{ opacity: 0, height: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="px-4 pb-4 space-y-4">
-                                {/* {['home', 'destinations', 'packages', 'tours', 'guides', 'gallery', 'reviews'].map((routeName) => ( */}
-                                {['home'].map((routeName) => (
+                            <div className="px-4 pb-4 space-y-1">
+                                {['home', 'destinations', 'packages', 'hotels', 'cabs', 'trains', 'flights', 'guides', 'gallery'].map((routeName) => (
+                                // {['home'].map((routeName) => (
                                     <motion.div
                                         key={routeName}
                                         variants={navVariants}
@@ -219,7 +225,7 @@ const AuthenticatedLayout = ({ children }) => {
                                         <ResponsiveNavLink
                                             href={route(routeName)}
                                             active={route().current(routeName)}
-                                            className="block px-4 py-3 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700"
+                                            className="block px-0 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700"
                                         >
                                             {routeName.charAt(0).toUpperCase() + routeName.slice(1)}
                                         </ResponsiveNavLink>
@@ -241,6 +247,12 @@ const AuthenticatedLayout = ({ children }) => {
                                         className="hover:bg-blue-50 dark:hover:bg-gray-700"
                                     >
                                         Profile
+                                    </ResponsiveNavLink>
+                                    <ResponsiveNavLink
+                                        href={route('bookings')}
+                                        className="hover:bg-blue-50 dark:hover:bg-gray-700"
+                                    >
+                                        <span className="text-blue-600 dark:text-blue-400">📝</span> My Bookings
                                     </ResponsiveNavLink>
                                     <ResponsiveNavLink
                                         method="post"

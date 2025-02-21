@@ -1,0 +1,67 @@
+/* Bookings.css */
+.bookings-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+.bookings-container {
+    display: flex;
+    flex-direction: column; /* Stack booking sections vertically */
+    align-items: center; /* Center horizontally */
+    padding: 20px;
+    flex: 1;
+}
+
+.booking-section {
+    width: 500px; /* Adjust as needed */
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.booking-section h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.booking-section p {
+    margin-bottom: 5px;
+}
+
+.delete-button {
+    background-color: #dc3545; /* Red for delete */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.delete-button:hover {
+    background-color: #c12a36; /* Darker red on hover */
+}
+
+
+footer {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    margin-top: auto;
+    width: 100%;
+}
