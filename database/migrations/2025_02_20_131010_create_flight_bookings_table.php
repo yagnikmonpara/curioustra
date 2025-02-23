@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('flight_bookings', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('flight_id')->constrained()->onDelete('cascade');
+            $table->integer('number_of_seats');
+            $table->decimal('total_price', 10, 2);
+            $table->string('seat_numbers')->nullable(); // Comma-separated or JSON array of seat numbers
+            $table->string('status')->default('pending'); // pending, confirmed, cancelled, completed
+            $table->json('additional_info')->nullable();
             $table->timestamps();
         });
     }

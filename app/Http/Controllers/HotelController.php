@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Hotel;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class HotelController extends Controller
 {
@@ -12,7 +13,10 @@ class HotelController extends Controller
      */
     public function index()
     {
-        //
+        $hotels = Hotel::all();
+        return Inertia::render('User/Hotels/index', [
+            'hotels' => $hotels,
+        ]);
     }
 
     /**
@@ -20,7 +24,7 @@ class HotelController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Admin/Hotels/create');
     }
 
     /**
@@ -28,7 +32,24 @@ class HotelController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'address' => 'nullable|string',
+            'city' => 'nullable|string',
+            'country' => 'nullable|string',
+            'stars' => 'nullable|integer',
+            'price_per_night' => 'nullable|numeric',
+            'amenities' => 'nullable|array',
+            'images' => 'nullable|array',
+        ]);
+
+        $hotel = new Hotel();
+        $hotel->fill($request->all());
+
+        $hotel->save();
+
+        return redirect()->route('hotels.index')->with('success', 'Hotel created successfully.');
     }
 
     /**
@@ -36,7 +57,9 @@ class HotelController extends Controller
      */
     public function show(Hotel $hotel)
     {
-        //
+        return Inertia::render('User/Hotels/show', [
+            'hotel' => $hotel,
+        ]);
     }
 
     /**
@@ -44,7 +67,9 @@ class HotelController extends Controller
      */
     public function edit(Hotel $hotel)
     {
-        //
+        return Inertia::render('Admin/Hotels/edit', [
+            'hotel' => $hotel,
+        ]);
     }
 
     /**
@@ -52,7 +77,21 @@ class HotelController extends Controller
      */
     public function update(Request $request, Hotel $hotel)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'address' => 'nullable|string',
+            'city' => 'nullable|string',
+            'country' => 'nullable|string',
+            'stars' => 'nullable|integer',
+            'price_per_night' => 'nullable|numeric',
+            'amenities' => 'nullable|array',
+            'images' => 'nullable|array',
+        ]);
+
+        $hotel->update($request->all());
+
+        return redirect()->route('hotels.index')->with('success', 'Hotel updated successfully.');
     }
 
     /**
@@ -60,6 +99,7 @@ class HotelController extends Controller
      */
     public function destroy(Hotel $hotel)
     {
-        //
+        $hotel->delete();
+        return redirect()->route('hotels.index')->with('success', 'Hotel deleted successfully.');
     }
 }

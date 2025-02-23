@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('galleries', function (Blueprint $table) {
             $table->id();
+            $table->morphs('imageable'); // Polymorphic relationship for different models
+            $table->string('image_path'); // Path to the image
+            $table->string('caption')->nullable();
             $table->timestamps();
         });
     }

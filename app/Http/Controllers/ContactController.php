@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Contact;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ContactController extends Controller
 {
@@ -12,7 +13,10 @@ class ContactController extends Controller
      */
     public function index()
     {
-        //
+        $contacts = Contact::all();
+        return Inertia::render('Admin/Contacts/index', [
+            'contacts' => $contacts,
+        ]);
     }
 
     /**
@@ -20,7 +24,7 @@ class ContactController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('User/Contact/create'); // or just contact.
     }
 
     /**
@@ -28,7 +32,17 @@ class ContactController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|numeric|max:10',
+            'subject' => 'nullable|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        Contact::create($request->all());
+
+        return redirect()->back()->with('success', 'Your message has been sent successfully!');
     }
 
     /**
@@ -36,23 +50,9 @@ class ContactController extends Controller
      */
     public function show(Contact $contact)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Contact $contact)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Contact $contact)
-    {
-        //
+        return Inertia::render('Admin/Contacts/show', [
+            'contact' => $contact,
+        ]);
     }
 
     /**
@@ -60,6 +60,7 @@ class ContactController extends Controller
      */
     public function destroy(Contact $contact)
     {
-        //
+        $contact->delete();
+        return redirect()->route('contacts.index')->with('success', 'Contact message deleted successfully.');
     }
 }

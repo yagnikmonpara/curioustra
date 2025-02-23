@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Gallery;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class GalleryController extends Controller
 {
@@ -12,7 +13,10 @@ class GalleryController extends Controller
      */
     public function index()
     {
-        //
+        $galleries = Gallery::with('imageable')->get();
+        return Inertia::render('Admin/Galleries/index', [
+            'galleries' => $galleries,
+        ]);
     }
 
     /**
@@ -20,7 +24,7 @@ class GalleryController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Admin/Galleries/create');
     }
 
     /**
@@ -28,7 +32,29 @@ class GalleryController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'imageable_id' => 'required|integer',
+            'imageable_type' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'caption' => 'nullable|string',
+        ]);
+
+        $gallery = new Gallery();
+        $gallery->imageable_id = $request->imageable_id;
+        $gallery->imageable_type = $request->imageable_type;
+        $gallery->caption = $request->caption;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $imagePath = public_path('images/galleries');
+            $image->move($imagePath, $imageName);
+            $gallery->image_path = '/images/galleries/' . $imageName;
+        }
+
+        $gallery->save();
+
+        return redirect()->route('galleries.index')->with('success', 'Image added to gallery successfully.');
     }
 
     /**
@@ -36,7 +62,10 @@ class GalleryController extends Controller
      */
     public function show(Gallery $gallery)
     {
-        //
+        $gallery->load('imageable');
+        return Inertia::render('Admin/Galleries/show', [
+            'gallery' => $gallery,
+        ]);
     }
 
     /**
@@ -44,7 +73,10 @@ class GalleryController extends Controller
      */
     public function edit(Gallery $gallery)
     {
-        //
+        $gallery->load('imageable');
+        return Inertia::render('Admin/Galleries/edit', [
+            'gallery' => $gallery,
+        ]);
     }
 
     /**
@@ -52,7 +84,30 @@ class GalleryController extends Controller
      */
     public function update(Request $request, Gallery $gallery)
     {
-        //
+        $request->validate([
+            'caption' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $gallery->caption = $request->caption;
+
+        if ($request->hasFile('image')) {
+            if ($gallery->image_path) {
+                $oldImagePath = public_path($gallery->image_path);
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+            }
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $imagePath = public_path('images/galleries');
+            $image->move($imagePath, $imageName);
+            $gallery->image_path = '/images/galleries/' . $imageName;
+        }
+
+        $gallery->save();
+
+        return redirect()->route('galleries.index')->with('success', 'Gallery image updated successfully.');
     }
 
     /**
@@ -60,6 +115,15 @@ class GalleryController extends Controller
      */
     public function destroy(Gallery $gallery)
     {
-        //
+        if ($gallery->image_path) {
+            $imagePath = public_path($gallery->image_path);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+        }
+
+        $gallery->delete();
+
+        return redirect()->route('galleries.index')->with('success', 'Gallery image deleted successfully.');
     }
 }

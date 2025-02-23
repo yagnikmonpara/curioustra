@@ -13,6 +13,15 @@ return new class extends Migration
     {
         Schema::create('hotels', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->string('address')->nullable();
+            $table->string('city')->nullable();
+            $table->string('country')->nullable();
+            $table->integer('stars')->nullable();
+            $table->decimal('price_per_night', 10, 2)->nullable();
+            $table->json('amenities')->nullable(); // JSON array of amenities
+            $table->json('images')->nullable(); // JSON array of image paths/URLs
             $table->timestamps();
         });
     }

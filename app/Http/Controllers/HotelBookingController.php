@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\HotelBooking;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class HotelBookingController extends Controller
 {
@@ -12,7 +14,10 @@ class HotelBookingController extends Controller
      */
     public function index()
     {
-        //
+        $bookings = HotelBooking::with('user', 'hotel')->get();
+        return Inertia::render('Admin/HotelBookings/index', [
+            'bookings' => $bookings,
+        ]);
     }
 
     /**
@@ -20,7 +25,7 @@ class HotelBookingController extends Controller
      */
     public function create()
     {
-        //
+        // Not typically needed, bookings are created during the booking process
     }
 
     /**
@@ -28,7 +33,7 @@ class HotelBookingController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Bookings are created during the booking process in the HotelController
     }
 
     /**
@@ -36,7 +41,10 @@ class HotelBookingController extends Controller
      */
     public function show(HotelBooking $hotelBooking)
     {
-        //
+        $hotelBooking->load('user', 'hotel');
+        return Inertia::render('Admin/HotelBookings/show', [
+            'booking' => $hotelBooking,
+        ]);
     }
 
     /**
@@ -44,7 +52,10 @@ class HotelBookingController extends Controller
      */
     public function edit(HotelBooking $hotelBooking)
     {
-        //
+        $hotelBooking->load('user', 'hotel');
+        return Inertia::render('Admin/HotelBookings/edit', [
+            'booking' => $hotelBooking,
+        ]);
     }
 
     /**
@@ -52,7 +63,18 @@ class HotelBookingController extends Controller
      */
     public function update(Request $request, HotelBooking $hotelBooking)
     {
-        //
+        $request->validate([
+            'check_in_date' => 'required|date',
+            'check_out_date' => 'required|date',
+            'number_of_guests' => 'required|integer',
+            'total_price' => 'required|numeric',
+            'status' => 'required|string',
+            'additional_info' => 'nullable|json',
+        ]);
+
+        $hotelBooking->update($request->all());
+
+        return redirect()->route('hotel-bookings.index')->with('success', 'Hotel booking updated successfully.');
     }
 
     /**
@@ -60,6 +82,35 @@ class HotelBookingController extends Controller
      */
     public function destroy(HotelBooking $hotelBooking)
     {
-        //
+        $hotelBooking->delete();
+        return redirect()->route('hotel-bookings.index')->with('success', 'Hotel booking deleted successfully.');
+    }
+
+    public function confirmBooking(HotelBooking $booking)
+    {
+        if (!Auth::user()->isAdmin()) { // Replace isAdmin() with your actual admin check
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($booking->status !== 'pending') {
+            return back()->with('error', 'Booking is not pending.');
+        }
+
+        $booking->status = 'confirmed';
+        $booking->save();
+
+        return back()->with('success', 'Booking confirmed.');
+    }
+
+    public function cancelBooking(HotelBooking $booking)
+    {
+        if (!Auth::user()->isAdmin() && Auth::id() !== $booking->user_id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $booking->status = 'cancelled';
+        $booking->save();
+
+        return back()->with('success', 'Booking cancelled.');
     }
 }

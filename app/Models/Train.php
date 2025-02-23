@@ -6,5 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class Train extends Model
 {
-    //
+    use HasFactory;
+
+    protected $fillable = [
+        'train_name',
+        'train_number',
+        'departure_station',
+        'arrival_station',
+        'departure_time',
+        'arrival_time',
+        'total_seats',
+        'price_per_seat',
+        'class',
+        'status',
+    ];
+
+    protected $casts = [
+        'departure_time' => 'datetime',
+        'arrival_time' => 'datetime',
+    ];
 }

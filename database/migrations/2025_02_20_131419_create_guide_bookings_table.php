@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('guide_bookings', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('guide_id')->constrained()->onDelete('cascade');
+            $table->date('booking_date');
+            $table->time('booking_time')->nullable();
+            $table->integer('duration_hours')->nullable();
+            $table->decimal('total_price', 10, 2)->nullable();
+            $table->string('status')->default('pending'); // pending, confirmed, cancelled, etc.
+            $table->json('additional_info')->nullable();
             $table->timestamps();
         });
     }

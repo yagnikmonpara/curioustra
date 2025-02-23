@@ -142,9 +142,6 @@ const AdminPackages = () => {
 
     return (
         <div className="admin-packages-page">
-            <header>
-                <h1>Admin Packages</h1>
-            </header>
             <main className="packages-container">
                 {isAdding ? (
                     <div className="add-package-form">
@@ -181,9 +178,6 @@ const AdminPackages = () => {
                     </div>
                 ))}
             </main>
-            <footer>
-                <p>&copy; 2023 Travel Company</p>
-            </footer>
         </div>
     );
 };

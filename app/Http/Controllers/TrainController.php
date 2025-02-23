@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Train;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class TrainController extends Controller
 {
@@ -12,7 +13,10 @@ class TrainController extends Controller
      */
     public function index()
     {
-        //
+        $trains = Train::all();
+        return Inertia::render('Admin/Trains/index', [
+            'trains' => $trains,
+        ]);
     }
 
     /**
@@ -20,7 +24,7 @@ class TrainController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('Admin/Trains/create');
     }
 
     /**
@@ -28,7 +32,24 @@ class TrainController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'train_name' => 'required|string|max:255',
+            'train_number' => 'required|string|unique:trains',
+            'departure_station' => 'required|string|max:255',
+            'arrival_station' => 'required|string|max:255',
+            'departure_time' => 'required|date_format:Y-m-d H:i:s',
+            'arrival_time' => 'required|date_format:Y-m-d H:i:s|after:departure_time',
+            'total_seats' => 'required|integer|min:1',
+            'price_per_seat' => 'required|numeric|min:0',
+            'class' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:scheduled,delayed,cancelled,completed',
+        ]);
+
+        $train = new Train();
+        $train->fill($request->all());
+        $train->save();
+
+        return redirect()->route('trains.index')->with('success', 'Train created successfully.');
     }
 
     /**
@@ -36,7 +57,9 @@ class TrainController extends Controller
      */
     public function show(Train $train)
     {
-        //
+        return Inertia::render('Admin/Trains/show', [
+            'train' => $train,
+        ]);
     }
 
     /**
@@ -44,7 +67,9 @@ class TrainController extends Controller
      */
     public function edit(Train $train)
     {
-        //
+        return Inertia::render('Admin/Trains/edit', [
+            'train' => $train,
+        ]);
     }
 
     /**
@@ -52,7 +77,23 @@ class TrainController extends Controller
      */
     public function update(Request $request, Train $train)
     {
-        //
+        $request->validate([
+            'train_name' => 'required|string|max:255',
+            'train_number' => 'required|string|unique:trains,train_number,' . $train->id,
+            'departure_station' => 'required|string|max:255',
+            'arrival_station' => 'required|string|max:255',
+            'departure_time' => 'required|date_format:Y-m-d H:i:s',
+            'arrival_time' => 'required|date_format:Y-m-d H:i:s|after:departure_time',
+            'total_seats' => 'required|integer|min:1',
+            'price_per_seat' => 'required|numeric|min:0',
+            'class' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:scheduled,delayed,cancelled,completed',
+        ]);
+
+        $train->fill($request->all());
+        $train->save();
+
+        return redirect()->route('trains.index')->with('success', 'Train updated successfully.');
     }
 
     /**
@@ -60,6 +101,7 @@ class TrainController extends Controller
      */
     public function destroy(Train $train)
     {
-        //
+        $train->delete();
+        return redirect()->route('trains.index')->with('success', 'Train deleted successfully.');
     }
 }

@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('guides', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->text('bio')->nullable();
+            $table->string('specialization')->nullable();
+            $table->string('contact_number')->nullable();
+            $table->string('email')->nullable();
+            $table->string('profile_picture')->nullable(); // Path to profile picture
+            $table->json('languages')->nullable(); // JSON array of languages spoken
             $table->timestamps();
         });
     }
