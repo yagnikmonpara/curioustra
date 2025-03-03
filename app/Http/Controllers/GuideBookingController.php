@@ -14,6 +14,13 @@ class GuideBookingController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        $guideBookings = GuideBooking::with('user', 'guide')->where('user_id', $user->id)->get();
+        return $guideBookings;
+    }
+
+    public function list()
+    {
         $bookings = GuideBooking::with('user', 'guide')->get();
         return Inertia::render('Admin/GuideBookings/index', [
             'bookings' => $bookings,
@@ -25,15 +32,27 @@ class GuideBookingController extends Controller
      */
     public function create()
     {
-        // Not typically needed, bookings are created during the booking process
+        return Inertia::render('User/Guides/create');
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
+    * Store a newly created resource in storage.
+    */
     public function store(Request $request)
     {
-        // Bookings are created during the booking process in the GuideController or related booking logic
+        $request->validate([
+            'booking_date' => 'required|date',
+            'booking_time' => 'nullable|date_format:H:i',
+            'duration_hours' => 'nullable|integer',
+            'total_price' => 'nullable|numeric',
+            'additional_info' => 'nullable|json',
+        ]);
+
+        $guideBooking = new GuideBooking($request->all());
+        $guideBooking->user_id = auth()->id(); // Set the user_id to the authenticated user's ID
+        $guideBooking->save();
+
+        return redirect()->route('bookings')->with('success', 'Guide booking created successfully.');
     }
 
     /**

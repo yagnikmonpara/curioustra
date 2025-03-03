@@ -16,7 +16,6 @@ import '../../css/welcome.css';
 
 export default function Welcome() {
     const { user } = usePage().props.auth;
-    console.log(user);
     const [isHeaderActive, setIsHeaderActive] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -48,7 +47,7 @@ export default function Welcome() {
 
             {/* Main Content */}
             <main>
-                <HeroSection user={user} />
+                <HeroSection />
                 <PopularDestinations />
                 <PackagesSection />
                 <GallerySection />

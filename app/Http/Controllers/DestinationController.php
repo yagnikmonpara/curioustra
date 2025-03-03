@@ -19,6 +19,13 @@ class DestinationController extends Controller
         ]);
     }
 
+    public function list()
+    {
+        $destinations = Destination::all();
+        return Inertia::render('Admin/Destinations/index', [
+            'destinations' => $destinations,
+        ]);
+    }
     /**
      * Show the form for creating a new resource.
      */
@@ -54,7 +61,7 @@ class DestinationController extends Controller
 
         $destination->save();
 
-        return redirect()->route('destinations.index')->with('success', 'Destination created successfully.');
+        return redirect()->back()->with('success', 'Destination created successfully.');
     }
 
     /**
@@ -71,9 +78,10 @@ class DestinationController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(Destination $destination)
-    {
+    {   
+        $dest = Destination::findOrFail($destination->id);
         return Inertia::render('Admin/Destinations/edit', [
-            'destination' => $destination,
+            'destination' => $dest,
         ]);
     }
 
@@ -81,7 +89,8 @@ class DestinationController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, Destination $destination)
-    {
+    {   
+        $dest = Destination::findOrFail($destination->id);
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -109,7 +118,7 @@ class DestinationController extends Controller
 
         $destination->save();
 
-        return redirect()->route('destinations.index')->with('success', 'Destination updated successfully.');
+        return redirect()->route('admin.destinations')->with('success', 'Destination updated successfully.');
     }
 
     /**
@@ -117,15 +126,16 @@ class DestinationController extends Controller
      */
     public function destroy(Destination $destination)
     {
-        if ($destination->image) {
-            $imagePath = public_path($destination->image);
+        $dest = Destination::findOrFail($destination->id);
+        if ($dest->image) {
+            $imagePath = public_path($dest->image);
             if (file_exists($imagePath)) {
                 unlink($imagePath);
             }
         }
 
-        $destination->delete();
+        $dest->delete();
 
-        return redirect()->route('destinations.index')->with('success', 'Destination deleted successfully.');
+        return redirect()->route('admin.destinations')->with('success', 'Destination deleted successfully.');
     }
 }

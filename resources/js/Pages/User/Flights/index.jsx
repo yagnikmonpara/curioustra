@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Flights.css'; // Import your CSS file
+import '../../../../css/Flights.css'; // Import your CSS file
 
 const Flights = () => {
     const [origin, setOrigin] = useState('');

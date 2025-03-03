@@ -14,26 +14,43 @@ class FlightBookingController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        $flightBookings = FlightBooking::with('user', 'flight')->where('user_id', $user->id)->get();
+        return $flightBookings;
+    }
+
+    public function list()
+    {
         $bookings = FlightBooking::with('user', 'flight')->get();
-        return Inertia::render('Admin/FlightBookings/index', [
+        return Inertia::render('Admin/FlightBookings/Index', [
             'bookings' => $bookings,
         ]);
     }
-
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        // Not typically needed, bookings are created during the booking process
+        return Inertia::render('User/Flights/create');  
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
+    * Store a newly created resource in storage.
+    */
     public function store(Request $request)
     {
-        // Bookings are created during the booking process in the FlightController or related booking logic
+        $request->validate([
+            'number_of_seats' => 'required|integer|min:1',
+            'total_price' => 'required|numeric|min:0',
+            'seat_numbers' => 'nullable|string',
+            'additional_info' => 'nullable|json',
+        ]);
+
+        $flightBooking = new FlightBooking($request->all());
+        $flightBooking->user_id = auth()->id(); // Set the user_id to the authenticated user's ID
+        $flightBooking->save();
+
+        return redirect()->route('bookings')->with('success', 'Flight booking created successfully.');
     }
 
     /**
@@ -85,30 +102,30 @@ class FlightBookingController extends Controller
         return redirect()->route('flight-bookings.index')->with('success', 'Flight booking deleted successfully.');
     }
 
-    public function confirmBooking(FlightBooking $booking)
+    public function confirmBooking(FlightBooking $flightBooking)
     {
         if (!Auth::user()->isAdmin()) { // Replace isAdmin() with your actual admin check
             abort(403, 'Unauthorized action.');
         }
 
-        if ($booking->status !== 'pending') {
+        if ($flightBooking->status !== 'pending') {
             return back()->with('error', 'Booking is not pending.');
         }
 
-        $booking->status = 'confirmed';
-        $booking->save();
+        $flightBooking->status = 'confirmed';
+        $flightBooking->save();
 
         return back()->with('success', 'Booking confirmed.');
     }
 
-    public function cancelBooking(FlightBooking $booking)
+    public function cancelBooking(FlightBooking $flightBooking)
     {
-        if (!Auth::user()->isAdmin() && Auth::id() !== $booking->user_id) {
+        if (!Auth::user()->isAdmin() && Auth::id() !== $flightBooking->user_id) {
             abort(403, 'Unauthorized action.');
         }
 
-        $booking->status = 'cancelled';
-        $booking->save();
+        $flightBooking->status = 'cancelled';
+        $flightBooking->save();
 
         return back()->with('success', 'Booking cancelled.');
     }

@@ -19,6 +19,14 @@ class PackageController extends Controller
         ]);
     }
 
+    public function list()
+    {
+        $packages = Package::all(); // Fetch all packages
+        return Inertia::render('Admin/Packages/index', [
+            'packages' => $packages, // Pass packages to the Inertia component
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -65,7 +73,7 @@ class PackageController extends Controller
 
         $package->save();
 
-        return redirect()->route('packages.index')->with('success', 'Package created successfully.');
+        return redirect()->back()->with('success', 'Package created successfully.');
     }
 
     /**
@@ -83,7 +91,7 @@ class PackageController extends Controller
      */
     public function edit(Package $package)
     {
-        return Inertia::render('User/Packages/edit', [
+        return Inertia::render('Admin/Packages/edit', [
             'package' => $package, // Pass the package to the view
         ]);
     }
@@ -131,7 +139,7 @@ class PackageController extends Controller
 
         $package->save();
 
-        return redirect()->route('packages.index')->with('success', 'Package updated successfully.');
+        return redirect()->back()->with('success', 'Package updated successfully.');
     }
 
     /**
@@ -147,6 +155,6 @@ class PackageController extends Controller
         }
         $package->delete();
 
-        return redirect()->route('packages.index')->with('success', 'Package deleted successfully.');
+        return redirect()->back()->with('success', 'Package deleted successfully.');
     }
 }

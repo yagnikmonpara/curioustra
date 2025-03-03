@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Trains.css'; // Import your CSS file
+import '../../../../css/Trains.css'; // Import your CSS file
 
 const Trains = () => {
     const [origin, setOrigin] = useState('');

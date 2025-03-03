@@ -14,6 +14,13 @@ class TrainBookingController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        $trainBookings = TrainBooking::with('user', 'train')->where('user_id', $user->id)->get();
+        return $trainBookings;
+    }
+
+    public function list()
+    {
         $bookings = TrainBooking::with('user', 'train')->get();
         return Inertia::render('Admin/TrainBookings/index', [
             'bookings' => $bookings,
@@ -25,15 +32,26 @@ class TrainBookingController extends Controller
      */
     public function create()
     {
-        // Not typically needed, bookings are created during the booking process
+        return Inertia::render('User/Trains/create');
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
+    * Store a newly created resource in storage.
+    */
     public function store(Request $request)
     {
-        // Bookings are created during the booking process in the TrainController or related booking logic
+        $request->validate([
+            'number_of_seats' => 'required|integer|min:1',
+            'total_price' => 'required|numeric|min:0',
+            'seat_numbers' => 'nullable|string',
+            'additional_info' => 'nullable|json',
+        ]);
+
+        $trainBooking = new TrainBooking($request->all());
+        $trainBooking->user_id = auth()->id(); // Set the user_id to the authenticated user's ID
+        $trainBooking->save();
+
+        return redirect()->route('bookings')->with('success', 'Train booking created successfully.');
     }
 
     /**
@@ -73,7 +91,7 @@ class TrainBookingController extends Controller
 
         $trainBooking->update($request->all());
 
-        return redirect()->route('train-bookings.index')->with('success', 'Train booking updated successfully.');
+        return redirect()->back()->with('success', 'Train booking updated successfully.');
     }
 
     /**
@@ -82,7 +100,7 @@ class TrainBookingController extends Controller
     public function destroy(TrainBooking $trainBooking)
     {
         $trainBooking->delete();
-        return redirect()->route('train-bookings.index')->with('success', 'Train booking deleted successfully.');
+        return redirect()->back()->with('success', 'Train booking deleted successfully.');
     }
 
     public function confirmBooking(TrainBooking $booking)

@@ -15,11 +15,18 @@ class ReviewController extends Controller
     public function index()
     {
         $reviews = Review::with('user', 'reviewable')->get();
-        return Inertia::render('Admin/Reviews/index', [
+        return Inertia::render('User/Reviews/index', [
             'reviews' => $reviews,
         ]);
     }
 
+    public function list()
+    {
+        $reviews = Review::with('user', 'reviewable')->get();
+        return Inertia::render('Admin/Reviews/index', [
+            'reviews' => $reviews,
+        ]);
+    }
     /**
      * Show the form for creating a new resource.
      */
@@ -57,7 +64,7 @@ class ReviewController extends Controller
     public function show(Review $review)
     {
         $review->load('user', 'reviewable');
-        return Inertia::render('Admin/Reviews/show', [
+        return Inertia::render('User/Reviews/show', [
             'review' => $review,
         ]);
     }
@@ -85,7 +92,7 @@ class ReviewController extends Controller
 
         $review->update($request->all());
 
-        return redirect()->route('reviews.index')->with('success', 'Review updated successfully.');
+        return redirect()->back()->with('success', 'Review updated successfully.');
     }
 
     /**
@@ -94,6 +101,6 @@ class ReviewController extends Controller
     public function destroy(Review $review)
     {
         $review->delete();
-        return redirect()->route('reviews.index')->with('success', 'Review deleted successfully.');
+        return redirect()->back()->with('success', 'Review deleted successfully.');
     }
 }

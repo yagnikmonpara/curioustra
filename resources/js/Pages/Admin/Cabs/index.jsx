@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './AdminCabs.css';
+import '../../../../css/AdminCabs.css';
+import AdminLayout from '../../Layouts/AdminLayout';
 
 const AdminCabs = () => {
     const [cabs, setCabs] = useState([]);
@@ -50,6 +51,7 @@ const AdminCabs = () => {
     }
 
     return (
+        <AdminLayout>
         <div className="admin-cabs-page">
             <header>
                 <h1>Admin Cabs</h1>
@@ -71,6 +73,7 @@ const AdminCabs = () => {
                 <p>&copy; 2023 Travel Company</p>
             </footer>
         </div>
+        </AdminLayout>
     );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './AdminTrains.css';
+import '../../../../css/AdminTrains.css';
+import AdminLayout from '../../Layouts/AdminLayout';
 
 const AdminTrains = () => {
     const [trains, setTrains] = useState([]);
@@ -125,6 +126,7 @@ const AdminTrains = () => {
     }
 
     return (
+        <AdminLayout>
         <div className="admin-trains-page">
             <header>
                 <h1>Admin Trains</h1>
@@ -178,6 +180,7 @@ const AdminTrains = () => {
                 <p>&copy; 2023 Travel Company</p>
             </footer>
         </div>
+        </AdminLayout>
     );
 };
 

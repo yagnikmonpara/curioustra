@@ -14,8 +14,15 @@ class PackageBookingController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        $packageBookings = PackageBooking::with('user', 'package')->where('user_id', $user->id)->get(); // Eager load relationships
+        return  $packageBookings;
+    }
+
+    public function list()
+    {
         $bookings = PackageBooking::with('user', 'package')->get(); // Eager load relationships
-        return Inertia::render('Admin/Bookings/index', [
+        return Inertia::render('Admin/PackageBookings/index', [
             'bookings' => $bookings,
         ]);
     }
@@ -26,16 +33,26 @@ class PackageBookingController extends Controller
      */
     public function create()
     {
-        // No create form for bookings in this scenario
+        return Inertia::render('User/Packages/create');
     }
 
     /**
-     * Store a newly created resource in storage.
-     * (Not typically needed for bookings, as they are created during the booking process)
-     */
+    * Store a newly created resource in storage.
+    */
     public function store(Request $request)
     {
-        // Bookings are stored during the booking process in PackageController
+        $request->validate([
+            'booking_date' => 'required|date',
+            'number_of_people' => 'required|integer',
+            'total_price' => 'required|numeric',
+            'additional_info' => 'nullable|json',
+        ]);
+
+        $packageBooking = new PackageBooking($request->all());
+        $packageBooking->user_id = auth()->id(); // Set the user_id to the authenticated user's ID
+        $packageBooking->save();
+
+        return redirect()->route('bookings')->with('success', 'Package booking created successfully.');
     }
 
     /**
@@ -54,10 +71,10 @@ class PackageBookingController extends Controller
      */
     public function edit(PackageBooking $packageBooking)
     {
-        $packageBooking->load('user', 'package');
-        return Inertia::render('Admin/Bookings/edit', [
-            'booking' => $packageBooking,
-        ]);
+        // $packageBooking->load('user', 'package');
+        // return Inertia::render('Admin/Bookings/edit', [
+        //     'booking' => $packageBooking,
+        // ]);
     }
 
     /**
@@ -65,17 +82,17 @@ class PackageBookingController extends Controller
      */
     public function update(Request $request, PackageBooking $packageBooking)
     {
-        $request->validate([
-            'booking_date' => 'required|date',
-            'number_of_people' => 'required|integer',
-            'total_price' => 'required|numeric',
-            'status' => 'required|string',
-            'additional_info' => 'nullable|json',
-        ]);
+        // $request->validate([
+        //     'booking_date' => 'required|date',
+        //     'number_of_people' => 'required|integer',
+        //     'total_price' => 'required|numeric',
+        //     'status' => 'required|string',
+        //     'additional_info' => 'nullable|json',
+        // ]);
 
-        $packageBooking->update($request->all());
+        // $packageBooking->update($request->all());
 
-        return redirect()->route('bookings.index')->with('success', 'Booking updated successfully.');
+        // return redirect()->back()->with('success', 'Booking updated successfully.');
     }
 
     /**

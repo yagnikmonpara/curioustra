@@ -14,6 +14,13 @@ class CabBookingController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        $cabBookings = CabBooking::with('user', 'cab')->where('user_id', $user->id)->get();
+        return $cabBookings;
+    }
+
+    public function list()
+    {
         $bookings = CabBooking::with('user', 'cab')->get();
         return Inertia::render('Admin/CabBookings/index', [
             'bookings' => $bookings,
@@ -25,16 +32,29 @@ class CabBookingController extends Controller
      */
     public function create()
     {
-        // Not typically needed, bookings are created during the booking process
+        return Inertia::render('User/Cabs/create');
     }
 
     /**
      * Store a newly created resource in storage.
-     */
+    */
     public function store(Request $request)
     {
-        // Bookings are created during the booking process in the CabController or related booking logic
-    }
+    $request->validate([
+        'pickup_location' => 'required|string|max:255',
+        'dropoff_location' => 'required|string|max:255',
+        'pickup_time' => 'required|date_format:Y-m-d H:i:s',
+        'distance_km' => 'nullable|integer|min:0',
+        'total_price' => 'nullable|numeric|min:0',
+        'additional_info' => 'nullable|json',
+    ]);
+
+    $cabBooking = new CabBooking($request->all());
+    $cabBooking->user_id = auth()->id(); // Set the user_id to the authenticated user's ID
+    $cabBooking->save();
+
+    return redirect()->route('bookings')->with('success', 'Cab booking created successfully.');
+}
 
     /**
      * Display the specified resource.

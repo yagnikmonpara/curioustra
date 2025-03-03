@@ -14,6 +14,14 @@ class TrainController extends Controller
     public function index()
     {
         $trains = Train::all();
+        return Inertia::render('User/Trains/index', [
+            'trains' => $trains,
+        ]);
+    }
+
+    public function list()
+    {
+        $trains = Train::all();
         return Inertia::render('Admin/Trains/index', [
             'trains' => $trains,
         ]);

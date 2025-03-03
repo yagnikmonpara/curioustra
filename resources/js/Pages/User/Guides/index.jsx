@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Guides.css'; // Import your CSS file
+import '../../../../css/Guides.css'; // Import your CSS file
 
 const Guides = () => {
     const [search, setSearch] = useState('');

@@ -19,6 +19,14 @@ class HotelController extends Controller
         ]);
     }
 
+    public function list()
+    {
+        $hotels = Hotel::all();
+        return Inertia::render('User/Hotels/index', [
+            'hotels' => $hotels,
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -49,7 +57,7 @@ class HotelController extends Controller
 
         $hotel->save();
 
-        return redirect()->route('hotels.index')->with('success', 'Hotel created successfully.');
+        return redirect()->back()->with('success', 'Hotel created successfully.');
     }
 
     /**
@@ -91,7 +99,7 @@ class HotelController extends Controller
 
         $hotel->update($request->all());
 
-        return redirect()->route('hotels.index')->with('success', 'Hotel updated successfully.');
+        return redirect()->back()->with('success', 'Hotel updated successfully.');
     }
 
     /**
@@ -100,6 +108,6 @@ class HotelController extends Controller
     public function destroy(Hotel $hotel)
     {
         $hotel->delete();
-        return redirect()->route('hotels.index')->with('success', 'Hotel deleted successfully.');
+        return redirect()->back()->with('success', 'Hotel deleted successfully.');
     }
 }

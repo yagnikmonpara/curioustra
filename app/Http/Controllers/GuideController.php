@@ -14,6 +14,14 @@ class GuideController extends Controller
     public function index()
     {
         $guides = Guide::all();
+        return Inertia::render('User/Guides/index', [
+            'guides' => $guides,
+        ]);
+    }
+
+    public function list()
+    {
+        $guides = Guide::all();
         return Inertia::render('Admin/Guides/index', [
             'guides' => $guides,
         ]);
@@ -55,7 +63,7 @@ class GuideController extends Controller
 
         $guide->save();
 
-        return redirect()->route('guides.index')->with('success', 'Guide created successfully.');
+        return redirect()->back()->with('success', 'Guide created successfully.');
     }
 
     /**
@@ -63,7 +71,7 @@ class GuideController extends Controller
      */
     public function show(Guide $guide)
     {
-        return Inertia::render('Admin/Guides/show', [
+        return Inertia::render('User/Guides/show', [
             'guide' => $guide,
         ]);
     }
@@ -128,6 +136,6 @@ class GuideController extends Controller
 
         $guide->delete();
 
-        return redirect()->route('guides.index')->with('success', 'Guide deleted successfully.');
+        return redirect()->back()->with('success', 'Guide deleted successfully.');
     }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AdminLayout from '@/Layouts/AdminLayout';
 import { Head } from '@inertiajs/react';
 import {
     Chart as ChartJS,
@@ -23,43 +23,13 @@ ChartJS.register(
 
 export default function Dashboard() {
     const [bookings, setBookings] = useState({
-        total: 0,
-        packages: 0,
-        hotels: 0,
-        cabs: 0,
-        trains: 0,
-        flights: 0,
+        total: 200,
+        packages: 50,
+        hotels: 30,
+        cabs: 50,
+        trains: 50,
+        flights: 20,
     });
-    const [visitors, setVisitors] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const bookingsResponse = await fetch('/api/admin/bookings/count'); // Your API endpoint for booking counts
-                if (!bookingsResponse.ok) {
-                    throw new Error(`HTTP error! status: ${bookingsResponse.status}`);
-                }
-                const bookingsData = await bookingsResponse.json();
-                setBookings(bookingsData);
-
-                const visitorsResponse = await fetch('/api/admin/visitors/count'); // Your API endpoint for visitor counts
-                if (!visitorsResponse.ok) {
-                    throw new Error(`HTTP error! status: ${visitorsResponse.status}`);
-                }
-                const visitorsData = await visitorsResponse.json();
-                setVisitors(visitorsData.count); // Assuming the response has a "count" property
-
-            } catch (err) {
-                setError(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
 
     const chartData = {
         labels: ['Bookings', 'Packages', 'Hotels', 'Cabs', 'Trains', 'Flights'],
@@ -101,16 +71,8 @@ export default function Dashboard() {
         },
     };
 
-    if (loading) {
-        return <div>Loading dashboard data...</div>;
-    }
-
-    if (error) {
-        return <div>Error: {error.message}</div>;
-    }
-
     return (
-        <AuthenticatedLayout>
+        <AdminLayout>
             <Head title="Dashboard" />
 
             <div className="py-12">
@@ -140,10 +102,6 @@ export default function Dashboard() {
                             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-700">Total Flights</h3>
                             <p className="text-2xl font-bold text-gray-900 dark:text-gray-700">{bookings.flights}</p>
                         </div>
-                        <div className="bg-white shadow-sm sm:rounded-lg dark:bg-gray-200 p-6">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-700">Total Visitors</h3>
-                            <p className="text-2xl font-bold text-gray-900 dark:text-gray-700">{visitors}</p>
-                        </div>
                     </div>
 
                     <div className="mt-8 bg-white shadow-sm sm:rounded-lg dark:bg-gray-200 p-6"> {/* Chart container */}
@@ -151,6 +109,6 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </AdminLayout>
     );
 }

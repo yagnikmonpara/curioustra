@@ -14,6 +14,14 @@ class ContactController extends Controller
     public function index()
     {
         $contacts = Contact::all();
+        return Inertia::render('User/Contacts/index', [
+            'contacts' => $contacts,
+        ]);
+    }
+
+    public function list()
+    {
+        $contacts = Contact::all();
         return Inertia::render('Admin/Contacts/index', [
             'contacts' => $contacts,
         ]);

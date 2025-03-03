@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Cabs.css';
+import '../../../../css/Cabs.css';
 
 const Cabs = () => {
     const [pickup, setPickup] = useState('');

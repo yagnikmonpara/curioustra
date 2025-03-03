@@ -25,6 +25,8 @@ use App\Http\Controllers\FlightController;
 use App\Http\Controllers\FlightBookingController;
 use App\Http\Controllers\GalleryController;
 
+
+// Guest Routes
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -32,6 +34,7 @@ Route::get('/', function () {
     ]);
 });
 
+// General Routes
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
@@ -40,122 +43,133 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(AdminMiddleware::class)->group(function () {
+
+// Admin Routes
+Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     
     // Admin Dashboard
-    Route::get('/admin/dashboard', function () {
+    Route::get('/dashboard', function () {
         return Inertia::render('Admin/Dashboard'); 
     })->name('admin.dashboard');
 
-    // Admin Booking Page
-    Route::resource('/admin/bookings', PackageBookingController::class)->except(['create', 'store', 'edit']);
-    Route::put('/admin/bookings/{booking}/confirm', [PackageBookingController::class, 'confirmBooking'])->name('admin.bookings.confirm');
-    Route::put('/admin/bookings/{booking}/cancel', [PackageBookingController::class, 'cancelBooking'])->name('admin.bookings.cancel');
-
-    // Admin Destionations Page
-    Route::get('/admin/destinations', [DestinationController::class, 'list'])->name('admin.destinations');
-    Route::get('/admin/destinations/create', [DestinationController::class, 'create'])->name('admin.destinations.create');
-    Route::post('/admin/destinations', [DestinationController::class, 'store'])->name('admin.destinations.store');
-    Route::get('/admin/destinations/{destination}/edit', [DestinationController::class, 'edit'])->name('admin.destinations.edit');
-    Route::put('/admin/destinations/{destination}', [DestinationController::class, 'update'])->name('admin.destinations.update');
-    Route::delete('/admin/destinations/{destination}', [DestinationController::class, 'destroy'])->name('admin.destinations.destroy');
+    // Admin Destinations Page
+    Route::get('/destinations', [DestinationController::class, 'list'])->name('admin.destinations');
+    Route::get('/destinations/create', [DestinationController::class, 'create'])->name('admin.destinations.create');
+    Route::post('/destinations', [DestinationController::class, 'store'])->name('admin.destinations.store');
+    Route::get('/destinations/{destination}/edit', [DestinationController::class, 'edit'])->name('admin.destinations.edit');
+    Route::put('/destinations/{destination}', [DestinationController::class, 'update'])->name('admin.destinations.update');
+    Route::delete('/destinations/{destination}', [DestinationController::class, 'destroy'])->name('admin.destinations.destroy');
 
     // Packages Page
-    Route::get('/admin/packages', [PackageController::class, 'list'])->name('admin.packages');
-    Route::get('/admin/packages/create', [PackageController::class, 'create'])->name('admin.packages.create');
-    Route::post('/admin/packages', [PackageController::class, 'store'])->name('admin.packages.store');
-    Route::get('/admin/packages/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
-    Route::put('/admin/packages/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
-    Route::delete('/admin/packages/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
+    Route::get('/packages', [PackageController::class, 'list'])->name('admin.packages');
+    Route::get('/packages/create', [PackageController::class, 'create'])->name('admin.packages.create');
+    Route::post('/packages', [PackageController::class, 'store'])->name('admin.packages.store');
+    Route::get('/packages/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
+    Route::put('/packages/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
+    Route::delete('/packages/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
 
     // Admin Package Bookings
-    Route::get('/admin/package-bookings', [PackageBookingController::class, 'index'])->name('admin.package-bookings');
-    Route::put('/admin/package-bookings/{booking}/confirm', [PackageBookingController::class, 'confirmBooking'])->name('admin.package-bookings.confirm');
-    Route::put('/admin/package-bookings/{booking}/cancel', [PackageBookingController::class, 'cancelBooking'])->name('admin.package-bookings.cancel');
+    Route::get('/package-bookings', [PackageBookingController::class, 'list'])->name('admin.package-bookings');
+    Route::get('/package-bookings/{booking}', [PackageBookingController::class, 'show'])->name('admin.package-bookings.show');
+    Route::put('/package-bookings/{booking}/confirm', [PackageBookingController::class, 'confirmBooking'])->name('admin.package-bookings.confirm');
+    Route::put('/package-bookings/{booking}/cancel', [PackageBookingController::class, 'cancelBooking'])->name('admin.package-bookings.cancel');
+    Route::delete('/package-bookings/{booking}', [PackageBookingController::class, 'destroy'])->name('admin.package-bookings.destroy');
 
     // Admin Hotel Page
-    Route::get('/admin/hotels', [HotelController::class, 'list'])->name('admin.hotels');
-    Route::get('/admin/hotels/create', [HotelController::class, 'create'])->name('admin.hotels.create');
-    Route::post('/admin/hotels', [HotelController::class, 'store'])->name('admin.hotels.store');
-    Route::get('/admin/hotels/{hotel}/edit', [HotelController::class, 'edit'])->name('admin.hotels.edit');
-    Route::put('/admin/hotels/{hotel}', [HotelController::class, 'update'])->name('admin.hotels.update');
-    Route::delete('/admin/hotels/{hotel}', [HotelController::class, 'destroy'])->name('admin.hotels.destroy');
+    Route::get('/hotels', [HotelController::class, 'list'])->name('admin.hotels');
+    Route::get('/hotels/create', [HotelController::class, 'create'])->name('admin.hotels.create');
+    Route::post('/hotels', [HotelController::class, 'store'])->name('admin.hotels.store');
+    Route::get('/hotels/{hotel}/edit', [HotelController::class, 'edit'])->name('admin.hotels.edit');
+    Route::put('/hotels/{hotel}', [HotelController::class, 'update'])->name('admin.hotels.update');
+    Route::delete('/hotels/{hotel}', [HotelController::class, 'destroy'])->name('admin.hotels.destroy');
 
     // Admin Hotel Bookings
-    Route::get('/admin/hotel-bookings', [HotelBookingController::class, 'index'])->name('admin.hotel-bookings');
-    Route::put('/admin/hotel-bookings/{booking}/confirm', [HotelBookingController::class, 'confirmBooking'])->name('admin.hotel-bookings.confirm');
-    Route::put('/admin/hotel-bookings/{booking}/cancel', [HotelBookingController::class, 'cancelBooking'])->name('admin.hotel-bookings.cancel');
+    Route::get('/hotel-bookings', [HotelBookingController::class, 'index'])->name('admin.hotel-bookings');
+    Route::get('/hotel-bookings/{booking}', [HotelBookingController::class, 'show'])->name('admin.hotel-bookings.show');
+    Route::put('/hotel-bookings/{booking}/confirm', [HotelBookingController::class, 'confirmBooking'])->name('admin.hotel-bookings.confirm');
+    Route::put('/hotel-bookings/{booking}/cancel', [HotelBookingController::class, 'cancelBooking'])->name('admin.hotel-bookings.cancel');
+    Route::delete('/hotel-bookings/{booking}', [HotelBookingController::class, 'destroy'])->name('admin.hotel-bookings.destroy');
 
     // Admin Cabs Page
-    Route::get('/admin/cabs', [CabController::class, 'list'])->name('admin.cabs');
-    Route::get('/admin/cabs/create', [CabController::class, 'create'])->name('admin.cabs.create');
-    Route::post('/admin/cabs', [CabController::class, 'store'])->name('admin.cabs.store');
-    Route::get('/admin/cabs/{cab}/edit', [CabController::class, 'edit'])->name('admin.cabs.edit');
-    Route::put('/admin/cabs/{cab}', [CabController::class, 'update'])->name('admin.cabs.update');
-    Route::delete('/admin/cabs/{cab}', [CabController::class, 'destroy'])->name('admin.cabs.destroy');
+    Route::get('/cabs', [CabController::class, 'list'])->name('admin.cabs');
+    Route::get('/cabs/create', [CabController::class, 'create'])->name('admin.cabs.create');
+    Route::post('/cabs', [CabController::class, 'store'])->name('admin.cabs.store');
+    Route::get('/cabs/{cab}/edit', [CabController::class, 'edit'])->name('admin.cabs.edit');
+    Route::put('/cabs/{cab}', [CabController::class, 'update'])->name('admin.cabs.update');
+    Route::delete('/cabs/{cab}', [CabController::class, 'destroy'])->name('admin.cabs.destroy');
 
-    //Admin Cab Bookings
-    Route::get('/admin/cab-bookings', [CabBookingController::class, 'index'])->name('admin.cab-bookings');
-    Route::put('/admin/cab-bookings/{booking}/confirm', [CabBookingController::class, 'confirmBooking'])->name('admin.cab-bookings.confirm');
-    Route::put('/admin/cab-bookings/{booking}/cancel', [CabBookingController::class, 'cancelBooking'])->name('admin.cab-bookings.cancel');
+    // Admin Cab Bookings
+    Route::get('/cab-bookings', [CabBookingController::class, 'index'])->name('admin.cab-bookings');
+    Route::get('/cab-bookings/{booking}', [CabBookingController::class, 'show'])->name('admin.cab-bookings.show');
+    Route::put('/cab-bookings/{booking}/confirm', [CabBookingController::class, 'confirmBooking'])->name('admin.cab-bookings.confirm');
+    Route::put('/cab-bookings/{booking}/cancel', [CabBookingController::class, 'cancelBooking'])->name('admin.cab-bookings.cancel');
+    Route::delete('/cab-bookings/{booking}', [CabBookingController::class, 'destroy'])->name('admin.cab-bookings.destroy');
 
     // Admin Train Page
-    Route::get('/admin/trains', [TrainController::class, 'list'])->name('admin.trains');
-    Route::get('/admin/trains/create', [TrainController::class, 'create'])->name('admin.trains.create');
-    Route::post('/admin/trains', [TrainController::class, 'store'])->name('admin.trains.store');
-    Route::get('/admin/trains/{train}/edit', [TrainController::class, 'edit'])->name('admin.trains.edit');
-    Route::put('/admin/trains/{train}', [TrainController::class, 'update'])->name('admin.trains.update');
-    Route::delete('/admin/trains/{train}', [TrainController::class, 'destroy'])->name('admin.trains.destroy');
+    Route::get('/trains', [TrainController::class, 'list'])->name('admin.trains');
+    Route::get('/trains/create', [TrainController::class, 'create'])->name('admin.trains.create');
+    Route::post('/trains', [TrainController::class, 'store'])->name('admin.trains.store');
+    Route::get('/trains/{train}/edit', [TrainController::class, 'edit'])->name('admin.trains.edit');
+    Route::put('/trains/{train}', [TrainController::class, 'update'])->name('admin.trains.update');
+    Route::delete('/trains/{train}', [TrainController::class, 'destroy'])->name('admin.trains.destroy');
 
     // Admin Train Bookings
-    Route::get('/admin/train-bookings', [TrainBookingController::class, 'index'])->name('admin.train-bookings');
-    Route::put('/admin/train-bookings/{booking}/confirm', [TrainBookingController::class, 'confirmBooking'])->name('admin.train-bookings.confirm');
-    Route::put('/admin/train-bookings/{booking}/cancel', [TrainBookingController::class, 'cancelBooking'])->name('admin.train-bookings.cancel');
+    Route::get('/train-bookings', [TrainBookingController::class, 'index'])->name('admin.train-bookings');
+    Route::get('/train-bookings/{booking}', [TrainBookingController::class, 'show'])->name('admin.train-bookings.show');
+    Route::put('/train-bookings/{booking}/confirm', [TrainBookingController::class, 'confirmBooking'])->name('admin.train-bookings.confirm');
+    Route::put('/train-bookings/{booking}/cancel', [TrainBookingController::class, 'cancelBooking'])->name('admin.train-bookings.cancel');
+    Route::delete('/train-bookings/{booking}', [TrainBookingController::class, 'destroy'])->name('admin.train-bookings.destroy');
 
     // Admin Flight Page
-    Route::get('/admin/flights', [FlightController::class, 'list'])->name('admin.flights');
-    Route::get('/admin/flights/create', [FlightController::class, 'create'])->name('admin.flights.create');
-    Route::post('/admin/flights', [FlightController::class, 'store'])->name('admin.flights.store');
-    Route::get('/admin/flights/{flight}/edit', [FlightController::class, 'edit'])->name('admin.flights.edit');
-    Route::put('/admin/flights/{flight}', [FlightController::class, 'update'])->name('admin.flights.update');
-    Route::delete('/admin/flights/{flight}', [FlightController::class, 'destroy'])->name('admin.flights.destroy');
+    Route::get('/flights', [FlightController::class, 'list'])->name('admin.flights');
+    Route::get('/flights/create', [FlightController::class, 'create'])->name('admin.flights.create');
+    Route::post('/flights', [FlightController::class, 'store'])->name('admin.flights.store');
+    Route::get('/flights/{flight}/edit', [FlightController::class, 'edit'])->name('admin.flights.edit');
+    Route::put('/flights/{flight}', [FlightController::class, 'update'])->name('admin.flights.update');
+    Route::delete('/flights/{flight}', [FlightController::class, 'destroy'])->name('admin.flights.destroy');
 
-    //Admin Flight Bookings
-    Route::get('/admin/flight-bookings', [FlightBookingController::class, 'index'])->name('admin.flight-bookings');
-    Route::put('/admin/flight-bookings/{booking}/confirm', [FlightBookingController::class, 'confirmBooking'])->name('admin.flight-bookings.confirm');
-    Route::put('/admin/flight-bookings/{booking}/cancel', [FlightBookingController::class, 'cancelBooking'])->name('admin.flight-bookings.cancel');
+    // Admin Flight Bookings
+    Route::get('/flight-bookings', [FlightBookingController::class, 'index'])->name('admin.flight-bookings');
+    Route::get('/flight-bookings/{booking}', [FlightBookingController::class, 'show'])->name('admin.flight-bookings.show');
+    Route::put('/flight-bookings/{booking}/confirm', [FlightBookingController::class, 'confirmBooking'])->name('admin.flight-bookings.confirm');
+    Route::put('/flight-bookings/{booking}/cancel', [FlightBookingController::class, 'cancelBooking'])->name('admin.flight-bookings.cancel');
+    Route::delete('/flight-bookings/{booking}', [FlightBookingController::class, 'destroy'])->name('admin.flight-bookings.destroy');
 
     // Admin Guide Page
-    Route::get('/admin/guides', [GuideController::class, 'list'])->name('admin.guides');
-    Route::get('/admin/guides/create', [GuideController::class, 'create'])->name('admin.guides.create');
-    Route::post('/admin/guides', [GuideController::class, 'store'])->name('admin.guides.store');
-    Route::get('/admin/guides/{guide}/edit', [GuideController::class, 'edit'])->name('admin.guides.edit');
-    Route::put('/admin/guides/{guide}', [GuideController::class, 'update'])->name('admin.guides.update');
-    Route::delete('/admin/guides/{guide}', [GuideController::class, 'destroy'])->name('admin.guides.destroy');
+    Route::get('/guides', [GuideController::class, 'list'])->name('admin.guides');
+    Route::get('/guides/create', [GuideController::class, 'create'])->name('admin.guides.create');
+    Route::post('/guides', [GuideController::class, 'store'])->name('admin.guides.store');
+    Route::get('/guides/{guide}/edit', [GuideController::class, 'edit'])->name('admin.guides.edit');
+    Route::put('/guides/{guide}', [GuideController::class, 'update'])->name('admin.guides.update');
+    Route::delete('/guides/{guide}', [GuideController::class, 'destroy'])->name('admin.guides.destroy');
 
     // Admin Guide Bookings
-    Route::get('/admin/guide-bookings', [GuideBookingController::class, 'index'])->name('admin.guide-bookings');
-    Route::put('/admin/guide-bookings/{booking}/confirm', [GuideBookingController::class, 'confirmBooking'])->name('admin.guide-bookings.confirm');
-    Route::put('/admin/guide-bookings/{booking}/cancel', [GuideBookingController::class, 'cancelBooking'])->name('admin.guide-bookings.cancel');
+    Route::get('/guide-bookings', [GuideBookingController::class, 'index'])->name('admin.guide-bookings');
+    Route::get('/guide-bookings/{booking}', [GuideBookingController::class, 'show'])->name('admin.guide-bookings.show');
+    Route::put('/guide-bookings/{booking}/confirm', [GuideBookingController::class, 'confirmBooking'])->name('admin.guide-bookings.confirm');
+    Route::put('/guide-bookings/{booking}/cancel', [GuideBookingController::class, 'cancelBooking'])->name('admin.guide-bookings.cancel');
+    Route::delete('/guide-bookings/{booking}', [GuideBookingController::class, 'destroy'])->name('admin.guide-bookings.destroy');
 
     // Gallery Page
-    Route::get('/admin/galleries', [GalleryController::class, 'list'])->name('admin.galleries');
-    Route::get('/admin/galleries/create', [GalleryController::class, 'create'])->name('admin.galleries.create');
-    Route::post('/admin/galleries', [GalleryController::class, 'store'])->name('admin.galleries.store');
-    Route::get('/admin/galleries/{gallery}/edit', [GalleryController::class, 'edit'])->name('admin.galleries.edit');
-    Route::put('/admin/galleries/{gallery}', [GalleryController::class, 'update'])->name('admin.galleries.update');
-    Route::delete('/admin/galleries/{gallery}', [GalleryController::class, 'destroy'])->name('admin.galleries.destroy');
+    Route::get('/gallery', [GalleryController::class, 'list'])->name('admin.gallery');
+    Route::get('/gallery/create', [GalleryController::class, 'create'])->name('admin.gallery.create');
+    Route::post('/gallery', [GalleryController::class, 'store'])->name('admin.gallery.store');
+    Route::get('/gallery/{gallery}/edit', [GalleryController::class, 'edit'])->name('admin.gallery.edit');
+    Route::put('/gallery/{gallery}', [GalleryController::class, 'update'])->name('admin.gallery.update');
+    Route::delete('/gallery/{gallery}', [GalleryController::class, 'destroy'])->name('admin.gallery.destroy');
 
     // Reviews Page
-    Route::get('/admin/reviews', [ReviewController::class, 'list'])->name('admin.reviews');
-    Route::delete('/admin/reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
+    Route::get('/reviews', [ReviewController::class, 'list'])->name('admin.reviews');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
     // Contact Page
-    Route::get('/admin/contacts', [ContactController::class, 'list'])->name('admin.contacts');
-    Route::get('/admin/contacts/{contact}', [ContactController::class, 'show'])->name('admin.contacts.show');
-    Route::delete('/admin/contacts/{contact}', [ContactController::class, 'destroy'])->name('admin.contacts.destroy');
+    Route::get('/contacts', [ContactController::class, 'list'])->name('admin.contacts');
+    Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('admin.contacts.show');
+    Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->name('admin.contacts.destroy');
 });
 
+
+// User Routes
 Route::middleware(UserMiddleware::class)->group(function () {
     // Home Page
     Route::get('/home', function () {
@@ -163,8 +177,12 @@ Route::middleware(UserMiddleware::class)->group(function () {
     })->name('home');
 
     // Booking Page
-    Route::get('/bookings', [PackageBookingController::class, 'index'])->name('bookings');
-    Route::get('/bookings/{booking}', [PackageBookingController::class, 'show'])->name('bookings.show');
+    Route::get('/bookings', function () {
+        return Inertia::render('User/Bookings/index');
+    })->name('bookings');
+    Route::get('/bookings/{booking}', function () {
+        return Inertia::render('User/Bookings/show');
+    })->name('bookings.show');
 
     // Destionations Page
     Route::get('/destinations', [DestinationController::class, 'index'])->name('destinations');

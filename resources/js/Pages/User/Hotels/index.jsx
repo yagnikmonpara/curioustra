@@ -1,5 +1,5 @@
 import React from 'react';
-import './Hotels.css'; // Create a Hotels.css file for styling
+import '../../../../css/Hotels.css'; // Create a Hotels.css file for styling
 
 const hotelsData = [ // Sample hotel data (replace with API fetch later)
     {

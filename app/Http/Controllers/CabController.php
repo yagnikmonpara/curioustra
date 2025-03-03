@@ -14,6 +14,14 @@ class CabController extends Controller
     public function index()
     {
         $cabs = Cab::all();
+        return Inertia::render('User/Cabs/index', [
+            'cabs' => $cabs,
+        ]);
+    }
+
+    public function list()
+    {
+        $cabs = Cab::all();
         return Inertia::render('Admin/Cabs/index', [
             'cabs' => $cabs,
         ]);
@@ -58,7 +66,7 @@ class CabController extends Controller
 
         $cab->save();
 
-        return redirect()->route('cabs.index')->with('success', 'Cab created successfully.');
+        return redirect()->route('admin.cabs')->with('success', 'Cab created successfully.');
     }
 
     /**
@@ -66,7 +74,7 @@ class CabController extends Controller
      */
     public function show(Cab $cab)
     {
-        return Inertia::render('Admin/Cabs/show', [
+        return Inertia::render('User/Cabs/show', [
             'cab' => $cab,
         ]);
     }
@@ -117,7 +125,7 @@ class CabController extends Controller
 
         $cab->save();
 
-        return redirect()->route('cabs.index')->with('success', 'Cab updated successfully.');
+        return redirect()->route('admin.cabs')->with('success', 'Cab updated successfully.');
     }
 
     /**
@@ -133,6 +141,6 @@ class CabController extends Controller
         }
         $cab->delete();
 
-        return redirect()->route('cabs.index')->with('success', 'Cab deleted successfully.');
+        return redirect()->route('admin.cabs')->with('success', 'Cab deleted successfully.');
     }
 }

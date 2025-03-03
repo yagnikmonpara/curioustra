@@ -13,9 +13,17 @@ class GalleryController extends Controller
      */
     public function index()
     {
-        $galleries = Gallery::with('imageable')->get();
-        return Inertia::render('Admin/Galleries/index', [
-            'galleries' => $galleries,
+        $gallery = Gallery::with('imageable')->get();
+        return Inertia::render('User/Gallery/index', [
+            'gallery' => $gallery,
+        ]);
+    }
+
+    public function list()
+    {
+        $gallery = Gallery::with('imageable')->get();
+        return Inertia::render('Admin/Gallery/index', [
+            'gallery' => $gallery,
         ]);
     }
 
@@ -24,7 +32,7 @@ class GalleryController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Galleries/create');
+        return Inertia::render('User/Gallery/create');
     }
 
     /**
@@ -47,14 +55,14 @@ class GalleryController extends Controller
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/galleries');
+            $imagePath = public_path('images/Gallery');
             $image->move($imagePath, $imageName);
-            $gallery->image_path = '/images/galleries/' . $imageName;
+            $gallery->image_path = '/images/Gallery/' . $imageName;
         }
 
         $gallery->save();
 
-        return redirect()->route('galleries.index')->with('success', 'Image added to gallery successfully.');
+        return redirect()->back()->with('success', 'Image added to gallery successfully.');
     }
 
     /**
@@ -63,7 +71,7 @@ class GalleryController extends Controller
     public function show(Gallery $gallery)
     {
         $gallery->load('imageable');
-        return Inertia::render('Admin/Galleries/show', [
+        return Inertia::render('Admin/Gallery/show', [
             'gallery' => $gallery,
         ]);
     }
@@ -74,7 +82,7 @@ class GalleryController extends Controller
     public function edit(Gallery $gallery)
     {
         $gallery->load('imageable');
-        return Inertia::render('Admin/Galleries/edit', [
+        return Inertia::render('Admin/Gallery/edit', [
             'gallery' => $gallery,
         ]);
     }
@@ -100,14 +108,14 @@ class GalleryController extends Controller
             }
             $image = $request->file('image');
             $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/galleries');
+            $imagePath = public_path('images/Gallery');
             $image->move($imagePath, $imageName);
-            $gallery->image_path = '/images/galleries/' . $imageName;
+            $gallery->image_path = '/images/Gallery/' . $imageName;
         }
 
         $gallery->save();
 
-        return redirect()->route('galleries.index')->with('success', 'Gallery image updated successfully.');
+        return redirect()->back()->with('success', 'Gallery image updated successfully.');
     }
 
     /**
@@ -124,6 +132,6 @@ class GalleryController extends Controller
 
         $gallery->delete();
 
-        return redirect()->route('galleries.index')->with('success', 'Gallery image deleted successfully.');
+        return redirect()->back()->with('success', 'Gallery image deleted successfully.');
     }
 }

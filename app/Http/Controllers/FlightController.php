@@ -14,11 +14,18 @@ class FlightController extends Controller
     public function index()
     {
         $flights = Flight::all();
-        return Inertia::render('Admin/Flights/index', [
+        return Inertia::render('User/Flights/index', [
             'flights' => $flights,
         ]);
     }
 
+    public function list()
+    {
+        $flights = Flight::all();
+        return Inertia::render('Admin/Flights/index', [
+            'flights' => $flights,
+        ]);
+    }
     /**
      * Show the form for creating a new resource.
      */
@@ -49,7 +56,7 @@ class FlightController extends Controller
         $flight->fill($request->all());
         $flight->save();
 
-        return redirect()->route('flights.index')->with('success', 'Flight created successfully.');
+        return redirect()->back()->with('success', 'Flight created successfully.');
     }
 
     /**
@@ -57,7 +64,7 @@ class FlightController extends Controller
      */
     public function show(Flight $flight)
     {
-        return Inertia::render('Admin/Flights/show', [
+        return Inertia::render('User/Flights/show', [
             'flight' => $flight,
         ]);
     }
@@ -93,7 +100,7 @@ class FlightController extends Controller
         $flight->fill($request->all());
         $flight->save();
 
-        return redirect()->route('flights.index')->with('success', 'Flight updated successfully.');
+        return redirect()->back()->with('success', 'Flight updated successfully.');
     }
 
     /**
@@ -102,6 +109,6 @@ class FlightController extends Controller
     public function destroy(Flight $flight)
     {
         $flight->delete();
-        return redirect()->route('flights.index')->with('success', 'Flight deleted successfully.');
+        return redirect()->back()->with('success', 'Flight deleted successfully.');
     }
 }

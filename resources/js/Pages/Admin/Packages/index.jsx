@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './AdminPackages.css';
+import '../../../../css/AdminPackages.css';
+import AdminLayout from '../../Layouts/AdminLayout';
 
 const AdminPackages = () => {
     const [packages, setPackages] = useState([]);
@@ -141,6 +142,7 @@ const AdminPackages = () => {
     }
 
     return (
+        <AdminLayout>
         <div className="admin-packages-page">
             <main className="packages-container">
                 {isAdding ? (
@@ -179,6 +181,7 @@ const AdminPackages = () => {
                 ))}
             </main>
         </div>
+        </AdminLayout>
     );
 };
 

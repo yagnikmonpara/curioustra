@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './AdminBookings.css';
+import '../../../../css/AdminBookings.css';
+import AdminLayout from '../../Layouts/AdminLayout';
 
 const AdminBookings = () => {
     const [bookings, setBookings] = useState([]);
@@ -69,6 +70,7 @@ const AdminBookings = () => {
     }
 
     return (
+        <AdminLayout>
         <div className="admin-bookings-page">
             <header>
                 <h1>Admin Bookings</h1>
@@ -91,11 +93,7 @@ const AdminBookings = () => {
                     </div>
                 ))}
             </main>
-            <footer>
-                <p>&copy; 2023 Travel Company</p>
-            </footer>
         </div>
+        </AdminLayout>
     );
 };
-
-export default AdminBookings;

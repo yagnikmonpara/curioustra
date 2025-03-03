@@ -14,26 +14,44 @@ class HotelBookingController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        $hotelBookings = HotelBooking::with('user', 'hotel')->where('user_id', $user->id)->get();
+        return $hotelBookings;
+    }
+
+    public function list()
+    {
         $bookings = HotelBooking::with('user', 'hotel')->get();
         return Inertia::render('Admin/HotelBookings/index', [
             'bookings' => $bookings,
         ]);
     }
-
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        // Not typically needed, bookings are created during the booking process
+        return Inertia::render('User/Hotels/create');
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
+    * Store a newly created resource in storage.
+    */
     public function store(Request $request)
     {
-        // Bookings are created during the booking process in the HotelController
+        $request->validate([
+            'check_in_date' => 'required|date',
+            'check_out_date' => 'required|date',
+            'number_of_guests' => 'required|integer',
+            'total_price' => 'required|numeric',
+            'additional_info' => 'nullable|json',
+        ]);
+
+        $hotelBooking = new HotelBooking($request->all());
+        $hotelBooking->user_id = auth()->id(); // Set the user_id to the authenticated user's ID
+        $hotelBooking->save();
+
+        return redirect()->route('bookings')->with('success', 'Hotel booking created successfully.');
     }
 
     /**
@@ -74,7 +92,7 @@ class HotelBookingController extends Controller
 
         $hotelBooking->update($request->all());
 
-        return redirect()->route('hotel-bookings.index')->with('success', 'Hotel booking updated successfully.');
+        return redirect()->back()->with('success', 'Hotel booking updated successfully.');
     }
 
     /**
@@ -83,7 +101,7 @@ class HotelBookingController extends Controller
     public function destroy(HotelBooking $hotelBooking)
     {
         $hotelBooking->delete();
-        return redirect()->route('hotel-bookings.index')->with('success', 'Hotel booking deleted successfully.');
+        return redirect()->back()->with('success', 'Hotel booking deleted successfully.');
     }
 
     public function confirmBooking(HotelBooking $booking)

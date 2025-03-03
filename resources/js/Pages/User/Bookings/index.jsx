@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Bookings.css';
+import '../../../../css/Bookings.css';
 
 const Bookings = () => {
     const [bookings, setBookings] = useState([]); // Store bookings

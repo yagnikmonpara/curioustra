@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './AdminUsers.css'; // Create this CSS file
-
+import '../../../../css/AdminUsers.css'; // Create this CSS file
+import AdminLayout from '../../Layouts/AdminLayout';
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -9,8 +9,6 @@ const AdminUsers = () => {
     const [userBookings, setUserBookings] = useState([]); // To store bookings for the viewed user
     const [bookingsLoading, setBookingsLoading] = useState(false);
     const [bookingsError, setBookingsError] = useState(null);
-
-
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -69,7 +67,6 @@ const AdminUsers = () => {
         setUserBookings([]); // Clear bookings when closing view
     };
 
-
     if (loading) {
         return <div>Loading users...</div>;
     }
@@ -79,6 +76,7 @@ const AdminUsers = () => {
     }
 
     return (
+        <AdminLayout>
         <div className="admin-users-page">
             <header>
                 <h1>Admin Users</h1>
@@ -133,6 +131,7 @@ const AdminUsers = () => {
                 <p>&copy; 2023 Travel Company</p>
             </footer>
         </div>
+        </AdminLayout>
     );
 };
 
