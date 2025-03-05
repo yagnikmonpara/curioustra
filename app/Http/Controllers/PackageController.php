@@ -9,152 +9,151 @@ use Inertia\Inertia;
 class PackageController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display user-facing packages
      */
     public function index()
     {
-        $packages = Package::all(); // Fetch all packages
         return Inertia::render('User/Packages/index', [
-            'packages' => $packages, // Pass packages to the Inertia component
-        ]);
-    }
-
-    public function list()
-    {
-        $packages = Package::all(); // Fetch all packages
-        return Inertia::render('Admin/Packages/index', [
-            'packages' => $packages, // Pass packages to the Inertia component
+            'packages' => Package::all()
         ]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display admin package management
+     */
+    public function list()
+    {
+        return Inertia::render('Admin/Packages/index', [
+            'packages' => Package::all()
+        ]);
+    }
+
+    /**
+     * Show package creation form
      */
     public function create()
     {
-        return Inertia::render('User/Packages/create');
+        return Inertia::render('Admin/Packages/create');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store new package
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'duration' => 'required|string',
             'pax' => 'required|integer',
             'location' => 'required|string',
+            'country' => 'required|string',
             'price' => 'required|numeric',
-            'amenities' => 'nullable|json',
-            'highlights' => 'nullable|json',
+            'new_images' => 'required|array',
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'amenities' => 'nullable|string',
+            'highlights' => 'nullable|string',
         ]);
 
-        $package = new Package;
-        $package->title = $request->title;
-        $package->description = $request->description;
-        $package->duration = $request->duration;
-        $package->pax = $request->pax;
-        $package->location = $request->location;
-        $package->price = $request->price;
-
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/packages'); // Store images in 'packages' folder
-            $image->move($imagePath, $imageName);
-            $package->image = '/images/packages/' . $imageName;
-        }
-
-        $package->amenities = $request->amenities ? json_encode($request->amenities) : null;
-        $package->highlights = $request->highlights ? json_encode($request->highlights) : null;
-
-        $package->save();
-
-        return redirect()->back()->with('success', 'Package created successfully.');
+        $package = new Package();
+        $this->savePackageData($package, $validated, $request->file('new_images'));
+        
+        return redirect()->route('admin.packages')->with('success', 'Package created successfully.');
     }
 
     /**
-     * Display the specified resource.
+     * Show package details
      */
     public function show(Package $package)
     {
-        return Inertia::render('User/Packages/show', [
-            'package' => $package, // Pass the package to the view
+        return Inertia::render('User/Packages/Show', [
+            'package' => $package
         ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show package edit form
      */
     public function edit(Package $package)
     {
-        return Inertia::render('Admin/Packages/edit', [
-            'package' => $package, // Pass the package to the view
+        return Inertia::render('Admin/Packages/Edit', [
+            'package' => $package
         ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update package
      */
     public function update(Request $request, Package $package)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'duration' => 'required|string',
             'pax' => 'required|integer',
             'location' => 'required|string',
+            'country' => 'required|string',
             'price' => 'required|numeric',
-            'amenities' => 'nullable|json',
-            'highlights' => 'nullable|json',
+            'new_images' => 'nullable|array',
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'existing_images' => 'nullable|array',
+            'amenities' => 'nullable|string',
+            'highlights' => 'nullable|string',
         ]);
 
-        $package->title = $request->title;
-        $package->description = $request->description;
-        $package->duration = $request->duration;
-        $package->pax = $request->pax;
-        $package->location = $request->location;
-        $package->price = $request->price;
-
-        if ($request->hasFile('image')) {
-            if ($package->image) {
-                $oldImagePath = public_path($package->image);
-                if (file_exists($oldImagePath)) {
-                    unlink($oldImagePath);
-                }
-            }
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/packages'); // Store images in 'packages' folder
-            $image->move($imagePath, $imageName);
-            $package->image = '/images/packages/' . $imageName;
-        }
-
-        $package->amenities = $request->amenities ? json_encode($request->amenities) : null;
-        $package->highlights = $request->highlights ? json_encode($request->highlights) : null;
-
-        $package->save();
-
-        return redirect()->back()->with('success', 'Package updated successfully.');
+        $this->savePackageData($package, $validated, $request->file('new_images'), $request->existing_images);
+        
+        return redirect()->route('admin.packages')->with('success', 'Package updated successfully.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete package
      */
     public function destroy(Package $package)
     {
-        if ($package->image) {
-            $imagePath = public_path($package->image);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
+        $this->deleteImages($package->images);
+        $package->delete();
+        return redirect()->back()->with('success', 'Package deleted successfully.');
+    }
+
+    /**
+     * Shared package save logic
+     */
+    private function savePackageData(Package $package, array $validated, $newImages = null, $existingImages = [])
+    {
+        // Handle image updates
+        $images = $existingImages ?? [];
+        
+        if ($newImages) {
+            foreach ($newImages as $image) {
+                $imageName = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path('images/packages'), $imageName);
+                $images[] = '/images/packages/' . $imageName;
             }
         }
-        $package->delete();
 
-        return redirect()->back()->with('success', 'Package deleted successfully.');
+        // Clean up removed images
+        if ($package->exists) {
+            $removedImages = array_diff($package->images ?? [], $images);
+            $this->deleteImages($removedImages);
+        }
+
+        // Update package attributes
+        $package->fill($validated);
+        $package->images = $images;
+        $package->save();
+    }
+
+    /**
+     * Delete images from filesystem
+     */
+    private function deleteImages(array $images)
+    {
+        foreach ($images as $image) {
+            $path = public_path(parse_url($image, PHP_URL_PATH));
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
     }
 }

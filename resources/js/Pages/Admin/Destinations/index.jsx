@@ -1,5 +1,4 @@
 import { Head, router } from '@inertiajs/react';
-import '../../../../css/AdminDestinations.css';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState, useEffect } from 'react';
 
@@ -12,8 +11,11 @@ const AdminDestinations = ({ destinations: initialDestinations }) => {
         id: null,
         name: '',
         description: '',
-        price: '',
-        image: null,
+        location: '',
+        country: '',
+        rating: '',
+        existing_images: [],
+        new_images: [],
     });
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -24,21 +26,51 @@ const AdminDestinations = ({ destinations: initialDestinations }) => {
 
     useEffect(() => {
         const results = destinations.filter(destination =>
-            destination.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            destination.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            destination.price.toString().includes(searchTerm)
+            Object.values(destination).some(value =>
+                String(value).toLowerCase().includes(searchTerm.toLowerCase())
+            )
         );
         setFilteredDestinations(results);
     }, [searchTerm, destinations]);
 
-    const openModal = (mode, data = { id: null, name: '', description: '', price: '', image: null }) => {
+    const openModal = (mode, data = null) => {
         setModalMode(mode);
-        setModalData(data);
+        if (data) {
+            setModalData({
+                ...data,
+                existing_images: data.images || [],
+                new_images: [],
+            });
+        } else {
+            setModalData({
+                id: null,
+                name: '',
+                description: '',
+                location: '',
+                country: '',
+                rating: '3',
+                existing_images: [],
+                new_images: [],
+            });
+        }
         setShowModal(true);
     };
 
-    const closeModal = () => {
-        setShowModal(false);
+    const handleRemoveImage = (index, type) => {
+        if (type === 'existing') {
+            const updatedImages = [...modalData.existing_images];
+            updatedImages.splice(index, 1);
+            setModalData({ ...modalData, existing_images: updatedImages });
+        } else {
+            const updatedImages = [...modalData.new_images];
+            updatedImages.splice(index, 1);
+            setModalData({ ...modalData, new_images: updatedImages });
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setModalData({ ...modalData, new_images: files });
     };
 
     const handleChange = (e) => {
@@ -48,34 +80,32 @@ const AdminDestinations = ({ destinations: initialDestinations }) => {
         });
     };
 
-    const handleImageChange = (e) => {
-        setModalData({
-            ...modalData,
-            image: e.target.files[0],
-        });
-    };
-
     const handleSubmit = (e) => {
         e.preventDefault();
         const data = new FormData();
+
+        // Basic fields
         data.append('name', modalData.name);
         data.append('description', modalData.description);
-        data.append('price', modalData.price);
-        if (modalData.image) {
-            data.append('image', modalData.image);
-        }
+        data.append('location', modalData.location);
+        data.append('country', modalData.country);
+        data.append('rating', modalData.rating);
+
+        // Handle images
+        modalData.existing_images.forEach(img => data.append('existing_images[]', img));
+        modalData.new_images.forEach(file => data.append('new_images[]', file));
+
+        const requestOptions = {
+            onSuccess: () => window.location.reload(),
+            preserveScroll: true,
+        };
 
         if (modalMode === 'add') {
-            router.post(route('admin.destinations.store'), data, {
-                onSuccess: () => window.location.reload(),
-            });
+            router.post(route('admin.destinations.store'), data, requestOptions);
         } else {
             data.append('_method', 'PUT');
-            router.post(route('admin.destinations.update', modalData.id), data, {
-                onSuccess: () => window.location.reload(),
-            });
+            router.post(route('admin.destinations.update', modalData.id), data, requestOptions);
         }
-        closeModal();
     };
 
     const handleDelete = (id) => {
@@ -89,108 +119,250 @@ const AdminDestinations = ({ destinations: initialDestinations }) => {
     return (
         <AdminLayout>
             <Head title="Destinations" />
-            <div className="admin-destinations-page">
-                <main className="destinations-container">
-                    <div className="flex flex-col">
-                        <div className="-m-1.5 overflow-x-auto">
-                            <div className="p-1.5 min-w-full inline-block align-middle">
-                                <div className="border rounded-lg divide-y divide-gray-200">
-                                <div className="py-3 px-4 flex justify-between items-center">
-                                        <h2 className="text-xl font-semibold">Destinations</h2>
-                                        <button onClick={() => openModal('add')} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Add Destination</button>
-                                    </div>
-                                    <div className="py-3 px-4">
-                                        <div className="relative max-w-xs">
-                                            <label className="sr-only">Search</label>
-                                            <input type="text" name="hs-table-with-pagination-search" id="hs-table-with-pagination-search" className="py-2 px-3 ps-9 block w-full border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none" placeholder="Search for items" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                                            <div className="absolute inset-y-0 start-0 flex items-center pointer-events-none ps-3">
-                                                <svg className="size-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <circle cx="11" cy="11" r="8"></circle>
-                                                    <path d="m21 21-4.3-4.3"></path>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="overflow-hidden">
-                                        <table className="min-w-full divide-y divide-gray-200">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Name</th>
-                                                    <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Description</th>
-                                                    <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Price</th>
-                                                    <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Image</th>
-                                                    <th scope="col" className="px-6 py-3 text-end text-xs font-medium text-gray-500 uppercase">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-200">
-                                                {filteredDestinations.map(destination => (
-                                                    <tr key={destination.id}>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{destination.name}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{destination.description}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{destination.price}</td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                                                            {destination.image && <img src={destination.image} alt={destination.name} style={{ maxWidth: '50px' }} />}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
-                                                            <button onClick={() => openModal('edit', destination)} className="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 focus:outline-none focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none">Edit</button>
-                                                            <button onClick={() => handleDelete(destination.id)} className="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-red-600 hover:text-red-800 focus:outline-none focus:text-red-800 disabled:opacity-50 disabled:pointer-events-none">Delete</button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className="py-1 px-4">
-                                        <nav className="flex items-center space-x-1" aria-label="Pagination">
-                                            <button type="button" className="p-2.5 min-w-[40px] inline-flex justify-center items-center gap-x-2 text-sm rounded-full text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none" aria-label="Previous">
-                                                <span aria-hidden="true">«</span>
-                                                <span className="sr-only">Previous</span>
-                                            </button>
-                                            <button type="button" className="min-w-[40px] flex justify-center items-center text-gray-800 hover:bg-gray-1 0 focus:bg-gray-100 py-2.5 text-sm rounded-full disabled:opacity-50 disabled:pointer-events-none" aria-current="page">1</button>
-                                            <button type="button" className="min-w-[40px] flex justify-center items-center text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 py-2.5 text-sm rounded-full disabled:opacity-50 disabled:pointer-events-none">2</button>
-                                            <button type="button" className="min-w-[40px] flex justify-center items-center text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 py-2.5 text-sm rounded-full disabled:opacity-50 disabled:pointer-events-none">3</button>
-                                            <button type="button" className="p-2.5 min-w-[40px] inline-flex justify-center items-center gap-x-2 text-sm rounded-full text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none" aria-label="Next">
-                                                <span className="sr-only">Next</span>
-                                                <span aria-hidden="true">»</span>
-                                            </button>
-                                        </nav>
-                                    </div>
+            <div className="min-h-screen bg-sky-50">
+                <main className="py-8 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                            <div className="px-6 py-4 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white flex justify-between items-center">
+                                <h2 className="text-2xl font-bold text-sky-800">Destination Management</h2>
+                                <button
+                                    onClick={() => openModal('add')}
+                                    className="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg transition-all hover:scale-105"
+                                >
+                                    + Add Destination
+                                </button>
+                            </div>
+
+                            <div className="px-6 py-4 bg-sky-50">
+                                <div className="relative max-w-xs">
+                                    <input
+                                        type="text"
+                                        className="pl-10 pr-4 py-2 w-full rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm text-sky-700"
+                                        placeholder="Search destinations..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                    <svg className="h-5 w-5 text-sky-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
                                 </div>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-sky-200">
+                                    <thead className="bg-sky-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Name</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Description</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Location</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Country</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Rating</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Images</th>
+                                            <th className="px-6 py-3 text-right text-xs font-semibold text-sky-700 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-sky-100">
+                                        {filteredDestinations.map(destination => (
+                                            <tr key={destination.id} className="hover:bg-sky-50 transition-colors">
+                                                <td className="px-6 py-4 text-sm font-medium text-sky-900">{destination.name}</td>
+                                                <td className="px-6 py-4 text-sm text-sky-800 max-w-xs">{destination.description}</td>
+                                                <td className="px-6 py-4 text-sm text-sky-800">{destination.location}</td>
+                                                <td className="px-6 py-4 text-sm text-sky-800">{destination.country}</td>
+                                                <td className="px-6 py-4 text-sm text-sky-800">
+                                                    <span className="px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs font-semibold">
+                                                        ⭐ {destination.rating}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex space-x-1">
+                                                        {destination.images?.slice(0, 3).map((img, i) => (
+                                                            <img
+                                                                key={i}
+                                                                src={img}
+                                                                alt={destination.name}
+                                                                className="w-12 h-12 rounded-lg object-cover border border-sky-200"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-right space-x-2">
+                                                    <button
+                                                        onClick={() => openModal('edit', destination)}
+                                                        className="text-sky-600 hover:text-sky-800 px-3 py-1 rounded-md hover:bg-sky-100"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(destination.id)}
+                                                        className="text-rose-600 hover:text-rose-800 px-3 py-1 rounded-md hover:bg-rose-100"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </main>
 
                 {showModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-                        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-semibold">{modalMode === 'add' ? 'Add Destination' : 'Edit Destination'}</h2>
-                                <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
-                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
+                    <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto z-50">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-[95%] md:max-w-2xl my-8 mx-2">
+                            <div className="px-4 md:px-6 py-4 border-b border-sky-100 bg-sky-50 rounded-t-2xl flex justify-between items-center sticky top-0 bg-white z-10">
+                                <h2 className="text-lg md:text-xl font-bold text-sky-800">
+                                    {modalMode === 'add' ? 'New Destination' : 'Edit Destination'}
+                                </h2>
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="text-sky-400 hover:text-sky-600 text-lg md:text-xl p-1"
+                                >
+                                    ✕
                                 </button>
                             </div>
-                            <form onSubmit={handleSubmit} encType="multipart/form-data">
-                                <div className="mb-4">
-                                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">Name</label>
-                                    <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="name" type="text" name="name" placeholder="Name" value={modalData.name} onChange={handleChange} />
+
+                            <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4 overflow-y-auto max-h-[75vh]">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Name</label>
+                                        <input
+                                            name="name"
+                                            value={modalData.name}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Location</label>
+                                        <input
+                                            name="location"
+                                            value={modalData.location}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Country</label>
+                                        <input
+                                            name="country"
+                                            value={modalData.country}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Rating</label>
+                                        <input
+                                            type="number"
+                                            step="1"
+                                            min="0"
+                                            max="5"
+                                            name="rating"
+                                            value={modalData.rating}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                                <div className="mb-4">
-                                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="description">Description</label>
-                                    <textarea className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="description" name="description" placeholder="Description" value={modalData.description} onChange={handleChange} />
+
+                                <div>
+                                    <label className="block text-sm font-medium text-sky-700 mb-1">Description</label>
+                                    <textarea
+                                        name="description"
+                                        value={modalData.description}
+                                        onChange={handleChange}
+                                        rows="3"
+                                        className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
+                                    />
                                 </div>
-                                <div className="mb-4">
-                                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="price">Price</label>
-                                    <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="price" type="number" name="price" placeholder="Price" value={modalData.price} onChange={handleChange} />
+
+                                <div>
+                                    <label className="block text-sm font-medium text-sky-700 mb-1">
+                                        Destination Images
+                                    </label>
+
+                                    <div className="mb-4">
+                                        <p className="text-xs text-sky-500 mb-2">Existing Images:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {modalData.existing_images.map((img, index) => (
+                                                <div key={`existing-${index}`} className="relative">
+                                                    <img
+                                                        src={img}
+                                                        alt={`Existing ${index}`}
+                                                        className="w-16 h-16 rounded-lg object-cover border border-sky-200"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveImage(index, 'existing')}
+                                                        className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 hover:bg-rose-600"
+                                                        style={{ width: '20px', height: '20px' }}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {modalData.new_images.length > 0 && (
+                                        <div className="mb-4">
+                                            <p className="text-xs text-sky-500 mb-2">New Images to Upload:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {modalData.new_images.map((file, index) => (
+                                                    <div key={`new-${index}`} className="relative">
+                                                        <img
+                                                            src={URL.createObjectURL(file)}
+                                                            alt={`New ${index}`}
+                                                            className="w-16 h-16 rounded-lg object-cover border border-sky-200"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveImage(index, 'new')}
+                                                            className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 hover:bg-rose-600"
+                                                            style={{ width: '20px', height: '20px' }}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <input
+                                        type="file"
+                                        multiple
+                                        onChange={handleFileChange}
+                                        className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
+                                    />
+                                    <p className="mt-1 text-xs text-sky-500">
+                                        Upload destination images (multiple selection allowed)
+                                    </p>
                                 </div>
-                                <div className="mb-4">
-                                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="image">Image</label>
-                                    <input className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="image" type="file" name="image" onChange={handleImageChange} />
-                                </div>
-                                <div className="flex justify-end">
-                                    <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">{modalMode === 'add' ? 'Add' : 'Update'}</button>
+
+                                <div className="flex justify-end space-x-2 md:space-x-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowModal(false)}
+                                        className="px-3 py-1.5 md:px-4 md:py-2 text-sky-600 hover:text-sky-800 hover:bg-sky-50 rounded-lg text-sm md:text-base"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-1.5 md:px-6 md:py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors text-sm md:text-base"
+                                    >
+                                        {modalMode === 'add' ? 'Create Destination' : 'Save Changes'}
+                                    </button>
                                 </div>
                             </form>
                         </div>

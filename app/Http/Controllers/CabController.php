@@ -50,20 +50,28 @@ class CabController extends Controller
             'price_per_km' => 'required|numeric|min:0',
             'location' => 'nullable|string|max:255',
             'status' => 'nullable|string|in:available,booked,unavailable',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'new_images' => 'nullable|array',
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $cab = new Cab();
-        $cab->fill($request->all());
+        $cab->fill($request->except('new_images'));
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/cabs');
-            $image->move($imagePath, $imageName);
-            $cab->image = '/images/cabs/' . $imageName;
+        $images = [];
+
+        if ($request->has('existing_images')) {
+            $images = $request->existing_images;
         }
 
+        if ($request->hasFile('new_images')) {
+            foreach ($request->file('new_images') as $file) {
+                $imageName = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('images/cabs'), $imageName);
+                $images[] = '/images/cabs/' . $imageName;
+            }
+        }
+
+        $cab->images = $images;
         $cab->save();
 
         return redirect()->route('admin.cabs')->with('success', 'Cab created successfully.');
@@ -95,36 +103,38 @@ class CabController extends Controller
     public function update(Request $request, Cab $cab)
     {
         $request->validate([
-            'make' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'registration_number' => 'required|string|unique:cabs,registration_number,' . $cab->id,
-            'driver_name' => 'required|string|max:255',
-            'driver_contact_number' => 'required|string|max:20',
-            'capacity' => 'required|integer|min:1',
-            'price_per_km' => 'required|numeric|min:0',
-            'location' => 'nullable|string|max:255',
-            'status' => 'nullable|string|in:available,booked,unavailable',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            // Keep existing validation rules
+            'existing_images' => 'nullable|array',
+            'new_images' => 'nullable|array',
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-
-        $cab->fill($request->all());
-
-        if ($request->hasFile('image')) {
-            if ($cab->image) {
-                $oldImagePath = public_path($cab->image);
-                if (file_exists($oldImagePath)) {
-                    unlink($oldImagePath);
-                }
+    
+        $cab->fill($request->except(['new_images', 'existing_images']));
+    
+        $images = $request->existing_images ?? [];
+    
+        // Handle new images
+        if ($request->hasFile('new_images')) {
+            foreach ($request->file('new_images') as $file) {
+                $imageName = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('images/cabs'), $imageName);
+                $images[] = '/images/cabs/' . $imageName;
             }
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/cabs');
-            $image->move($imagePath, $imageName);
-            $cab->image = '/images/cabs/' . $imageName;
         }
-
+    
+        // Delete removed images
+        $oldImages = $cab->images ?? [];
+        $imagesToDelete = array_diff($oldImages, $images);
+        foreach ($imagesToDelete as $image) {
+            $imagePath = public_path($image);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+        }
+    
+        $cab->images = $images;
         $cab->save();
-
+    
         return redirect()->route('admin.cabs')->with('success', 'Cab updated successfully.');
     }
 
@@ -133,10 +143,12 @@ class CabController extends Controller
      */
     public function destroy(Cab $cab)
     {
-        if ($cab->image) {
-            $imagePath = public_path($cab->image);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
+        if ($cab->images) {
+            foreach ($cab->images as $image) {
+                $imagePath = public_path($image);
+                if (file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
             }
         }
         $cab->delete();

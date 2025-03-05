@@ -4,13 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Hotel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class HotelController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $hotels = Hotel::all();
@@ -21,93 +19,96 @@ class HotelController extends Controller
 
     public function list()
     {
-        $hotels = Hotel::all();
-        return Inertia::render('User/Hotels/index', [
-            'hotels' => $hotels,
+        return Inertia::render('Admin/Hotels/index', [
+            'hotels' => Hotel::all()
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        return Inertia::render('Admin/Hotels/create');
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'address' => 'nullable|string',
-            'city' => 'nullable|string',
-            'country' => 'nullable|string',
-            'stars' => 'nullable|integer',
-            'price_per_night' => 'nullable|numeric',
-            'amenities' => 'nullable|array',
-            'images' => 'nullable|array',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'stars' => 'required|integer|between:1,5',
+            'price_per_night' => 'required|numeric|min:0',
+            'amenities' => 'required|string',
+            'new_images' => 'required|array|min:1',
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $hotel = new Hotel();
-        $hotel->fill($request->all());
+        // Process images from correct field
+        $imagePaths = [];
+        foreach ($request->file('new_images') as $image) {
+            $path = $image->store('hotels', 'public');
+            $imagePaths[] = Storage::url($path);
+        }
 
-        $hotel->save();
-
-        return redirect()->back()->with('success', 'Hotel created successfully.');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Hotel $hotel)
-    {
-        return Inertia::render('User/Hotels/show', [
-            'hotel' => $hotel,
+        Hotel::create([
+            ...$validated,
+            'images' => $imagePaths,
         ]);
+
+        return redirect()->back()
+            ->with('success', 'Hotel created successfully');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Hotel $hotel)
-    {
-        return Inertia::render('Admin/Hotels/edit', [
-            'hotel' => $hotel,
-        ]);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Hotel $hotel)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'address' => 'nullable|string',
-            'city' => 'nullable|string',
-            'country' => 'nullable|string',
-            'stars' => 'nullable|integer',
-            'price_per_night' => 'nullable|numeric',
-            'amenities' => 'nullable|array',
-            'images' => 'nullable|array',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'stars' => 'required|integer|between:1,5',
+            'price_per_night' => 'required|numeric|min:0',
+            'amenities' => 'required|string',
+            'new_images' => 'nullable|array',
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'removed_images' => 'nullable|array',
         ]);
 
-        $hotel->update($request->all());
+        // Handle image deletions
+        $currentImages = $hotel->images ?? [];
+        if (!empty($validated['removed_images'])) {
+            foreach ($validated['removed_images'] as $image) {
+                $path = str_replace('/storage/', '', $image);
+                Storage::disk('public')->delete($path);
+            }
+            $currentImages = array_diff($currentImages, $validated['removed_images']);
+        }
 
-        return redirect()->back()->with('success', 'Hotel updated successfully.');
+        // Handle new image uploads
+        $newImagePaths = [];
+        if ($request->hasFile('new_images')) {
+            foreach ($request->file('new_images') as $image) {
+                $path = $image->store('hotels', 'public');
+                $newImagePaths[] = Storage::url($path);
+            }
+        }
+
+        $hotel->update([
+            ...$validated,
+            'images' => array_merge($currentImages, $newImagePaths),
+        ]);
+
+        return redirect()->route('admin.hotels')
+            ->with('success', 'Hotel updated successfully');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Hotel $hotel)
     {
+        foreach ($hotel->images as $image) {
+            $path = str_replace('/storage/', '', $image);
+            Storage::disk('public')->delete($path);
+        }
+
         $hotel->delete();
-        return redirect()->back()->with('success', 'Hotel deleted successfully.');
+
+        return redirect()->route('admin.hotels')
+            ->with('success', 'Hotel deleted successfully');
     }
 }

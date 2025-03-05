@@ -26,6 +26,7 @@ class DestinationController extends Controller
             'destinations' => $destinations,
         ]);
     }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -42,23 +43,26 @@ class DestinationController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'nullable|numeric',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'location' => 'required|string|max:255',
+            'country' => 'required|string|max:255',
+            'rating' => 'required|integer|min:0|max:5',
+            'new_images' => 'nullable|array',
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $destination = new Destination();
-        $destination->name = $request->name;
-        $destination->description = $request->description;
-        $destination->price = $request->price;
+        $images = [];
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/destinations');
-            $image->move($imagePath, $imageName);
-            $destination->image = '/images/destinations/' . $imageName;
+        if ($request->hasFile('new_images')) {
+            foreach ($request->file('new_images') as $file) {
+                $imageName = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('images/destinations'), $imageName);
+                $images[] = '/images/destinations/' . $imageName;
+            }
         }
 
+        $destination = new Destination();
+        $destination->fill($request->except('new_images'));
+        $destination->images = $images;
         $destination->save();
 
         return redirect()->back()->with('success', 'Destination created successfully.');
@@ -79,9 +83,8 @@ class DestinationController extends Controller
      */
     public function edit(Destination $destination)
     {   
-        $dest = Destination::findOrFail($destination->id);
         return Inertia::render('Admin/Destinations/edit', [
-            'destination' => $dest,
+            'destination' => $destination,
         ]);
     }
 
@@ -89,33 +92,42 @@ class DestinationController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, Destination $destination)
-    {   
-        $dest = Destination::findOrFail($destination->id);
+    {
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price' => 'nullable|numeric',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'location' => 'required|string|max:255',
+            'country' => 'required|string|max:255',
+            'rating' => 'required|integer|min:0|max:5',
+            'new_images' => 'nullable|array',
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'existing_images' => 'nullable|array',
         ]);
 
-        $destination->name = $request->name;
-        $destination->description = $request->description;
-        $destination->price = $request->price;
+        $images = $request->existing_images ?? [];
 
-        if ($request->hasFile('image')) {
-            if ($destination->image) {
-                $oldImagePath = public_path($destination->image);
-                if (file_exists($oldImagePath)) {
-                    unlink($oldImagePath);
-                }
+        // Handle new image uploads
+        if ($request->hasFile('new_images')) {
+            foreach ($request->file('new_images') as $file) {
+                $imageName = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('images/destinations'), $imageName);
+                $images[] = '/images/destinations/' . $imageName;
             }
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/destinations');
-            $image->move($imagePath, $imageName);
-            $destination->image = '/images/destinations/' . $imageName;
         }
 
+        // Delete old images that are no longer needed
+        $oldImages = $destination->images ?? [];
+        $imagesToDelete = array_diff($oldImages, $images);
+        foreach ($imagesToDelete as $image) {
+            $imagePath = public_path($image);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+        }
+
+        // Update destination
+        $destination->fill($request->except(['new_images', 'existing_images']));
+        $destination->images = $images;
         $destination->save();
 
         return redirect()->route('admin.destinations')->with('success', 'Destination updated successfully.');
@@ -126,15 +138,16 @@ class DestinationController extends Controller
      */
     public function destroy(Destination $destination)
     {
-        $dest = Destination::findOrFail($destination->id);
-        if ($dest->image) {
-            $imagePath = public_path($dest->image);
+        // Delete associated images
+        $images = $destination->images ?? [];
+        foreach ($images as $image) {
+            $imagePath = public_path($image);
             if (file_exists($imagePath)) {
                 unlink($imagePath);
             }
         }
 
-        $dest->delete();
+        $destination->delete();
 
         return redirect()->route('admin.destinations')->with('success', 'Destination deleted successfully.');
     }

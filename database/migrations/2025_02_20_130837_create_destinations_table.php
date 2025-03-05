@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('destinations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->text('description')->nullable(); // Description can be nullable
-            $table->decimal('price', 10, 2)->nullable(); // Price can be nullable
-            $table->string('image')->nullable(); // Image path or URL can be nullable
+            $table->text('description');
+            $table->string('location');
+            $table->string('country');
+            $table->integer('rating');
+            $table->json('images')->nullable();
             $table->timestamps();
         });
     }

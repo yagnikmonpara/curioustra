@@ -10,9 +10,7 @@ const destinations = [
         location: 'ITALY',
         description: 'Fusce hic augue velit wisi ips quibusdam pariatur, iusto.',
         image: '/images/popular-1.jpg',
-        rating: 5,
-        price: '$599',
-        duration: '5 Days'
+        rating: 5
     },
     {
         id: 2,

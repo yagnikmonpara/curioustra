@@ -6,10 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
         Schema::create('hotels', function (Blueprint $table) {
             $table->id();
@@ -20,16 +17,13 @@ return new class extends Migration
             $table->string('country')->nullable();
             $table->integer('stars')->nullable();
             $table->decimal('price_per_night', 10, 2)->nullable();
-            $table->json('amenities')->nullable(); // JSON array of amenities
-            $table->json('images')->nullable(); // JSON array of image paths/URLs
+            $table->json('amenities')->nullable();
+            $table->json('images')->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('hotels');
     }

@@ -18,8 +18,4 @@ class Guide extends Model
         'profile_picture',
         'languages',
     ];
-
-    protected $casts = [
-        'languages' => 'array',
-    ];
 }

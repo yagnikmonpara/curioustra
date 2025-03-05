@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('price_per_km', 8, 2);
             $table->string('location')->nullable(); // Current location if available
             $table->string('status')->default('available'); // available, booked, unavailable
-            $table->string('image')->nullable(); // Path to cab image
+            $table->json('images')->nullable(); // Path to cab images
             $table->timestamps();
         });
     }

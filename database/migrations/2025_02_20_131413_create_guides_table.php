@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('contact_number')->nullable();
             $table->string('email')->nullable();
             $table->string('profile_picture')->nullable(); // Path to profile picture
-            $table->json('languages')->nullable(); // JSON array of languages spoken
+            $table->string('languages')->nullable(); // JSON array of languages spoken
             $table->timestamps();
         });
     }

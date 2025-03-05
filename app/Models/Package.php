@@ -9,8 +9,21 @@ class Package extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'title',
+        'description',
+        'images',
+        'duration',
+        'pax',
+        'location',
+        'country',
+        'reviews',
+        'rating',
+        'price',
+        'amenities',
+        'highlights',
+    ];
     protected $casts = [ // Cast JSON columns to arrays
-        'amenities' => 'array',
-        'highlights' => 'array',
+        'images' => 'array',
     ];
 }

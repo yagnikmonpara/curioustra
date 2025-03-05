@@ -19,6 +19,10 @@ class Cab extends Model
         'price_per_km',
         'location',
         'status',
-        'image',
+        'images',
+    ];
+
+    protected $casts = [
+        'images' => 'array',
     ];
 }

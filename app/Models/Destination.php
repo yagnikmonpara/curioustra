@@ -9,5 +9,6 @@ class Destination extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'price', 'image']; // Allow mass assignment
+    protected $fillable = ['name', 'description', 'location', 'country', 'rating', 'images']; // Allow mass assignment
+    protected $casts = ['images' => 'array'];
 }

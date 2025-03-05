@@ -47,7 +47,7 @@ class GuideController extends Controller
             'contact_number' => 'nullable|string',
             'email' => 'nullable|email|max:255',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'languages' => 'nullable|array',
+            'languages' => 'nullable|string',
         ]);
 
         $guide = new Guide();
@@ -98,7 +98,7 @@ class GuideController extends Controller
             'contact_number' => 'nullable|string',
             'email' => 'nullable|email|max:255',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'languages' => 'nullable|array',
+            'languages' => 'nullable|string',
         ]);
 
         $guide->fill($request->all());
@@ -119,7 +119,7 @@ class GuideController extends Controller
 
         $guide->save();
 
-        return redirect()->route('guides.index')->with('success', 'Guide updated successfully.');
+        return redirect()->back()->with('success', 'Guide updated successfully.');
     }
 
     /**

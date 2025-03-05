@@ -25,9 +25,7 @@ const destinations = [
         location: 'ITALY',
         description: 'Fusce hic augue velit wisi ips quibusdam pariatur, iusto.',
         image: '/images/popular-1.jpg',
-        rating: 5,
-        price: '$599',
-        duration: '5 Days'
+        rating: 5
     },
     {
         id: 2,
@@ -166,16 +164,6 @@ const DestinationCard = ({ destination }) => {
                             >
                                 {destination.location}
                             </motion.h3>
-                            <motion.span 
-                                className="duration"
-                                initial={{ opacity: 0 }}
-                                animate={{
-                                    opacity: isHovered ? 1 : 0,
-                                    y: isHovered ? 0 : 10
-                                }}
-                            >
-                                {destination.duration}
-                            </motion.span>
                         </motion.div>
                         <RatingStars rating={destination.rating} />
                     </motion.div>
