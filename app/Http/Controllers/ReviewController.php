@@ -14,7 +14,7 @@ class ReviewController extends Controller
      */
     public function index()
     {
-        $reviews = Review::with('user', 'reviewable')->get();
+        $reviews = Review::with('user')->get();
         return Inertia::render('User/Reviews/index', [
             'reviews' => $reviews,
         ]);
@@ -22,17 +22,19 @@ class ReviewController extends Controller
 
     public function list()
     {
-        $reviews = Review::with('user', 'reviewable')->get();
+        $reviews = Review::with('user')->get();
         return Inertia::render('Admin/Reviews/index', [
             'reviews' => $reviews,
+            'auth' => ['user' => Auth::user()]
         ]);
     }
+
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        return Inertia::render('User/Reviews/create'); // Or Admin/Reviews/create
+        // 
     }
 
     /**
@@ -41,16 +43,12 @@ class ReviewController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'reviewable_id' => 'required|integer',
-            'reviewable_type' => 'required|string', // e.g., 'App\Models\Hotel', 'App\Models\Package'
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string',
         ]);
 
         $review = new Review();
-        $review->user_id = Auth::id(); // Get the authenticated user's ID
-        $review->reviewable_id = $request->reviewable_id;
-        $review->reviewable_type = $request->reviewable_type;
+        $review->user_id = Auth::id();
         $review->rating = $request->rating;
         $review->comment = $request->comment;
         $review->save();
@@ -63,10 +61,7 @@ class ReviewController extends Controller
      */
     public function show(Review $review)
     {
-        $review->load('user', 'reviewable');
-        return Inertia::render('User/Reviews/show', [
-            'review' => $review,
-        ]);
+        //
     }
 
     /**
@@ -74,10 +69,7 @@ class ReviewController extends Controller
      */
     public function edit(Review $review)
     {
-        $review->load('user', 'reviewable');
-        return Inertia::render('Admin/Reviews/edit', [
-            'review' => $review,
-        ]);
+        //
     }
 
     /**

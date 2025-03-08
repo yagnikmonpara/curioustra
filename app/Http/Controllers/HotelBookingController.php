@@ -23,9 +23,10 @@ class HotelBookingController extends Controller
     {
         $bookings = HotelBooking::with('user', 'hotel')->get();
         return Inertia::render('Admin/HotelBookings/index', [
-            'bookings' => $bookings,
+            'bookings' => $bookings
         ]);
     }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -51,7 +52,7 @@ class HotelBookingController extends Controller
         $hotelBooking->user_id = auth()->id(); // Set the user_id to the authenticated user's ID
         $hotelBooking->save();
 
-        return redirect()->route('bookings')->with('success', 'Hotel booking created successfully.');
+        return redirect()->back()->with('success', 'Hotel booking created successfully.');
     }
 
     /**

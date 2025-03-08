@@ -25,7 +25,6 @@ use App\Http\Controllers\FlightController;
 use App\Http\Controllers\FlightBookingController;
 use App\Http\Controllers\GalleryController;
 
-
 // Guest Routes
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -42,7 +41,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
-
 
 // Admin Routes
 Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
@@ -62,9 +60,7 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
 
     // Packages Page
     Route::get('/packages', [PackageController::class, 'list'])->name('admin.packages');
-    Route::get('/packages/create', [PackageController::class, 'create'])->name('admin.packages.create');
     Route::post('/packages', [PackageController::class, 'store'])->name('admin.packages.store');
-    Route::get('/packages/{package}/edit', [PackageController::class, 'edit'])->name('admin.packages.edit');
     Route::put('/packages/{package}', [PackageController::class, 'update'])->name('admin.packages.update');
     Route::delete('/packages/{package}', [PackageController::class, 'destroy'])->name('admin.packages.destroy');
 
@@ -92,9 +88,7 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
 
     // Admin Cabs Page
     Route::get('/cabs', [CabController::class, 'list'])->name('admin.cabs');
-    Route::get('/cabs/create', [CabController::class, 'create'])->name('admin.cabs.create');
     Route::post('/cabs', [CabController::class, 'store'])->name('admin.cabs.store');
-    Route::get('/cabs/{cab}/edit', [CabController::class, 'edit'])->name('admin.cabs.edit');
     Route::put('/cabs/{cab}', [CabController::class, 'update'])->name('admin.cabs.update');
     Route::delete('/cabs/{cab}', [CabController::class, 'destroy'])->name('admin.cabs.destroy');
 
@@ -104,36 +98,6 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     Route::put('/cab-bookings/{booking}/confirm', [CabBookingController::class, 'confirmBooking'])->name('admin.cab-bookings.confirm');
     Route::put('/cab-bookings/{booking}/cancel', [CabBookingController::class, 'cancelBooking'])->name('admin.cab-bookings.cancel');
     Route::delete('/cab-bookings/{booking}', [CabBookingController::class, 'destroy'])->name('admin.cab-bookings.destroy');
-
-    // Admin Train Page
-    Route::get('/trains', [TrainController::class, 'list'])->name('admin.trains');
-    Route::get('/trains/create', [TrainController::class, 'create'])->name('admin.trains.create');
-    Route::post('/trains', [TrainController::class, 'store'])->name('admin.trains.store');
-    Route::get('/trains/{train}/edit', [TrainController::class, 'edit'])->name('admin.trains.edit');
-    Route::put('/trains/{train}', [TrainController::class, 'update'])->name('admin.trains.update');
-    Route::delete('/trains/{train}', [TrainController::class, 'destroy'])->name('admin.trains.destroy');
-
-    // Admin Train Bookings
-    Route::get('/train-bookings', [TrainBookingController::class, 'index'])->name('admin.train-bookings');
-    Route::get('/train-bookings/{booking}', [TrainBookingController::class, 'show'])->name('admin.train-bookings.show');
-    Route::put('/train-bookings/{booking}/confirm', [TrainBookingController::class, 'confirmBooking'])->name('admin.train-bookings.confirm');
-    Route::put('/train-bookings/{booking}/cancel', [TrainBookingController::class, 'cancelBooking'])->name('admin.train-bookings.cancel');
-    Route::delete('/train-bookings/{booking}', [TrainBookingController::class, 'destroy'])->name('admin.train-bookings.destroy');
-
-    // Admin Flight Page
-    Route::get('/flights', [FlightController::class, 'list'])->name('admin.flights');
-    Route::get('/flights/create', [FlightController::class, 'create'])->name('admin.flights.create');
-    Route::post('/flights', [FlightController::class, 'store'])->name('admin.flights.store');
-    Route::get('/flights/{flight}/edit', [FlightController::class, 'edit'])->name('admin.flights.edit');
-    Route::put('/flights/{flight}', [FlightController::class, 'update'])->name('admin.flights.update');
-    Route::delete('/flights/{flight}', [FlightController::class, 'destroy'])->name('admin.flights.destroy');
-
-    // Admin Flight Bookings
-    Route::get('/flight-bookings', [FlightBookingController::class, 'index'])->name('admin.flight-bookings');
-    Route::get('/flight-bookings/{booking}', [FlightBookingController::class, 'show'])->name('admin.flight-bookings.show');
-    Route::put('/flight-bookings/{booking}/confirm', [FlightBookingController::class, 'confirmBooking'])->name('admin.flight-bookings.confirm');
-    Route::put('/flight-bookings/{booking}/cancel', [FlightBookingController::class, 'cancelBooking'])->name('admin.flight-bookings.cancel');
-    Route::delete('/flight-bookings/{booking}', [FlightBookingController::class, 'destroy'])->name('admin.flight-bookings.destroy');
 
     // Admin Guide Page
     Route::get('/guides', [GuideController::class, 'list'])->name('admin.guides');
@@ -160,14 +124,17 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
 
     // Reviews Page
     Route::get('/reviews', [ReviewController::class, 'list'])->name('admin.reviews');
+    Route::post('/reviews', [ReviewController::class, 'store'])->name('admin.reviews.store');
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('admin.reviews.update');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
     // Contact Page
     Route::get('/contacts', [ContactController::class, 'list'])->name('admin.contacts');
     Route::get('/contacts/{contact}', [ContactController::class, 'show'])->name('admin.contacts.show');
     Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->name('admin.contacts.destroy');
+    Route::put('/contacts/{contact}/mark-read', [ContactController::class, 'markAsRead'])->name('admin.contacts.markAsRead');
+    Route::post('/contacts/{contact}/send-response', [ContactController::class, 'sendResponse'])->name('admin.contacts.sendResponse');
 });
-
 
 // User Routes
 Route::middleware(UserMiddleware::class)->group(function () {
@@ -226,11 +193,11 @@ Route::middleware(UserMiddleware::class)->group(function () {
     // Contact Page
     Route::get('/contact', [ContactController::class, 'index'])->name('contact');
     Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+    Route::put('/contact', [ContactController::class, 'update'])->name('contact.update');
 
     // Reviews Page
     Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews');
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
-    Route::get('/reviews/{review}', [ReviewController::class, 'create'])->name('reviews.create');
     Route::post('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 });

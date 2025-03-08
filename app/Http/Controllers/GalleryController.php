@@ -13,7 +13,7 @@ class GalleryController extends Controller
      */
     public function index()
     {
-        $gallery = Gallery::with('imageable')->get();
+        $gallery = Gallery::All();
         return Inertia::render('User/Gallery/index', [
             'gallery' => $gallery,
         ]);
@@ -21,7 +21,7 @@ class GalleryController extends Controller
 
     public function list()
     {
-        $gallery = Gallery::with('imageable')->get();
+        $gallery = Gallery::All();
         return Inertia::render('Admin/Gallery/index', [
             'gallery' => $gallery,
         ]);
@@ -41,28 +41,29 @@ class GalleryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'imageable_id' => 'required|integer',
-            'imageable_type' => 'required|string',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'caption' => 'nullable|string',
         ]);
-
-        $gallery = new Gallery();
-        $gallery->imageable_id = $request->imageable_id;
-        $gallery->imageable_type = $request->imageable_type;
-        $gallery->caption = $request->caption;
-
+    
+        $user = auth()->user();
+        
+        $imagePath = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '.' . $image->getClientOriginalExtension();
             $imagePath = public_path('images/Gallery');
             $image->move($imagePath, $imageName);
-            $gallery->image_path = '/images/Gallery/' . $imageName;
+            $imagePath = '/images/Gallery/' . $imageName;
         }
-
-        $gallery->save();
-
-        return redirect()->back()->with('success', 'Image added to gallery successfully.');
+    
+        Gallery::create([
+            'image' => $imagePath,
+            'caption' => $request->caption,
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+        ]);
+    
+        return redirect()->back()->with('success', 'Image added successfully');
     }
 
     /**
@@ -70,7 +71,6 @@ class GalleryController extends Controller
      */
     public function show(Gallery $gallery)
     {
-        $gallery->load('imageable');
         return Inertia::render('Admin/Gallery/show', [
             'gallery' => $gallery,
         ]);
@@ -81,7 +81,6 @@ class GalleryController extends Controller
      */
     public function edit(Gallery $gallery)
     {
-        $gallery->load('imageable');
         return Inertia::render('Admin/Gallery/edit', [
             'gallery' => $gallery,
         ]);
@@ -92,12 +91,12 @@ class GalleryController extends Controller
      */
     public function update(Request $request, Gallery $gallery)
     {
-        $request->validate([
+        $data = $request->validate([
             'caption' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $gallery->caption = $request->caption;
+        $gallery->caption = $data['caption'];
 
         if ($request->hasFile('image')) {
             if ($gallery->image_path) {
@@ -113,7 +112,7 @@ class GalleryController extends Controller
             $gallery->image_path = '/images/Gallery/' . $imageName;
         }
 
-        $gallery->save();
+        $gallery->update($data);
 
         return redirect()->back()->with('success', 'Gallery image updated successfully.');
     }

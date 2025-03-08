@@ -1,20 +1,22 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import '../../css/AdminLayout.css';
-import { usePage } from '@inertiajs/react';
 
 export default function AdminLayout({ children }) {
-    const { user } = usePage().props.auth;
+
+    const handleLogout = () => {
+        router.post(route('logout'));
+    };
 
     return (
         <>
             <Head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" /></Head>
             <div className="main-body">
-            <aside className="sidebar">
-                <div className="sidebar-header">
-                    <img src="images/logo.png" alt="logo" />
-                    <h2>CuriousTra</h2>
-                </div>
-                <ul className="sidebar-links">
+                <aside className="sidebar">
+                    <div className="sidebar-header">
+                        <img src="/images/logo.png" alt="logo" />
+                        <h2>CuriousTra</h2>
+                    </div>
+                    <ul className="sidebar-links">
                     <h4>
                         <span>Main Menu</span>
                         <div className="menu-separator"></div>
@@ -38,14 +40,6 @@ export default function AdminLayout({ children }) {
                     <li>
                         <Link href={route('admin.cabs')}>
                             <span className="material-symbols-outlined"> local_taxi </span>Cabs</Link>
-                    </li>
-                    <li>
-                        <Link href={route('admin.trains')}>
-                            <span className="material-symbols-outlined"> train </span>Trains</Link>
-                    </li>
-                    <li>
-                        <Link href={route('admin.flights')}>
-                            <span className="material-symbols-outlined"> flight </span>Flights</Link>
                     </li>
                     <li>
                         <Link href={route('admin.guides')}>
@@ -77,12 +71,6 @@ export default function AdminLayout({ children }) {
                         <Link href={route('admin.cab-bookings')}><span className="material-symbols-outlined"> folder </span>Cab Bookings</Link>
                     </li>
                     <li>
-                        <Link href={route('admin.train-bookings')}><span className="material-symbols-outlined"> folder </span>Train Bookings</Link>
-                    </li>
-                    <li>
-                        <Link href={route('admin.flight-bookings')}><span className="material-symbols-outlined"> folder </span>Flight Bookings</Link>
-                    </li>
-                    <li>
                         <Link href={route('admin.guide-bookings')}><span className="material-symbols-outlined"> folder </span>Guide Bookings</Link>
                     </li>
                     <h4>
@@ -90,10 +78,7 @@ export default function AdminLayout({ children }) {
                         <div className="menu-separator"></div>
                     </h4>
                     <li>
-                        <Link href={route('profile.edit')}><span className="material-symbols-outlined"> account_circle </span>Profile</Link>
-                    </li>
-                    <li>
-                        <Link href={route('logout')} method="POST"><span className="material-symbols-outlined"> logout </span>Logout</Link>
+                        <Link onClick={handleLogout} className="hover:bg-red-400"><span className="material-symbols-outlined text-red-500"> logout </span> <p className="text-red-500 text-lg">Logout</p> </Link>
                     </li>
                 </ul>
             </aside>

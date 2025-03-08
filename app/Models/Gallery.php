@@ -10,14 +10,15 @@ class Gallery extends Model
     use HasFactory;
 
     protected $fillable = [
-        'imageable_id',
-        'imageable_type',
-        'image_path',
+        'image',
         'caption',
+        'user_id',
+        'user_name',
     ];
-
-    public function imageable()
+    
+    // Add relationship to User
+    public function user()
     {
-        return $this->morphTo();
+        return $this->belongsTo(User::class);
     }
 }

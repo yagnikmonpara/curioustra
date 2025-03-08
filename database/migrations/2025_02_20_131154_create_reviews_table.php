@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->morphs('reviewable'); // Polymorphic relationship for different reviewable models
             $table->integer('rating'); // Rating (e.g., 1-5)
             $table->text('comment')->nullable();
             $table->timestamps();

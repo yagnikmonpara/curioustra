@@ -18,6 +18,8 @@ return new class extends Migration
             $table->integer('phone');
             $table->string('subject')->nullable();
             $table->text('message');
+            $table->timestamp('read_at')->nullable();
+            $table->string('response')->nullable();
             $table->timestamps();
         });
     }

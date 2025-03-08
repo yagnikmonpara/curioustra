@@ -23,7 +23,7 @@ class PackageBookingController extends Controller
     {
         $bookings = PackageBooking::with('user', 'package')->get(); // Eager load relationships
         return Inertia::render('Admin/PackageBookings/index', [
-            'bookings' => $bookings,
+            'bookings' => PackageBooking::with(['user', 'package'])->get()
         ]);
     }
 
