@@ -2,7 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { useState, useEffect } from 'react';
 
-const AdminHotelBookings = ({ bookings: initialBookings }) => {
+const AdminCabBookings = ({ bookings: initialBookings }) => {
     const [bookings, setBookings] = useState(initialBookings);
     const [filteredBookings, setFilteredBookings] = useState(initialBookings);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -20,7 +20,7 @@ const AdminHotelBookings = ({ bookings: initialBookings }) => {
                 String(value).toLowerCase().includes(searchTerm.toLowerCase())
             ) ||
             booking.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            booking.hotel.name.toLowerCase().includes(searchTerm.toLowerCase())
+            booking.cab.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setFilteredBookings(results);
     }, [searchTerm, bookings]);
@@ -28,6 +28,7 @@ const AdminHotelBookings = ({ bookings: initialBookings }) => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'confirmed': return 'bg-green-100 text-green-800';
+            case 'completed': return 'bg-blue-100 text-blue-800';
             case 'cancelled': return 'bg-red-100 text-red-800';
             default: return 'bg-yellow-100 text-yellow-800';
         }
@@ -35,7 +36,7 @@ const AdminHotelBookings = ({ bookings: initialBookings }) => {
 
     const handleStatusChange = (booking, status) => {
         if (status === 'confirmed') {
-            router.post(route('admin.hotel-bookings.confirm', booking.id), {
+            router.post(route('admin.cab-bookings.confirm', booking.id), {
                 onSuccess: () => {
                     const updated = bookings.map(b => 
                         b.id === booking.id ? { ...b, status: 'confirmed' } : b
@@ -44,7 +45,7 @@ const AdminHotelBookings = ({ bookings: initialBookings }) => {
                 }
             });
         } else {
-            router.post(route('admin.hotel-bookings.cancel', booking.id), {
+            router.post(route('admin.cab-bookings.cancel', booking.id), {
                 onSuccess: () => {
                     const updated = bookings.map(b => 
                         b.id === booking.id ? { ...b, status: 'cancelled' } : b
@@ -62,13 +63,13 @@ const AdminHotelBookings = ({ bookings: initialBookings }) => {
 
     return (
         <AdminLayout>
-            <Head title="Hotel Bookings" />
+            <Head title="Cab Bookings" />
             <div className="min-h-screen bg-sky-50">
                 <main className="py-8 px-4 sm:px-6 lg:px-8">
                     <div className="max-w-7xl mx-auto">
                         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                             <div className="px-6 py-4 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-white">
-                                <h2 className="text-2xl font-bold text-sky-800">Hotel Bookings Management</h2>
+                                <h2 className="text-2xl font-bold text-sky-800">Cab Bookings Management</h2>
                             </div>
 
                             <div className="px-6 py-4 bg-sky-50">
@@ -91,10 +92,11 @@ const AdminHotelBookings = ({ bookings: initialBookings }) => {
                                     <thead className="bg-sky-50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">User</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Hotel</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Check-in</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Check-out</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Guests</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Cab</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Pickup Location</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Dropoff Location</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Pickup Time</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Distance</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Price</th>
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-sky-700 uppercase">Status</th>
                                             <th className="px-6 py-3 text-right text-xs font-semibold text-sky-700 uppercase">Actions</th>
@@ -107,16 +109,17 @@ const AdminHotelBookings = ({ bookings: initialBookings }) => {
                                                     <div className="font-medium">{booking.user.name}</div>
                                                     <div className="text-sky-600">{booking.user.email}</div>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-sky-900">{booking.hotel.name}</td>
+                                                <td className="px-6 py-4 text-sm text-sky-900">{booking.cab.name}</td>
+                                                <td className="px-6 py-4 text-sm text-sky-800">{booking.pickup_location}</td>
+                                                <td className="px-6 py-4 text-sm text-sky-800">{booking.dropoff_location}</td>
                                                 <td className="px-6 py-4 text-sm text-sky-800">
-                                                    {new Date(booking.check_in_date).toLocaleDateString()}
+                                                    {new Date(booking.pickup_time).toLocaleString()}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-sky-800">
-                                                    {new Date(booking.check_out_date).toLocaleDateString()}
+                                                    {booking.distance_km ? `${booking.distance_km} km` : 'N/A'}
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-sky-800">{booking.number_of_guests}</td>
                                                 <td className="px-6 py-4 text-sm text-sky-800">
-                                                    ${booking.total_price.toFixed(2)}
+                                                    ${booking.total_price?.toFixed(2) || '0.00'}
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
@@ -182,38 +185,44 @@ const AdminHotelBookings = ({ bookings: initialBookings }) => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Hotel</label>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Cab</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
-                                            <p className="font-medium">{selectedBooking.hotel.name}</p>
-                                            <p className="text-sky-600">${selectedBooking.hotel.price}</p>
+                                            <p className="font-medium">{selectedBooking.cab.name}</p>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Check-in Date</label>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Pickup Location</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
-                                            {new Date(selectedBooking.check_in_date).toLocaleDateString()}
+                                            {selectedBooking.pickup_location}
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Check-out Date</label>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Dropoff Location</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
-                                            {new Date(selectedBooking.check_out_date).toLocaleDateString()}
+                                            {selectedBooking.dropoff_location}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Pickup Time</label>
+                                        <div className="bg-sky-50 p-3 rounded-lg">
+                                            {new Date(selectedBooking.pickup_time).toLocaleString()}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Distance</label>
+                                        <div className="bg-sky-50 p-3 rounded-lg">
+                                            {selectedBooking.distance_km ? `${selectedBooking.distance_km} km` : 'N/A'}
                                         </div>
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-sky-700 mb-1">Total Price</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
-                                            ${selectedBooking.total_price.toFixed(2)}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Number of Guests</label>
-                                        <div className="bg-sky-50 p-3 rounded-lg">
-                                            {selectedBooking.number_of_guests}
+                                            ${selectedBooking.total_price?.toFixed(2) || '0.00'}
                                         </div>
                                     </div>
 
@@ -259,4 +268,4 @@ const AdminHotelBookings = ({ bookings: initialBookings }) => {
     );
 };
 
-export default AdminHotelBookings;
+export default AdminCabBookings;

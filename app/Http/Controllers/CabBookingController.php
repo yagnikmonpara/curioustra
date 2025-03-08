@@ -53,7 +53,7 @@ class CabBookingController extends Controller
     $cabBooking->user_id = auth()->id(); // Set the user_id to the authenticated user's ID
     $cabBooking->save();
 
-    return redirect()->route('bookings')->with('success', 'Cab booking created successfully.');
+    return redirect()->route('admin.cab-bookings')->with('success', 'Cab booking created successfully.');
 }
 
     /**
@@ -95,7 +95,7 @@ class CabBookingController extends Controller
 
         $cabBooking->update($request->all());
 
-        return redirect()->route('cab-bookings.index')->with('success', 'Cab booking updated successfully.');
+        return redirect()->route('admin.cab-bookings')->with('success', 'Cab booking updated successfully.');
     }
 
     /**
@@ -104,7 +104,7 @@ class CabBookingController extends Controller
     public function destroy(CabBooking $cabBooking)
     {
         $cabBooking->delete();
-        return redirect()->route('cab-bookings.index')->with('success', 'Cab booking deleted successfully.');
+        return redirect()->route('admin.cab-bookings')->with('success', 'Cab booking deleted successfully.');
     }
 
     public function confirmBooking(CabBooking $booking)

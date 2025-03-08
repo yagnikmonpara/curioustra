@@ -80,7 +80,7 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     Route::delete('/hotels/{hotel}', [HotelController::class, 'destroy'])->name('admin.hotels.destroy');
 
     // Admin Hotel Bookings
-    Route::get('/hotel-bookings', [HotelBookingController::class, 'index'])->name('admin.hotel-bookings');
+    Route::get('/hotel-bookings', [HotelBookingController::class, 'list'])->name('admin.hotel-bookings');
     Route::get('/hotel-bookings/{booking}', [HotelBookingController::class, 'show'])->name('admin.hotel-bookings.show');
     Route::put('/hotel-bookings/{booking}/confirm', [HotelBookingController::class, 'confirmBooking'])->name('admin.hotel-bookings.confirm');
     Route::put('/hotel-bookings/{booking}/cancel', [HotelBookingController::class, 'cancelBooking'])->name('admin.hotel-bookings.cancel');
@@ -93,7 +93,7 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     Route::delete('/cabs/{cab}', [CabController::class, 'destroy'])->name('admin.cabs.destroy');
 
     // Admin Cab Bookings
-    Route::get('/cab-bookings', [CabBookingController::class, 'index'])->name('admin.cab-bookings');
+    Route::get('/cab-bookings', [CabBookingController::class, 'list'])->name('admin.cab-bookings');
     Route::get('/cab-bookings/{booking}', [CabBookingController::class, 'show'])->name('admin.cab-bookings.show');
     Route::put('/cab-bookings/{booking}/confirm', [CabBookingController::class, 'confirmBooking'])->name('admin.cab-bookings.confirm');
     Route::put('/cab-bookings/{booking}/cancel', [CabBookingController::class, 'cancelBooking'])->name('admin.cab-bookings.cancel');
@@ -108,7 +108,7 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     Route::delete('/guides/{guide}', [GuideController::class, 'destroy'])->name('admin.guides.destroy');
 
     // Admin Guide Bookings
-    Route::get('/guide-bookings', [GuideBookingController::class, 'index'])->name('admin.guide-bookings');
+    Route::get('/guide-bookings', [GuideBookingController::class, 'list'])->name('admin.guide-bookings');
     Route::get('/guide-bookings/{booking}', [GuideBookingController::class, 'show'])->name('admin.guide-bookings.show');
     Route::put('/guide-bookings/{booking}/confirm', [GuideBookingController::class, 'confirmBooking'])->name('admin.guide-bookings.confirm');
     Route::put('/guide-bookings/{booking}/cancel', [GuideBookingController::class, 'cancelBooking'])->name('admin.guide-bookings.cancel');
