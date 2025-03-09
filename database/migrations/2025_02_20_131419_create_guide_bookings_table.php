@@ -19,7 +19,7 @@ return new class extends Migration
             $table->time('booking_time')->nullable();
             $table->integer('duration_hours')->nullable();
             $table->decimal('total_price', 10, 2)->nullable();
-            $table->string('status')->default('pending'); // pending, confirmed, cancelled, etc.
+            $table->string('status')->default('pending'); // pending, confirmed, in-progress, cancelled, etc.
             $table->json('additional_info')->nullable();
             $table->timestamps();
         });

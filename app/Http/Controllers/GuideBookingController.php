@@ -132,4 +132,36 @@ class GuideBookingController extends Controller
 
         return back()->with('success', 'Booking cancelled.');
     }
+
+    public function inProgressBooking(GuideBooking $booking)
+    {
+        // if (!Auth::user()->isAdmin()) { // Replace isAdmin() with your actual admin check
+        //     abort(403, 'Unauthorized action.');
+        // }
+
+        if ($booking->status !== 'confirmed') {
+            return back()->with('error', 'Booking is not confirmed.');
+        }
+
+        $booking->status = 'in-progress';
+        $booking->save();
+
+        return back()->with('success', 'Booking marked as in-progress.');
+    }
+
+    public function completeBooking(GuideBooking $booking)
+    {
+        // if (!Auth::user()->isAdmin()) { // Replace isAdmin() with your actual admin check
+        //     abort(403, 'Unauthorized action.');
+        // }
+
+        if ($booking->status !== 'in-progress') {
+            return back()->with('error', 'Booking is not in-progress.');
+        }
+
+        $booking->status = 'completed';
+        $booking->save();
+
+        return back()->with('success', 'Booking marked as completed.');
+    }
 }

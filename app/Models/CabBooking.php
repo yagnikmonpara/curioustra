@@ -16,6 +16,7 @@ class CabBooking extends Model
         'dropoff_location',
         'pickup_time',
         'distance_km',
+        'rate_per_km',
         'total_price',
         'status',
         'additional_info',

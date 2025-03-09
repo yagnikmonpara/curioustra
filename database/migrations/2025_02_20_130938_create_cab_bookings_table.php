@@ -15,14 +15,19 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('cab_id')->constrained()->onDelete('cascade');
-            $table->string('pickup_location');
-            $table->string('dropoff_location');
+            $table->string('pickup_location', 100);
+            $table->string('dropoff_location', 100);
             $table->dateTime('pickup_time');
-            $table->integer('distance_km')->nullable();
-            $table->decimal('total_price', 10, 2)->nullable();
-            $table->string('status')->default('pending'); // pending, confirmed, completed, cancelled
+            $table->unsignedMediumInteger('distance_km');
+            $table->decimal('total_price', 10, 2);
+            $table->decimal('rate_per_km', 10, 2);
+            $table->string('status', 20)->default('pending'); // pending, confirmed, in_progress, completed, cancelled
             $table->json('additional_info')->nullable();
             $table->timestamps();
+
+            // Add indexes for common search fields
+            $table->index('pickup_time');
+            $table->index('status');
         });
     }
 

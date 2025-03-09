@@ -22,6 +22,8 @@ class HotelBooking extends Model
 
     protected $casts = [
         'additional_info' => 'array',
+        'check_in_date' => 'datetime',
+        'check_out_date' => 'datetime',
     ];
 
     public function user()

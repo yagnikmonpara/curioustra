@@ -13,13 +13,15 @@ return new class extends Migration
     {
         Schema::create('package_bookings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // User who booked
-            $table->foreignId('package_id')->constrained()->onDelete('cascade'); // Booked package
-            $table->date('booking_date'); // Date of booking
-            $table->integer('number_of_people'); // Number of people going
-            $table->decimal('total_price', 10, 2); // Total price of the booking
-            $table->string('status')->default('pending'); // Booking status (e.g., pending, confirmed, cancelled)
-            $table->json('additional_info')->nullable(); // Any additional information (e.g., special requests)
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('package_id')->constrained()->onDelete('cascade');
+            $table->date('booking_date');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->integer('number_of_people');
+            $table->decimal('total_price', 10, 2);
+            $table->string('status')->default('pending'); // pending, confirmed, in-progress, cancelled, completed
+            $table->text('additional_notes')->nullable();
             $table->timestamps();
         });
     }

@@ -22,6 +22,8 @@ class GuideBooking extends Model
 
     protected $casts = [
         'additional_info' => 'array',
+        'booking_date' => 'datetime',
+        'booking_time' => 'datetime',
     ];
 
     public function user()

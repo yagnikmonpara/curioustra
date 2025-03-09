@@ -10,7 +10,9 @@ class PackageBooking extends Model
     use HasFactory;
 
     protected $casts = [
-        'additional_info' => 'array', // Cast to array
+        'contact_info' => 'array', // Cast to array
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
     public function user() {

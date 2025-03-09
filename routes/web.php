@@ -19,10 +19,6 @@ use App\Http\Controllers\GuideController;
 use App\Http\Controllers\GuideBookingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\TrainController;
-use App\Http\Controllers\TrainBookingController;
-use App\Http\Controllers\FlightController;
-use App\Http\Controllers\FlightBookingController;
 use App\Http\Controllers\GalleryController;
 
 // Guest Routes
@@ -68,8 +64,9 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     Route::get('/package-bookings', [PackageBookingController::class, 'list'])->name('admin.package-bookings');
     Route::get('/package-bookings/{booking}', [PackageBookingController::class, 'show'])->name('admin.package-bookings.show');
     Route::put('/package-bookings/{booking}/confirm', [PackageBookingController::class, 'confirmBooking'])->name('admin.package-bookings.confirm');
+    Route::put('/package-bookings/{booking}/in-progress', [PackageBookingController::class, 'inProgressBooking'])->name('admin.package-bookings.in-progress');
+    Route::put('/package-bookings/{booking}/complete', [PackageBookingController::class, 'completeBooking'])->name('admin.package-bookings.complete');
     Route::put('/package-bookings/{booking}/cancel', [PackageBookingController::class, 'cancelBooking'])->name('admin.package-bookings.cancel');
-    Route::delete('/package-bookings/{booking}', [PackageBookingController::class, 'destroy'])->name('admin.package-bookings.destroy');
 
     // Admin Hotel Page
     Route::get('/hotels', [HotelController::class, 'list'])->name('admin.hotels');
@@ -83,6 +80,8 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     Route::get('/hotel-bookings', [HotelBookingController::class, 'list'])->name('admin.hotel-bookings');
     Route::get('/hotel-bookings/{booking}', [HotelBookingController::class, 'show'])->name('admin.hotel-bookings.show');
     Route::put('/hotel-bookings/{booking}/confirm', [HotelBookingController::class, 'confirmBooking'])->name('admin.hotel-bookings.confirm');
+    Route::put('/hotel-bookings/{booking}/in-progress', [HotelBookingController::class, 'inProgressBooking'])->name('admin.hotel-bookings.in-progress');
+    Route::put('/hotel-bookings/{booking}/complete', [HotelBookingController::class, 'completeBooking'])->name('admin.hotel-bookings.complete');
     Route::put('/hotel-bookings/{booking}/cancel', [HotelBookingController::class, 'cancelBooking'])->name('admin.hotel-bookings.cancel');
     Route::delete('/hotel-bookings/{booking}', [HotelBookingController::class, 'destroy'])->name('admin.hotel-bookings.destroy');
 
@@ -94,10 +93,10 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
 
     // Admin Cab Bookings
     Route::get('/cab-bookings', [CabBookingController::class, 'list'])->name('admin.cab-bookings');
-    Route::get('/cab-bookings/{booking}', [CabBookingController::class, 'show'])->name('admin.cab-bookings.show');
     Route::put('/cab-bookings/{booking}/confirm', [CabBookingController::class, 'confirmBooking'])->name('admin.cab-bookings.confirm');
     Route::put('/cab-bookings/{booking}/cancel', [CabBookingController::class, 'cancelBooking'])->name('admin.cab-bookings.cancel');
-    Route::delete('/cab-bookings/{booking}', [CabBookingController::class, 'destroy'])->name('admin.cab-bookings.destroy');
+    Route::put('/cab-bookings/{booking}/in-progress', [CabBookingController::class, 'inProgressBooking'])->name('admin.cab-bookings.in-progress');
+    Route::put('/cab-bookings/{booking}/complete', [CabBookingController::class, 'completeBooking'])->name('admin.cab-bookings.complete');
 
     // Admin Guide Page
     Route::get('/guides', [GuideController::class, 'list'])->name('admin.guides');
@@ -112,6 +111,8 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     Route::get('/guide-bookings/{booking}', [GuideBookingController::class, 'show'])->name('admin.guide-bookings.show');
     Route::put('/guide-bookings/{booking}/confirm', [GuideBookingController::class, 'confirmBooking'])->name('admin.guide-bookings.confirm');
     Route::put('/guide-bookings/{booking}/cancel', [GuideBookingController::class, 'cancelBooking'])->name('admin.guide-bookings.cancel');
+    Route::put('/guide-bookings/{booking}/in-progress', [GuideBookingController::class, 'inProgressBooking'])->name('admin.guide-bookings.in-progress');
+    Route::put('/guide-bookings/{booking}/complete', [GuideBookingController::class, 'completeBooking'])->name('admin.guide-bookings.complete');
     Route::delete('/guide-bookings/{booking}', [GuideBookingController::class, 'destroy'])->name('admin.guide-bookings.destroy');
 
     // Gallery Page
@@ -169,16 +170,6 @@ Route::middleware(UserMiddleware::class)->group(function () {
     Route::get('/cabs', [CabController::class, 'index'])->name('cabs');
     Route::get('/cabs/{cab}', [CabController::class, 'show'])->name('cabs.show');
     Route::post('/cabs/{cab}/book', [CabBookingController::class, 'store'])->name('cabs.book');
-
-    // Train Page
-    Route::get('/trains', [TrainController::class, 'index'])->name('trains');
-    Route::get('/trains/{train}', [TrainController::class, 'show'])->name('trains.show');
-    Route::post('/trains/{train}/book', [TrainBookingController::class, 'store'])->name('trains.book');
-
-    // Flight Page
-    Route::get('/flights', [FlightController::class, 'index'])->name('flights');
-    Route::get('/flights/{flight}', [FlightController::class, 'show'])->name('flights.show');
-    Route::post('/flights/{flight}/book', [FlightBookingController::class, 'store'])->name('flights.book');
 
     // Guide Page
     Route::get('/guides', [GuideController::class, 'index'])->name('guides');
