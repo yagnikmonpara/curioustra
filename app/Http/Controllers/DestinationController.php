@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Destination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class DestinationController extends Controller
 {
@@ -53,10 +54,9 @@ class DestinationController extends Controller
         $images = [];
 
         if ($request->hasFile('new_images')) {
-            foreach ($request->file('new_images') as $file) {
-                $imageName = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('images/destinations'), $imageName);
-                $images[] = '/images/destinations/' . $imageName;
+            foreach ($request->file('new_images') as $image) {
+                $path = $image->store('destinations', 'public');
+                $images[] = Storage::url($path);
             }
         }
 
@@ -108,10 +108,9 @@ class DestinationController extends Controller
 
         // Handle new image uploads
         if ($request->hasFile('new_images')) {
-            foreach ($request->file('new_images') as $file) {
-                $imageName = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('images/destinations'), $imageName);
-                $images[] = '/images/destinations/' . $imageName;
+            foreach ($request->file('new_images') as $image) {
+                $path = $image->store('destinations', 'public');
+                $images[] = Storage::url($path);
             }
         }
 
@@ -119,10 +118,8 @@ class DestinationController extends Controller
         $oldImages = $destination->images ?? [];
         $imagesToDelete = array_diff($oldImages, $images);
         foreach ($imagesToDelete as $image) {
-            $imagePath = public_path($image);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
+            $path = str_replace('/storage/', '', $image);
+            Storage::disk('public')->delete($path);
         }
 
         // Update destination
@@ -141,10 +138,8 @@ class DestinationController extends Controller
         // Delete associated images
         $images = $destination->images ?? [];
         foreach ($images as $image) {
-            $imagePath = public_path($image);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
+            $path = str_replace('/storage/', '', $image);
+            Storage::disk('public')->delete($path);
         }
 
         $destination->delete();

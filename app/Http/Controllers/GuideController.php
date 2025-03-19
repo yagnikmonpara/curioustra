@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Guide;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class GuideController extends Controller
 {
@@ -51,14 +52,11 @@ class GuideController extends Controller
         ]);
 
         $guide = new Guide();
-        $guide->fill($request->all());
+        $guide->fill($request->except('profile_picture'));
 
         if ($request->hasFile('profile_picture')) {
-            $image = $request->file('profile_picture');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/guides');
-            $image->move($imagePath, $imageName);
-            $guide->profile_picture = '/images/guides/' . $imageName;
+            $path = $request->file('profile_picture')->store('guides', 'public');
+            $guide->profile_picture = Storage::url($path);
         }
 
         $guide->save();
@@ -101,20 +99,16 @@ class GuideController extends Controller
             'languages' => 'nullable|string',
         ]);
 
-        $guide->fill($request->all());
+        $guide->fill($request->except('profile_picture'));
 
         if ($request->hasFile('profile_picture')) {
             if ($guide->profile_picture) {
-                $oldImagePath = public_path($guide->profile_picture);
-                if (file_exists($oldImagePath)) {
-                    unlink($oldImagePath);
-                }
+                $oldPath = str_replace('/storage/', '', $guide->profile_picture);
+                Storage::disk('public')->delete($oldPath);
             }
-            $image = $request->file('profile_picture');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/guides');
-            $image->move($imagePath, $imageName);
-            $guide->profile_picture = '/images/guides/' . $imageName;
+            
+            $path = $request->file('profile_picture')->store('guides', 'public');
+            $guide->profile_picture = Storage::url($path);
         }
 
         $guide->save();
@@ -128,10 +122,8 @@ class GuideController extends Controller
     public function destroy(Guide $guide)
     {
         if ($guide->profile_picture) {
-            $imagePath = public_path($guide->profile_picture);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
+            $path = str_replace('/storage/', '', $guide->profile_picture);
+            Storage::disk('public')->delete($path);
         }
 
         $guide->delete();

@@ -62,7 +62,6 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
 
     // Admin Package Bookings
     Route::get('/package-bookings', [PackageBookingController::class, 'list'])->name('admin.package-bookings');
-    Route::get('/package-bookings/{booking}', [PackageBookingController::class, 'show'])->name('admin.package-bookings.show');
     Route::put('/package-bookings/{booking}/confirm', [PackageBookingController::class, 'confirmBooking'])->name('admin.package-bookings.confirm');
     Route::put('/package-bookings/{booking}/in-progress', [PackageBookingController::class, 'inProgressBooking'])->name('admin.package-bookings.in-progress');
     Route::put('/package-bookings/{booking}/complete', [PackageBookingController::class, 'completeBooking'])->name('admin.package-bookings.complete');
@@ -158,8 +157,10 @@ Route::middleware(UserMiddleware::class)->group(function () {
 
     // Packages Page
     Route::get('/packages', [PackageController::class, 'index'])->name('packages');
-    Route::get('/packages/{package}', [PackageController::class, 'show'])->name('packages.show');
-    Route::post('/packages/{package}/book', [PackageBookingController::class, 'store'])->name('packages.book');
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::post('packages/{package}/book', [PackageBookingController::class, 'store'])->name('packages.book');
+        Route::post('packages/payment', [PackageBookingController::class, 'verifyPayment'])->name('packages.payment');
+    });
 
     // Hotel Page
     Route::get('/hotels', [HotelController::class, 'index'])->name('hotels');

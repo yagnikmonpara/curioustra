@@ -5,6 +5,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import NavLink from '@/Components/NavLink';
 import Dropdown from '@/Components/Dropdown';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import FlashMessage from '@/Components/FlashMessage';
 
 const AuthenticatedLayout = ({ children }) => {
     const { user } = usePage().props.auth;
@@ -272,6 +273,7 @@ const AuthenticatedLayout = ({ children }) => {
                 {children}
             </main>
             <Footer />
+            <FlashMessage />
         </div>
     </>
     );

@@ -1,0 +1,165 @@
+/* Search Box Styling */
+.search-box {
+    margin-bottom: 20px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 25px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.search-box input:focus {
+    border-color: #4f46e5;
+}
+
+/* Package List Layout */
+.package-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.package-item {
+    flex: 1 1 400px; /* Wider flex-basis */
+    max-width: 100%;
+}
+
+@media (min-width: 768px) {
+    .package-item {
+        flex: 1 1 calc(50% - 20px); /* 2 columns on medium screens */
+    }
+}
+
+@media (min-width: 1024px) {
+    .package-item {
+        flex: 1 1 calc(33.333% - 20px); /* 3 columns on larger screens */
+    }
+}
+
+/* Package Card Styling */
+.package-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    width: 100%; /* Ensure cards take full width of their container */
+}
+
+.package-card:hover {
+    transform: translateY(-5px);
+}
+
+.image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.highlight-list {
+    list-style: none;
+    padding: 0;
+    text-align: center;
+}
+
+.highlight-list li {
+    margin-bottom: 8px;
+}
+
+.card-content {
+    padding: 16px;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    margin-bottom: 8px;
+}
+
+.card-text {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 16px;
+}
+
+.card-meta-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-price {
+    padding: 16px;
+    border-top: 1px solid #eee;
+}
+
+.price {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* Modal Styling */
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content h3 {
+    margin-bottom: 16px;
+}
+
+.modal-content img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.modal-content ul {
+    list-style: none;
+    padding: 0;
+}
+
+.modal-content ul li {
+    margin-bottom: 8px;
+}
+
+.modal-content .btn {
+    margin-top: 16px;
+}

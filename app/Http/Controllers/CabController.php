@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cab;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class CabController extends Controller
 {
@@ -64,10 +65,9 @@ class CabController extends Controller
         }
 
         if ($request->hasFile('new_images')) {
-            foreach ($request->file('new_images') as $file) {
-                $imageName = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('images/cabs'), $imageName);
-                $images[] = '/images/cabs/' . $imageName;
+            foreach ($request->file('new_images') as $image) {
+                $path = $image->store('cabs', 'public');
+                $images[] = Storage::url($path);
             }
         }
 
@@ -103,7 +103,15 @@ class CabController extends Controller
     public function update(Request $request, Cab $cab)
     {
         $request->validate([
-            // Keep existing validation rules
+            'make' => 'required|string|max:255',
+            'model' => 'required|string|max:255',
+            'registration_number' => 'required|string|unique:cabs,registration_number,' . $cab->id,
+            'driver_name' => 'required|string|max:255',
+            'driver_contact_number' => 'required|string|max:20',
+            'capacity' => 'required|integer|min:1',
+            'price_per_km' => 'required|numeric|min:0',
+            'location' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:available,booked,unavailable',
             'existing_images' => 'nullable|array',
             'new_images' => 'nullable|array',
             'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -115,10 +123,9 @@ class CabController extends Controller
     
         // Handle new images
         if ($request->hasFile('new_images')) {
-            foreach ($request->file('new_images') as $file) {
-                $imageName = time() . '_' . $file->getClientOriginalName();
-                $file->move(public_path('images/cabs'), $imageName);
-                $images[] = '/images/cabs/' . $imageName;
+            foreach ($request->file('new_images') as $image) {
+                $path = $image->store('cabs', 'public');
+                $images[] = Storage::url($path);
             }
         }
     
@@ -126,10 +133,8 @@ class CabController extends Controller
         $oldImages = $cab->images ?? [];
         $imagesToDelete = array_diff($oldImages, $images);
         foreach ($imagesToDelete as $image) {
-            $imagePath = public_path($image);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
+            $path = str_replace('/storage/', '', $image);
+            Storage::disk('public')->delete($path);
         }
     
         $cab->images = $images;
@@ -145,10 +150,8 @@ class CabController extends Controller
     {
         if ($cab->images) {
             foreach ($cab->images as $image) {
-                $imagePath = public_path($image);
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
+                $path = str_replace('/storage/', '', $image);
+                Storage::disk('public')->delete($path);
             }
         }
         $cab->delete();

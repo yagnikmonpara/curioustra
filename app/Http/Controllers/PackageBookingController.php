@@ -2,10 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Notifications\{
+    BookingConfirmed, 
+    BookingCanceled,
+    BookingInProgress,
+    BookingCompleted
+};
+use Razorpay\Api\Api;
+use Illuminate\Support\Facades\Notification;
+use App\Models\Package;
 use App\Models\PackageBooking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Illuminate\Validation\ValidationException;
 
 class PackageBookingController extends Controller
 {
@@ -33,7 +43,7 @@ class PackageBookingController extends Controller
      */
     public function create()
     {
-        return Inertia::render('User/Packages/create');
+        // return Inertia::render('User/Packages/create');
     }
 
     /**
@@ -41,18 +51,75 @@ class PackageBookingController extends Controller
     */
     public function store(Request $request)
     {
-        $request->validate([
-            'booking_date' => 'required|date',
-            'number_of_people' => 'required|integer',
-            'total_price' => 'required|numeric',
-            'additional_info' => 'nullable|json',
-        ]);
+        try {
+            // Check authentication first
+            if (!auth()->check()) {
+                return response()->json([
+                    'message' => 'Booking creation failed',
+                    'error' => 'Authentication required'
+                ], 401);
+            }
 
-        $packageBooking = new PackageBooking($request->all());
-        $packageBooking->user_id = auth()->id(); // Set the user_id to the authenticated user's ID
-        $packageBooking->save();
+            $validated = $request->validate([
+                'package_id' => 'required|exists:packages,id',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after:start_date',
+                'number_of_people' => 'required|integer|min:1',
+                'additional_notes' => 'nullable|string',
+            ]);
 
-        return redirect()->route('bookings')->with('success', 'Package booking created successfully.');
+            // Find the package first
+            $package = Package::findOrFail($request->package_id);
+            
+            // Calculate total price
+            $totalPrice = $package->price * $request->number_of_people;
+
+            // Create booking
+            $booking = PackageBooking::create([
+                'user_id' => auth()->id(),
+                'package_id' => $request->package_id,
+                'booking_date' => now(),
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'number_of_people' => $request->number_of_people,
+                'total_price' => $totalPrice,
+                'additional_notes' => $request->additional_notes,
+                'status' => 'pending',
+                'payment_status' => 'pending'
+            ]);
+
+            // Initialize Razorpay
+            $razorpay = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+
+            // Create Razorpay order
+            $order = $razorpay->order->create([
+                'amount' => $totalPrice * 100,
+                'currency' => 'INR',
+                'receipt' => 'booking_'.$booking->id,
+                'payment_capture' => 1
+            ]);
+
+            // Update booking with payment ID
+            $booking->update(['payment_id' => $order->id]);
+
+            return response()->json([
+                'booking' => $booking,
+                'razorpay_key' => env('RAZORPAY_KEY_ID'),
+                'order_id' => $order->id
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed', 
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Booking creation failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Booking creation failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -60,10 +127,10 @@ class PackageBookingController extends Controller
      */
     public function show(PackageBooking $packageBooking)
     {
-        $packageBooking->load('user', 'package'); // Eager load relationships
-        return Inertia::render('Admin/Bookings/show', [
-            'booking' => $packageBooking,
-        ]);
+        // $packageBooking->load('user', 'package'); // Eager load relationships
+        // return Inertia::render('Admin/Bookings/show', [
+        //     'booking' => $packageBooking,
+        // ]);
     }
 
     /**
@@ -82,17 +149,17 @@ class PackageBookingController extends Controller
      */
     public function update(Request $request, PackageBooking $packageBooking)
     {
-        // $request->validate([
-        //     'booking_date' => 'required|date',
-        //     'number_of_people' => 'required|integer',
-        //     'total_price' => 'required|numeric',
-        //     'status' => 'required|string',
-        //     'additional_info' => 'nullable|json',
-        // ]);
+        $request->validate([
+            'booking_date' => 'required|date',
+            'number_of_people' => 'required|integer',
+            'total_price' => 'required|numeric',
+            'status' => 'required|string',
+            'additional_info' => 'nullable|json',
+        ]);
 
-        // $packageBooking->update($request->all());
+        $packageBooking->update($request->all());
 
-        // return redirect()->back()->with('success', 'Booking updated successfully.');
+        return redirect()->back()->with('success', 'Booking updated successfully.');
     }
 
     /**
@@ -101,9 +168,45 @@ class PackageBookingController extends Controller
     public function destroy(PackageBooking $packageBooking)
     {
         $packageBooking->delete();
-        return redirect()->route('bookings.index')->with('success', 'Booking deleted successfully.');
+        return redirect()->route('bookings')->with('success', 'Booking deleted successfully.');
     }
 
+    public function verifyPayment(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:package_bookings,id',
+            'payment_id' => 'required|string'
+        ]);
+    
+        $booking = PackageBooking::findOrFail($request->booking_id);
+        
+        try {
+            $razorpay = new Api(env('RAZORPAY_KEY'), env('RAZORPAY_SECRET'));
+            $payment = $razorpay->payment->fetch($request->payment_id);
+    
+            if ($payment->status === 'captured') {
+                $booking->update([
+                    'payment_status' => 'paid',
+                    'status' => 'confirmed',
+                    'payment_id' => $request->payment_id
+                ]);
+                
+                $booking->user->notify(new BookingConfirmed($booking));
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment verified and booking confirmed!'
+                ]);
+            }
+    
+            return response()->json(['error' => 'Payment not captured'], 400);
+    
+        } catch (\Exception $e) {
+            $booking->update(['payment_status' => 'failed']);
+            return response()->json(['error' => 'Payment verification failed'], 400);
+        }
+    }
+    
     // Additional methods for booking management (e.g., confirm booking)
 
     public function confirmBooking(PackageBooking $booking)
@@ -117,6 +220,7 @@ class PackageBookingController extends Controller
         }
 
         $booking->status = 'confirmed';
+        $booking->user->notify(new BookingConfirmed($booking));
         $booking->save();
 
         return back()->with('success', 'Booking confirmed.');
@@ -129,10 +233,34 @@ class PackageBookingController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $booking->status = 'cancelled';
-        $booking->save();
-
-        return back()->with('success', 'Booking cancelled.');
+        try {
+            // Process refund if payment was successful
+            if ($booking->payment_status === 'paid') {
+                $razorpay = new Api(env('RAZORPAY_KEY'), env('RAZORPAY_SECRET'));
+                
+                $refund = $razorpay->payment
+                    ->fetch($booking->payment_id)
+                    ->refund([
+                        'amount' => $booking->total_price * 100,
+                        'speed' => 'normal'
+                    ]);
+    
+                $booking->update([
+                    'refund_id' => $refund->id,
+                    'payment_status' => 'refunded'
+                ]);
+            }
+    
+            $booking->update(['status' => 'cancelled']);
+            
+            // Send notification
+            $booking->user->notify(new BookingCanceled($booking));
+            
+            return back()->with('success', 'Booking cancelled and refund processed.');
+    
+        } catch (\Exception $e) {
+            return back()->with('error', 'Refund failed: ' . $e->getMessage());
+        }
     }
 
     public function inProgressBooking(PackageBooking $booking)
@@ -146,6 +274,7 @@ class PackageBookingController extends Controller
         }
 
         $booking->status = 'in-progress';
+        $booking->user->notify(new BookingInProgress($booking));
         $booking->save();
 
         return back()->with('success', 'Booking marked as in-progress.');
@@ -162,8 +291,11 @@ class PackageBookingController extends Controller
         }
 
         $booking->status = 'completed';
+        $booking->user->notify(new BookingCompleted($booking));
         $booking->save();
 
         return back()->with('success', 'Booking marked as completed.');
     }
+
+    
 }

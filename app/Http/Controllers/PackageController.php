@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Package;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class PackageController extends Controller
 {
@@ -126,16 +127,18 @@ class PackageController extends Controller
         
         if ($newImages) {
             foreach ($newImages as $image) {
-                $imageName = time() . '_' . $image->getClientOriginalName();
-                $image->move(public_path('images/packages'), $imageName);
-                $images[] = '/images/packages/' . $imageName;
+                $path = $image->store('packages', 'public');
+                $images[] = Storage::url($path);
             }
         }
 
         // Clean up removed images
         if ($package->exists) {
             $removedImages = array_diff($package->images ?? [], $images);
-            $this->deleteImages($removedImages);
+            foreach ($removedImages as $image) {
+                $path = str_replace('/storage/', '', $image);
+                Storage::disk('public')->delete($path);
+            }
         }
 
         // Update package attributes
@@ -150,10 +153,8 @@ class PackageController extends Controller
     private function deleteImages(array $images)
     {
         foreach ($images as $image) {
-            $path = public_path(parse_url($image, PHP_URL_PATH));
-            if (file_exists($path)) {
-                unlink($path);
-            }
+            $path = str_replace('/storage/', '', $image);
+            Storage::disk('public')->delete($path);
         }
     }
 }

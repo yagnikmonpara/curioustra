@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import '../../css/AdminLayout.css';
+import FlashMessage from '@/Components/FlashMessage';
 
 export default function AdminLayout({ children }) {
 
@@ -83,6 +84,7 @@ export default function AdminLayout({ children }) {
                 </ul>
             </aside>
             <main>{children}</main>
+            <FlashMessage />
             </div>
         </>
     );

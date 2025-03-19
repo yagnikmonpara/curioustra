@@ -54,3 +54,53 @@
     margin-top: 1rem;
     font-weight: bold;
 }
+
+/* Add to your travel.css */
+.btn-primary {
+    @apply bg-sky-500 text-white px-6 py-2 rounded-full hover:bg-sky-600 transition-colors;
+}
+
+.btn-outline {
+    @apply border-2 border-sky-500 text-sky-500 px-6 py-2 rounded-full hover:bg-sky-50 transition-colors;
+}
+
+.card-hover {
+    @apply hover:shadow-lg transition-shadow duration-300;
+}
+
+.input-field {
+    @apply w-full px-4 py-2 rounded-lg border border-sky-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors;
+}
+
+/* Add these CSS variables to your CSS file (travel.css) */
+:root {
+  --primary-color: #0ea5e9; /* sky-500 */
+  --primary-light: #7dd3fc; /* sky-300 */
+  --primary-dark: #0369a1; /* sky-700 */
+  --background-light: #f0f9ff; /* sky-50 */
+  --text-primary: #0f172a; /* slate-900 */
+  --text-secondary: #475569; /* slate-600 */
+}
+
+/* Update section backgrounds and styling */
+.section-subtitle {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  color: var(--text-primary);
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.section-text {
+  color: var(--text-secondary);
+  max-width: 800px;
+  margin: 0 auto 2rem;
+  line-height: 1.7;
+}

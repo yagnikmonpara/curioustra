@@ -22,6 +22,9 @@ return new class extends Migration
             $table->decimal('total_price', 10, 2);
             $table->string('status')->default('pending'); // pending, confirmed, in-progress, cancelled, completed
             $table->text('additional_notes')->nullable();
+            $table->string('payment_id')->nullable();
+            $table->string('payment_status')->default('pending');
+            $table->string('refund_id')->nullable();
             $table->timestamps();
         });
     }

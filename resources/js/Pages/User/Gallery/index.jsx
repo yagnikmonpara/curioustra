@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { usePage, useForm } from '@inertiajs/react';
+import { motion } from 'framer-motion';
 
 export default function Gallery() {
-    // const { gallery } = usePage().props;
     const [selectedImage, setSelectedImage] = useState(null);
     const fileInputRef = useRef(null);
 
@@ -70,7 +70,7 @@ export default function Gallery() {
             "created_at": "2023-10-27T18:00:00.000000Z",
             "updated_at": "2023-10-27T18:00:00.000000Z"
         }
-    ]
+    ];
 
     const { data, setData, post, processing, errors, reset, delete: destroy } = useForm({
         image: null,
@@ -108,30 +108,30 @@ export default function Gallery() {
     };
 
     return (
-        <div className="p-4">
-            <h1 className="text-2xl font-semibold mb-4">Gallery</h1>
+        <div className="p-4 bg-gray-50 dark:bg-gray-900 min-h-screen">
+            <h1 className="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">Gallery</h1>
 
-            <form onSubmit={handleSubmit} encType="multipart/form-data" className="mb-6">
+            <form onSubmit={handleSubmit} encType="multipart/form-data" className="mb-8 max-w-lg mx-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div className="mb-4">
-                    <label htmlFor="image" className="block text-sm font-medium text-gray-700">Image:</label>
+                    <label htmlFor="image" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Image:</label>
                     <input
                         type="file"
                         id="image"
                         onChange={handleImageChange}
                         ref={fileInputRef}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                     />
                     {errors.image && <div className="text-red-500 mt-1">{errors.image}</div>}
                 </div>
 
                 <div className="mb-4">
-                    <label htmlFor="caption" className="block text-sm font-medium text-gray-700">Caption:</label>
+                    <label htmlFor="caption" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Caption:</label>
                     <input
                         type="text"
                         id="caption"
                         value={data.caption}
                         onChange={(e) => setData('caption', e.target.value)}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
                     />
                     {errors.caption && <div className="text-red-500 mt-1">{errors.caption}</div>}
                 </div>
@@ -139,23 +139,30 @@ export default function Gallery() {
                 <button
                     type="submit"
                     disabled={processing}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
                 >
                     Upload
                 </button>
             </form>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4">
                 {gallery.map((gallery) => (
-                    <div key={gallery.id} className="relative cursor-pointer">
+                    <motion.div
+                        key={gallery.id}
+                        className="relative cursor-pointer overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5 }}
+                    >
                         <img
                             src={gallery.image_path}
                             alt={gallery.caption}
-                            className="w-full h-auto rounded-md shadow-md"
+                            className="w-full h-64 object-cover"
                             onClick={() => handleImageClick(gallery.image_path)}
                         />
                         {gallery.caption && (
-                            <div className="absolute bottom-0 left-0 w-full bg-black bg-opacity-50 text-white p-2 rounded-b-md">
+                            <div className="absolute bottom-0 left-0 w-full bg-black bg-opacity-50 text-white p-2 rounded-b-lg">
                                 {gallery.caption}
                             </div>
                         )}
@@ -167,19 +174,19 @@ export default function Gallery() {
                                 <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>
                         </button>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
 
             {selectedImage && (
                 <div
-                    className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 flex items-center justify-center"
+                    className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-90 flex items-center justify-center p-4"
                     onClick={closeLightbox}
                 >
                     <img
                         src={selectedImage}
                         alt="Lightbox Image"
-                        className="max-w-screen-lg max-h-screen-lg rounded-md"
+                        className="max-w-full max-h-full rounded-lg shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     />
                 </div>

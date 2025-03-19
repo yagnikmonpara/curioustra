@@ -15,6 +15,21 @@ class PackageBooking extends Model
         'end_date' => 'datetime',
     ];
 
+    protected $fillable = [
+        'user_id',
+        'package_id',
+        'booking_date',
+        'start_date',
+        'end_date',
+        'number_of_people',
+        'total_price',
+        'additional_notes',
+        'status',
+        'payment_status',
+        'payment_id',
+        'refund_id'
+    ];
+
     public function user() {
         return $this->belongsTo(User::class);
     }

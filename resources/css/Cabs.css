@@ -1,88 +1,134 @@
-/* Cabs.css */
-.cabs-page {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    font-family: sans-serif;
-    margin: 0;
-    background-color: #f4f4f4;
-}
-
-header {
-    background-color: #333;
-    color: #fff;
-    padding: 20px;
-    text-align: center;
-}
-
-.search-inputs {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.search-inputs input,
-.search-inputs button {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-.search-inputs input[type="date"],
-.search-inputs input[type="time"] {
-  width: auto; /* Adjust width for date and time inputs */
-}
-
-
-.cabs-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 20px;
-    flex: 1;
-}
-
+/* Cab Card Styles */
 .cab-card {
-    width: 350px;
-    margin: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-    background-color: white;
-    padding: 20px;
-    transition: transform 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: #fff;
 }
 
 .cab-card:hover {
     transform: translateY(-5px);
-    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.cab-card p {
-    margin-bottom: 5px;
-}
-
-.book-button {
-    background-color: #007bff;
-    color: #fff;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    margin-top: 10px;
-}
-
-.book-button:hover {
-    background-color: #0056b3;
-}
-
-footer {
-    background-color: #333;
-    color: #fff;
-    padding: 10px;
-    text-align: center;
-    margin-top: auto;
+.card-banner {
+    position: relative;
     width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.card-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.highlight-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: white;
+    text-align: center;
+}
+
+.highlight-list li {
+    margin: 8px 0;
+}
+
+.card-content {
+    padding: 16px;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.card-text {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 16px;
+}
+
+.card-meta-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.meta-box {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.card-price {
+    padding: 16px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* Responsive Grid */
+.cab-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 16px;
+}
+
+/* Search Box */
+.search-box {
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.search-box input {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.search-box input:focus {
+    border-color: #3b82f6;
 }
