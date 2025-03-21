@@ -50,10 +50,12 @@ class PackageController extends Controller
             'location' => 'required|string',
             'country' => 'required|string',
             'price' => 'required|numeric',
+            'reviews' => 'required|integer|min:0',
+            'rating' => 'required|numeric|min:0|max:5',
             'new_images' => 'required|array',
             'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            'amenities' => 'nullable|string',
-            'highlights' => 'nullable|string',
+            'amenities' => 'nullable|array',
+            'highlights' => 'nullable|array',
         ]);
 
         $package = new Package();
@@ -95,11 +97,13 @@ class PackageController extends Controller
             'location' => 'required|string',
             'country' => 'required|string',
             'price' => 'required|numeric',
+            'reviews' => 'required|integer|min:0',
+            'rating' => 'required|numeric|min:0|max:5',
             'new_images' => 'nullable|array',
             'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'existing_images' => 'nullable|array',
-            'amenities' => 'nullable|string',
-            'highlights' => 'nullable|string',
+            'amenities' => 'nullable|array',
+            'highlights' => 'nullable|array',
         ]);
 
         $this->savePackageData($package, $validated, $request->file('new_images'), $request->existing_images);

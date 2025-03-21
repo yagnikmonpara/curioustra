@@ -21,9 +21,22 @@ class Package extends Model
         'rating',
         'price',
         'amenities',
-        'highlights',
+        'highlights'
     ];
     protected $casts = [ // Cast JSON columns to arrays
         'images' => 'array',
+        'amenities' => 'array',
+        'highlights' => 'array'
     ];
+
+    public static function boot()
+    {
+        parent::boot();
+    
+        static::saving(function ($package) {
+            if (!preg_match('/^\d+D\/\d+N$/', $package->duration)) {
+                throw new \Exception('Invalid duration format. Use format like "5D/4N"');
+            }
+        });
+    }
 }

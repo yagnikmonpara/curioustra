@@ -23,6 +23,11 @@ const AdminPackages = ({ packages: initialPackages }) => {
     });
     const [searchTerm, setSearchTerm] = useState('');
 
+    const processList = (str) =>
+        str.split(',')
+            .map(item => item.trim())
+            .filter(item => item);
+
     useEffect(() => {
         setPackages(initialPackages);
         setFilteredPackages(initialPackages);
@@ -44,8 +49,12 @@ const AdminPackages = ({ packages: initialPackages }) => {
                 ...data,
                 existing_images: data.images || [],
                 new_images: [],
-                amenities: data.amenities || '', // Ensure string type
-                highlights: data.highlights || '', // Ensure string type
+                amenities: Array.isArray(data.amenities)
+                    ? data.amenities.join(', ')
+                    : '',
+                highlights: Array.isArray(data.highlights)
+                    ? data.highlights.join(', ')
+                    : '',
             });
         } else {
             setModalData({
@@ -57,6 +66,8 @@ const AdminPackages = ({ packages: initialPackages }) => {
                 location: '',
                 country: '',
                 price: 0,
+                reviews: 0,
+                rating: 0,
                 amenities: '',
                 highlights: '',
                 existing_images: [],
@@ -100,8 +111,12 @@ const AdminPackages = ({ packages: initialPackages }) => {
         data.append('location', modalData.location);
         data.append('country', modalData.country);
         data.append('price', modalData.price);
-        data.append('amenities', modalData.amenities);
-        data.append('highlights', modalData.highlights);
+        data.append('reviews', modalData.reviews);
+        data.append('rating', modalData.rating);
+
+        // Add processed arrays
+        processList(modalData.amenities).forEach(item => data.append('amenities[]', item));
+        processList(modalData.highlights).forEach(item => data.append('highlights[]', item));
 
         // Handle images
         modalData.existing_images.forEach(img => data.append('existing_images[]', img));
@@ -179,7 +194,7 @@ const AdminPackages = ({ packages: initialPackages }) => {
                                                 <td className="px-6 py-4 text-sm font-medium text-sky-900">{pkg.title}</td>
                                                 <td className="px-6 py-4 text-sm text-sky-800">{pkg.duration}</td>
                                                 <td className="px-6 py-4 text-sm text-sky-800">{pkg.pax}</td>
-                                                <td className="px-6 py-4 text-sm text-sky-800">${pkg.price}</td>
+                                                <td className="px-6 py-4 text-sm text-sky-800">₹{pkg.price}</td>
                                                 <td className="px-6 py-4 text-sm text-sky-800">{pkg.location}</td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex space-x-1">
@@ -269,7 +284,7 @@ const AdminPackages = ({ packages: initialPackages }) => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Price ($)</label>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Price (₹)</label>
                                         <input
                                             type="number"
                                             step="0.01"
@@ -303,22 +318,54 @@ const AdminPackages = ({ packages: initialPackages }) => {
                                         />
                                     </div>
 
+                                    <div>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Reviews</label>
+                                        <input
+                                            type="number"
+                                            name="reviews"
+                                            value={modalData.reviews}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
+                                            min="0"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Rating</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            name="rating"
+                                            value={modalData.rating}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
+                                            min="0"
+                                            max="5"
+                                        />
+                                    </div>
+
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Amenities (comma separated)</label>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">
+                                            Amenities (comma separated)
+                                        </label>
                                         <input
                                             name="amenities"
                                             value={modalData.amenities}
                                             onChange={handleChange}
+                                            placeholder="e.g., Swimming Pool, Free WiFi, Breakfast"
                                             className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
                                         />
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Highlights (comma separated)</label>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">
+                                            Highlights (comma separated)
+                                        </label>
                                         <input
                                             name="highlights"
                                             value={modalData.highlights}
                                             onChange={handleChange}
+                                            placeholder="e.g., Sunset Cruise, City Tour, Airport Transfer"
                                             className="w-full px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-sky-200 focus:ring-2 focus:ring-sky-200 focus:border-sky-500 text-sm"
                                         />
                                     </div>

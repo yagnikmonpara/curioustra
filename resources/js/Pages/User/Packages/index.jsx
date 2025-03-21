@@ -1,5 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, router, usePage } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
+import { Dialog } from '@headlessui/react';
 import { useEffect, useState } from "react";
 import { motion } from 'framer-motion';
 import '../../../../css/Packages.css';
@@ -12,11 +13,9 @@ const Packages = ({packages}) => {
     const { csrf_token, auth } = usePage().props;
     const [search, setSearch] = useState("");
     const [selectedPackage, setSelectedPackage] = useState(null);
-    const [bookingData, setBookingData] = useState(null);
     const [showBookingModal, setShowBookingModal] = useState(false);
     const [formData, setFormData] = useState({
         start_date: '',
-        end_date: '',
         number_of_people: 1,
         additional_notes: ''
     });
@@ -45,131 +44,57 @@ const Packages = ({packages}) => {
 
     const handlePayment = async () => {
         try {
-            if (!selectedPackage) {
-                throw new Error('No package selected');
-            }
-
             const bookingData = {
-                ...formData,
                 package_id: selectedPackage.id,
-                start_date: formData.start_date,
-                end_date: formData.end_date,
-                number_of_people: parseInt(formData.number_of_people),
-                additional_notes: formData.additional_notes || ''
+                start_date: new Date(formData.start_date).toISOString().split('T')[0],
+                number_of_people: Number(formData.number_of_people),
+                additional_notes: formData.additional_notes || null
             };
-
-            console.log('Sending booking data:', bookingData);
-
-            const response = await axios.post(route('packages.book', {
-                package: selectedPackage.id
-            }), bookingData, {
+    
+            const response = await axios.post(route('packages.book'), bookingData, {
                 headers: {
                     'X-CSRF-TOKEN': csrf_token,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Content-Type': 'application/json'
                 }
             });
 
-            const { booking, razorpay_key, order_id } = response.data;
-
             const options = {
-                key: razorpay_key,
-                amount: booking.total_price * 100,
+                key: response.data.razorpay_key,
+                amount: response.data.amount,
                 currency: 'INR',
-                name: selectedPackage.title,
-                description: 'Package Booking',
-                image: '/images/logo.png',
-                order_id: order_id,
-                handler: async function(response) {
-                    await axios.post(route('packages.payment'), {
-                        booking_id: booking.id,
-                        payment_id: response.razorpay_payment_id
-                    });
-                    setShowBookingModal(false);
-                    alert('Booking confirmed!');
-                },
-                modal: {
-                    ondismiss: async () => {
-                        await axios.delete(`/bookings/${booking.id}`);
+                order_id: response.data.order_id,
+                handler: async (razorpayResponse) => {
+                    try {
+                        const verifyResponse = await axios.post(
+                            route('packages.payment'), 
+                            { payment_id: razorpayResponse.razorpay_payment_id }
+                        );
+                        
+                        if (verifyResponse.data.success) {
+                            window.location.href = verifyResponse.data.redirect;
+                        }
+                    } catch (error) {
+                        console.error('Verification failed:', error.response?.data);
+                        alert(`Payment failed: ${error.response?.data.error || error.message}`);
                     }
                 },
-                prefill: {
-                    name: auth.user.name,
-                    email: auth.user.email
+                prefill: response.data.user,
+                theme: {
+                    color: '#3385ff'
                 }
             };
-
+    
             const rzp = new window.Razorpay(options);
             rzp.open();
-            
+    
         } catch (error) {
-            console.error('Full error details:', error.response?.data || error);
-            alert('Payment failed: ' + (error.response?.data?.message || error.message));
+            console.error('Booking Error:', {
+                config: error.config,
+                response: error.response?.data
+            });
+            alert(`Error: ${error.response?.data?.error || error.message}`);
         }
     };
-
-    // const packages = [
-    //     {
-    //         id: 1,
-    //         title: "Luxury Beach Resort Experience",
-    //         description: "Indulge in a luxurious beach getaway with world-class amenities, pristine beaches, and unforgettable sunsets. Perfect for couples and families.",
-    //         images: ["/images/packege-1.jpg", "/images/packege-2.jpg", "/images/packege-3.jpg", "/images/packege-4.png"],
-    //         duration: "5D/4N",
-    //         pax: 4,
-    //         location: "Maldives",
-    //         country: "Maldives",
-    //         reviews: 128,
-    //         rating: 5,
-    //         price: 1299,
-    //         amenities: ["Spa Access", "Water Sports", "Gourmet Dining"],
-    //         highlights: ["Private Beach", "Sunset Cruise", "Diving"]
-    //     },
-    //     {
-    //         id: 2,
-    //         title: "Amazon Rainforest Adventure",
-    //         description: "Embark on an exciting journey through the Amazon rainforest. Experience wildlife, indigenous cultures, and breathtaking natural wonders.",
-    //         images: ["/images/packege-1.jpg", "/images/packege-2.jpg", "/images/packege-3.jpg", "/images/packege-4.png"],
-    //         duration: "7D/6N",
-    //         pax: 8,
-    //         location: "Brazil",
-    //         country: "Brazil",
-    //         reviews: 95,
-    //         rating: 4.8,
-    //         price: 1599,
-    //         amenities: ["Guided Tours", "Eco Lodge", "Local Cuisine"],
-    //         highlights: ["Wildlife Safari", "Tribal Visit", "River Cruise"]
-    //     },
-    //     {
-    //         id: 3,
-    //         title: "Alpine Ski Adventure Package",
-    //         description: "Experience the thrill of skiing in the majestic Alps. Perfect for both beginners and experienced skiers with professional instruction available.",
-    //         images: ["/images/packege-1.jpg", "/images/packege-2.jpg", "/images/packege-3.jpg", "/images/packege-4.png"],
-    //         duration: "6D/5N",
-    //         pax: 6,
-    //         location: "Switzerland",
-    //         country: "Switzerland",
-    //         reviews: 156,
-    //         rating: 4.9,
-    //         price: 1899,
-    //         amenities: ["Ski Equipment", "Spa Access", "Mountain View"],
-    //         highlights: ["Ski Lessons", "Cable Car", "Snow Activities"]
-    //     },
-    //     {
-    //         id: 4,
-    //         title: "Cultural Heritage Tour",
-    //         description: "Explore the rich history and culture of ancient civilizations. Visit iconic landmarks such as the Acropolis, the Parthenon, and the ancient ruins of Delphi.",
-    //         images: ["/images/packege-1.jpg", "/images/packege-2.jpg", "/images/packege-3.jpg", "/images/packege-4.png"],
-    //         duration: "8D/7N",
-    //         pax: 10,
-    //         location: "Greece",
-    //         country: "Greece",
-    //         reviews: 75,
-    //         rating: 4.7,
-    //         price: 1999,
-    //         amenities: ["Guided Tours", "Cultural Experiences", "Local Cuisine"],
-    //         highlights: ["Acropolis Visit", "Local Festivals", "Cooking Class"]
-    //     }
-    // ];
 
     const PackageCard = ({ pkg }) => {
         const [isHovered, setIsHovered] = useState(false);
@@ -185,7 +110,9 @@ const Packages = ({packages}) => {
                 onHoverEnd={() => setIsHovered(false)}
             >
                 <figure className="card-banner">
-                    {/* <Carousel images={pkg.images} /> */}
+                    <Carousel images={pkg.images?.map(img => 
+                        img.startsWith('http') ? img : `/storage/${img}`
+                    )} />
                     <motion.div
                         className="image-overlay"
                         animate={{ opacity: isHovered ? 1 : 0 }}
@@ -193,12 +120,12 @@ const Packages = ({packages}) => {
                     >
                         <ul className="highlight-list">
                             {pkg.highlight}
-                            {/* {pkg.highlights.map((highlight, index) => (
+                            {pkg.highlights.map((highlight, index) => (
                                 <li key={index}>
                                     <ion-icon name="checkmark-circle"></ion-icon>
                                     {highlight}
                                 </li>
-                            ))} */}
+                            ))}
                         </ul>
                     </motion.div>
                 </figure>
@@ -262,85 +189,98 @@ const Packages = ({packages}) => {
     };
 
     const BookingModal = () => {
-        const handleSubmit = (e) => {
+        const [loading, setLoading] = useState(false);
+        const [errors, setErrors] = useState({});
+    
+        const handleSubmit = async (e) => {
             e.preventDefault();
-            if (!formData.start_date || !formData.end_date || !formData.number_of_people) {
-                alert('Please fill in all required fields');
-                return;
+            setLoading(true);
+            setErrors({});
+            
+            try {
+                if (!selectedPackage) throw new Error('No package selected');
+                if (!formData.start_date) {
+                    setErrors(prev => ({ ...prev, start_date: 'Start date is required' }));
+                    return;
+                }
+                if (formData.number_of_people < 1 || formData.number_of_people > selectedPackage.pax) {
+                    setErrors(prev => ({ ...prev, number_of_people: `Must be between 1-${selectedPackage.pax}` }));
+                    return;
+                }
+                
+                await handlePayment();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                setLoading(false);
             }
-            handlePayment();
         };
-
+    
         return (
-            <motion.div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <motion.div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-                    <form onSubmit={handleSubmit}>
-                        <h3 className="text-xl font-bold mb-4">Book {selectedPackage?.title}</h3>
-                        
-                        <div className="space-y-4">
+            <Dialog
+                open={showBookingModal}
+                onClose={() => setShowBookingModal(false)}
+                className="relative z-50"
+            >
+                <div className="fixed inset-0 bg-black/30" />
+                <div className="fixed inset-0 flex items-center justify-center p-4">
+                    <Dialog.Panel className="w-full max-w-md bg-white rounded-lg p-6">
+                        <Dialog.Title className="text-xl font-bold mb-4">
+                            Book {selectedPackage?.title}
+                        </Dialog.Title>
+    
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label>Start Date</label>
+                                <label className="block mb-1">Start Date</label>
                                 <input
                                     type="date"
-                                    className="w-full p-2 border rounded"
+                                    className={`w-full p-2 border rounded ${errors.start_date ? 'border-red-500' : ''}`}
                                     value={formData.start_date}
-                                    onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                                    onChange={(e) => setFormData(p => ({ ...p, start_date: e.target.value }))}
                                     min={new Date().toISOString().split('T')[0]}
-                                    required
                                 />
+                                {errors.start_date && <p className="text-red-500 text-sm">{errors.start_date}</p>}
                             </div>
-
+    
                             <div>
-                                <label>End Date</label>
-                                <input
-                                    type="date"
-                                    className="w-full p-2 border rounded"
-                                    value={formData.end_date}
-                                    onChange={(e) => setFormData({...formData, end_date: e.target.value})}
-                                    min={formData.start_date}
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label>Number of People</label>
+                                <label className="block mb-1">Number of People</label>
                                 <input
                                     type="number"
-                                    className="w-full p-2 border rounded"
+                                    className={`w-full p-2 border rounded ${errors.number_of_people ? 'border-red-500' : ''}`}
                                     value={formData.number_of_people}
-                                    onChange={(e) => setFormData({...formData, number_of_people: e.target.value})}
+                                    onChange={(e) => setFormData(p => ({
+                                        ...p,
+                                        number_of_people: Math.min(Number(e.target.value), selectedPackage?.pax || 1)
+                                    }))}
                                     min="1"
-                                    required
+                                    max={selectedPackage?.pax}
                                 />
+                                {errors.number_of_people && (
+                                    <p className="text-red-500 text-sm">{errors.number_of_people}</p>
+                                )}
                             </div>
-
-                            <div>
-                                <label>Additional Notes</label>
-                                <textarea
-                                    className="w-full p-2 border rounded"
-                                    value={formData.additional_notes}
-                                    onChange={(e) => setFormData({...formData, additional_notes: e.target.value})}
-                                />
+    
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBookingModal(false)}
+                                    className="px-4 py-2 border rounded hover:bg-gray-50"
+                                    disabled={loading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Processing...' : `Pay ₹${(selectedPackage?.price * formData.number_of_people) || 0}`}
+                                </button>
                             </div>
-                        </div>
-
-                        <div className="mt-6 flex justify-end space-x-4">
-                            <button 
-                                type="submit"
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                            >
-                                Pay Now ₹{(selectedPackage?.price * formData.number_of_people) || 0}
-                            </button>
-                            <button 
-                                className="border px-4 py-2 rounded"
-                                onClick={() => setShowBookingModal(false)}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </motion.div>
-            </motion.div>
+                        </form>
+                    </Dialog.Panel>
+                </div>
+            </Dialog>
         );
     };
 
@@ -410,7 +350,9 @@ const Packages = ({packages}) => {
                         <div className="flex flex-col md:flex-row gap-6">
                             <div className="flex-1">
                                 <h3 className="h3 mb-4">{selectedPackage.title}</h3>
-                                {/* <Carousel images={selectedPackage.images} /> */}
+                                <Carousel images={selectedPackage.images?.map(img => 
+                                    img.startsWith('http') ? img : `/storage/${img}`
+                                )} />
                                 <p className="text-gray-700 dark:text-gray-300">{selectedPackage.description}</p>
                             </div>
                             <div className="flex-1">

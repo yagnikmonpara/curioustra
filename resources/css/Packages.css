@@ -1,3 +1,21 @@
+/* Responsive Modal */
+@media (max-width: 640px) {
+    .modal-content {
+        margin: 1rem;
+        padding: 1rem;
+    }
+}
+
+/* Form Error Styling */
+.form-error {
+    @apply text-red-500 text-sm mt-1;
+}
+
+/* Loading State */
+.loading-spinner {
+    @apply animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full;
+}
+
 /* Search Box Styling */
 .search-box {
     margin-bottom: 20px;

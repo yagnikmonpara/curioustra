@@ -27,7 +27,7 @@ Route::get('/', function () {
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
     ]);
-});
+})->name('welcome');
 
 // General Routes
 Route::middleware('auth')->group(function () {
@@ -147,35 +147,33 @@ Route::middleware(UserMiddleware::class)->group(function () {
     Route::get('/bookings', function () {
         return Inertia::render('User/Bookings/index');
     })->name('bookings');
-    Route::get('/bookings/{booking}', function () {
-        return Inertia::render('User/Bookings/show');
-    })->name('bookings.show');
 
     // Destionations Page
     Route::get('/destinations', [DestinationController::class, 'index'])->name('destinations');
-    Route::get('/destinations/{destination}', [DestinationController::class, 'show'])->name('destinations.show');
 
     // Packages Page
     Route::get('/packages', [PackageController::class, 'index'])->name('packages');
-    Route::middleware(['auth', 'verified'])->group(function () {
-        Route::post('packages/{package}/book', [PackageBookingController::class, 'store'])->name('packages.book');
-        Route::post('packages/payment', [PackageBookingController::class, 'verifyPayment'])->name('packages.payment');
-    });
+    Route::post('packages/book', [PackageBookingController::class, 'store'])->name('packages.book');
+    Route::post('packages/payment', [PackageBookingController::class, 'verifyPayment'])->name('packages.payment');
+    Route::get('/packages/{booking}/download-receipt', [PackageBookingController::class, 'downloadReceipt'])->name('packages.download-receipt');
 
     // Hotel Page
     Route::get('/hotels', [HotelController::class, 'index'])->name('hotels');
-    Route::get('/hotels/{hotel}', [HotelController::class, 'show'])->name('hotels.show');
-    Route::post('/hotels/{hotel}/book', [HotelBookingController::class, 'store'])->name('hotels.book');
+    Route::post('hotels/book', [HotelBookingController::class, 'store'])->name('hotels.book');
+    Route::post('hotels/payment', [HotelBookingController::class, 'verifyPayment'])->name('hotels.payment');
+    Route::get('/hotels/{booking}/download-receipt', [HotelBookingController::class, 'downloadReceipt'])->name('hotels.download-receipt');
 
     // Cabs Page
     Route::get('/cabs', [CabController::class, 'index'])->name('cabs');
-    Route::get('/cabs/{cab}', [CabController::class, 'show'])->name('cabs.show');
-    Route::post('/cabs/{cab}/book', [CabBookingController::class, 'store'])->name('cabs.book');
+    Route::post('cabs/book', [CabBookingController::class, 'store'])->name('cabs.book');
+    Route::post('cabs/payment', [CabBookingController::class, 'verifyPayment'])->name('cabs.payment');
+    Route::get('/cabs/{booking}/download-receipt', [CabBookingController::class, 'downloadReceipt'])->name('cabs.download-receipt');
 
     // Guide Page
     Route::get('/guides', [GuideController::class, 'index'])->name('guides');
-    Route::get('/guides/{guide}', [GuideController::class, 'show'])->name('guides.show');
-    Route::post('/guides/{guide}/book', [GuideBookingController::class, 'store'])->name('guides.book');
+    Route::post('guides/book', [GuideBookingController::class, 'store'])->name('guides.book');
+    Route::post('guides/payment', [GuideBookingController::class, 'verifyPayment'])->name('guides.payment');
+    Route::get('/guides/{booking}/download-receipt', [GuideBookingController::class, 'downloadReceipt'])->name('guides.download-receipt');
 
     // Gallery Page
     Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');

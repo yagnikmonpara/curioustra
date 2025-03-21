@@ -29,18 +29,6 @@ const services = [
         url: '/images/cab.png'
     },
     {
-        title: "Trains Booking",
-        icon: <FaTrain />,
-        description: "Reserve train tickets effortlessly with our user-friendly booking system.",
-        url: '/images/train.png'
-    },
-    {
-        title: "Flights Booking",
-        icon: <FaPlane />,
-        description: "Find and book flights to any destination with competitive pricing.",
-        url: '/images/flight.png'
-    },
-    {
         title: "Hotel Reservation",
         icon: <FaHotel />,
         description: "Book from a wide range of hotels at your preferred destination with exclusive deals.",
