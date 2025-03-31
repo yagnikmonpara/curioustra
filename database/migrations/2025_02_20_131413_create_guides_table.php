@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('profile_picture')->nullable(); // Path to profile picture
             $table->string('languages')->nullable(); // JSON array of languages spoken
+            $table->decimal('price_per_hour', 10, 2)->default(0);
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }

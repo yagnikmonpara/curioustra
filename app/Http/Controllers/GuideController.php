@@ -6,128 +6,117 @@ use App\Models\Guide;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Gate;
 
 class GuideController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $guides = Guide::all();
         return Inertia::render('User/Guides/index', [
-            'guides' => $guides,
+            'guides' => Guide::all(),
         ]);
     }
 
     public function list()
     {
-        $guides = Guide::all();
+        Gate::authorize('admin-access');
+        
         return Inertia::render('Admin/Guides/index', [
-            'guides' => $guides,
+            'guides' => Guide::all(),
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
+        Gate::authorize('admin-access');
+        
         return Inertia::render('Admin/Guides/create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $request->validate([
+        Gate::authorize('admin-access');
+        
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'bio' => 'nullable|string',
-            'specialization' => 'nullable|string',
-            'contact_number' => 'nullable|string',
-            'email' => 'nullable|email|max:255',
+            'specialization' => 'required|string|max:255',
+            'contact_number' => 'required|string|max:20',
+            'email' => 'required|email|max:255|unique:guides',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'languages' => 'nullable|string',
+            'languages' => 'required|string',
+            'price_per_hour' => 'required|numeric|min:0',
+            'status' => 'required|string|in:available,unavailable',
         ]);
 
-        $guide = new Guide();
-        $guide->fill($request->except('profile_picture'));
+        $guide = Guide::create($validated);
 
         if ($request->hasFile('profile_picture')) {
             $path = $request->file('profile_picture')->store('guides', 'public');
-            $guide->profile_picture = Storage::url($path);
+            $guide->update(['profile_picture' => Storage::url($path)]);
         }
 
-        $guide->save();
-
-        return redirect()->back()->with('success', 'Guide created successfully.');
+        return redirect()->route('admin.guides')->with('success', 'Guide created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Guide $guide)
     {
         return Inertia::render('User/Guides/show', [
-            'guide' => $guide,
+            'guide' => $guide->load('bookings'),
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Guide $guide)
     {
-        return Inertia::render('Admin/Guides/edit', [
-            'guide' => $guide,
-        ]);
+        Gate::authorize('admin-access');
+        
+        return Inertia::render('Admin/Guides/edit', compact('guide'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Guide $guide)
     {
-        $request->validate([
+        Gate::authorize('admin-access');
+        
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'bio' => 'nullable|string',
-            'specialization' => 'nullable|string',
-            'contact_number' => 'nullable|string',
-            'email' => 'nullable|email|max:255',
+            'specialization' => 'required|string|max:255',
+            'contact_number' => 'required|string|max:20',
+            'email' => 'required|email|max:255|unique:guides,email,'.$guide->id,
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'languages' => 'nullable|string',
+            'languages' => 'required|string',
+            'price_per_hour' => 'required|numeric|min:0',
+            'status' => 'required|string|in:available,unavailable',
         ]);
 
-        $guide->fill($request->except('profile_picture'));
+        $guide->update($validated);
 
         if ($request->hasFile('profile_picture')) {
             if ($guide->profile_picture) {
-                $oldPath = str_replace('/storage/', '', $guide->profile_picture);
-                Storage::disk('public')->delete($oldPath);
+                Storage::disk('public')->delete(
+                    str_replace('/storage/', '', $guide->profile_picture)
+                );
             }
             
             $path = $request->file('profile_picture')->store('guides', 'public');
-            $guide->profile_picture = Storage::url($path);
+            $guide->update(['profile_picture' => Storage::url($path)]);
         }
 
-        $guide->save();
-
-        return redirect()->back()->with('success', 'Guide updated successfully.');
+        return redirect()->route('admin.guides')->with('success', 'Guide updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Guide $guide)
     {
+        Gate::authorize('admin-access');
+        
         if ($guide->profile_picture) {
-            $path = str_replace('/storage/', '', $guide->profile_picture);
-            Storage::disk('public')->delete($path);
+            Storage::disk('public')->delete(
+                str_replace('/storage/', '', $guide->profile_picture)
+            );
         }
 
         $guide->delete();
 
-        return redirect()->back()->with('success', 'Guide deleted successfully.');
+        return redirect()->route('admin.guides')->with('success', 'Guide deleted successfully.');
     }
 }

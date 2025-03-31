@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('pickup_location', 100);
             $table->string('dropoff_location', 100);
             $table->dateTime('pickup_time');
+            $table->dateTime('dropoff_time')->nullable();
             $table->unsignedMediumInteger('distance_km');
             $table->decimal('total_price', 10, 2);
             $table->decimal('rate_per_km', 10, 2);
@@ -26,7 +27,8 @@ return new class extends Migration
             $table->timestamps();
 
             // Add indexes for common search fields
-            $table->index('pickup_time');
+            $table->index(['cab_id', 'pickup_time', 'dropoff_time']);
+            $table->index(['pickup_time', 'dropoff_time']);
             $table->index('status');
         });
     }

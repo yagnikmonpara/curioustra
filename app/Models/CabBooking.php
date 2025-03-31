@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CabBooking extends Model
 {
@@ -15,6 +17,7 @@ class CabBooking extends Model
         'pickup_location',
         'dropoff_location',
         'pickup_time',
+        'dropoff_time',
         'distance_km',
         'rate_per_km',
         'total_price',
@@ -24,6 +27,7 @@ class CabBooking extends Model
 
     protected $casts = [
         'pickup_time' => 'datetime',
+        'dropoff_time' => 'datetime',
         'additional_info' => 'array',
     ];
 
@@ -32,8 +36,13 @@ class CabBooking extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function cab()
+    public function cab(): BelongsTo
     {
         return $this->belongsTo(Cab::class);
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(CabBooking::class);
     }
 }

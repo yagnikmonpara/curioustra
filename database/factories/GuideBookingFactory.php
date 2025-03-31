@@ -2,33 +2,32 @@
 
 namespace Database\Factories;
 
+use App\Models\Guide;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\GuideBooking>
- */
 class GuideBookingFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    public function definition()
     {
+        $startTime = $this->faker->dateTimeBetween('now', '+1 month');
+        $duration = $this->faker->numberBetween(1, 8);
+        $guide = Guide::factory()->create();
+        $paymentStatus = $this->faker->randomElement(['pending', 'paid', 'refunded']);
+        
         return [
-            'user_id' => \App\Models\User::inRandomOrder()->first()->id,
-            'guide_id' => \App\Models\Guide::inRandomOrder()->first()->id,
-            'booking_date' => $this->faker->dateTimeBetween('now', '+1 year')->format('Y-m-d'),
-            'booking_time' => $this->faker->time(),
-            'duration_hours' => $this->faker->numberBetween(1, 8),
-            'total_price' => $this->faker->randomFloat(2, 20, 500),
-            'status' => $this->faker->randomElement(['pending', 'confirmed', 'in-progress', 'cancelled', 'completed']),
-            'additional_info' => [
-                'meeting_point' => $this->faker->address,
-                'special_requests' => $this->faker->sentence,
-                'group_size' => $this->faker->numberBetween(1, 10)
-            ],
+            'user_id' => User::factory(),
+            'guide_id' => $guide->id,
+            'start_time' => $startTime,
+            'duration_hours' => $duration,
+            'meeting_location' => $this->faker->city,
+            'total_price' => $duration * $guide->price_per_hour,
+            'status' => $this->faker->randomElement(['pending', 'confirmed', 'completed', 'cancelled']),
+            'payment_status' => $paymentStatus,
+            'payment_method' => $paymentStatus === 'paid' ? $this->faker->randomElement(['razorpay', 'cash', 'card']) : null,
+            'razorpay_order_id' => $paymentStatus === 'paid' ? 'order_'.uniqid() : null,
+            'razorpay_payment_id' => $paymentStatus === 'paid' ? 'pay_'.uniqid() : null,
+            'special_requests' => $this->faker->optional(0.4)->paragraph,
         ];
     }
 }

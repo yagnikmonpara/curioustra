@@ -9,7 +9,7 @@
     <div style="max-width: 640px; margin: 0 auto; background-color: #ffffff;">
         <!-- Header -->
         <header style="background: linear-gradient(135deg, {{ $statusColor }}); padding: 2rem; text-align: center; border-radius: 0 0 20px 20px;">
-            <img src="{{ $logoUrl }}" alt="CuriousTra Logo" style="height: 40px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+            <img src="{{ $logoUrl }}" alt="Hotel Service Logo" style="height: 40px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
             <h1 style="color: #1e293b; font-size: 1.75rem; margin: 0 0 1rem; font-weight: 600; background: linear-gradient(135deg, {{ $statusColor }}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;">
                 {{ $subject }}
             </h1>
@@ -28,30 +28,42 @@
             </div>
 
             <div style="background-color: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.05); border: 1px solid rgba(14, 165, 233, 0.15);">
-                <!-- Booking Details -->
+                <!-- Hotel Details -->
                 <div style="margin-bottom: 1.5rem;">
-                    <h3 style="color: #0ea5e9; font-size: 1.2rem; margin-bottom: 1rem;">Booking Details</h3>
+                    <h3 style="color: #0ea5e9; font-size: 1.2rem; margin-bottom: 1rem;">Hotel Details</h3>
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
                         <div>
                             <p style="margin: 0.5rem 0; color: #64748b;">
-                                <strong>Package:</strong><br>
-                                {{ $booking->package->name }}
+                                <strong>Hotel:</strong><br>
+                                {{ $booking->hotel->name }}
                             </p>
                             <p style="margin: 0.5rem 0; color: #64748b;">
-                                <strong>Start Date:</strong><br>
-                                {{ $booking->start_date->format('d M Y') }}
+                                <strong>Check-in:</strong><br>
+                                {{ $booking->check_in_date->format('d M Y') }}
                             </p>
                         </div>
                         <div>
                             <p style="margin: 0.5rem 0; color: #64748b;">
-                                <strong>Travelers:</strong><br>
-                                {{ $booking->number_of_people }} people
+                                <strong>Guests:</strong><br>
+                                {{ $booking->number_of_guests }} {{ Str::plural('guest', $booking->number_of_guests) }}
                             </p>
                             <p style="margin: 0.5rem 0; color: #64748b;">
-                                <strong>Total Price:</strong><br>
-                                ₹{{ number_format($booking->total_price, 2) }}
+                                <strong>Check-out:</strong><br>
+                                {{ $booking->check_out_date->format('d M Y') }}
                             </p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Price Breakdown -->
+                <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #f8fafc; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="color: #64748b;">{{ $booking->hotel->price_per_night }} x {{ $booking->nights }} nights</span>
+                        <span style="color: #1e293b; font-weight: 500;">₹{{ number_format($booking->hotel->price_per_night * $booking->nights, 2) }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 0.5rem;">
+                        <span style="color: #1e293b; font-weight: 600;">Total</span>
+                        <span style="color: #0ea5e9; font-weight: 600;">₹{{ number_format($booking->total_price, 2) }}</span>
                     </div>
                 </div>
 
@@ -60,7 +72,7 @@
                     {!! $content !!}
                 </div>
 
-                <!-- Timeline -->
+                <!-- Action Timeline -->
                 <div style="border-top: 2px solid rgba(14, 165, 233, 0.1); padding-top: 1.5rem; margin-top: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 12px; color: #64748b;">
                         <svg style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -68,27 +80,28 @@
                         </svg>
                         <span style="font-size: 0.9rem;">
                             Booking {{ ucfirst($booking->status) }} on<br>
-                            <strong style="color: #0ea5e9;">{{ now()->format('F j, Y \a\t g:i a') }}</strong>
+                            <strong style="color: #0ea5e9;">{{ $booking->created_at->format('F j, Y \a\t g:i a') }}</strong>
                         </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Support CTA -->
+            <!-- Support & Actions -->
             <div style="text-align: center; margin: 2rem 0; padding: 1.5rem; background-color: #f8fafc; border-radius: 8px;">
-                <p style="margin: 0 0 0.5rem; color: #64748b; font-size: 0.95rem;">
-                    Need help with your booking? 🚀
-                </p>
-                <a href="mailto:info.curioustra@gmail.com" style="color: #0ea5e9; text-decoration: none; font-weight: 500; transition: all 0.2s ease;">
-                    Contact Our Support Team
-                    <span style="display: inline-block; margin-left: 4px;">→</span>
-                </a>
+                <div style="display: grid; gap: 1rem; grid-template-columns: repeat(2, 1fr);">
+                    <a href="{{ route('hotels.download-receipt', $booking->id) }}" style="color: #0ea5e9; text-decoration: none; font-weight: 500; padding: 0.5rem; border: 1px solid #0ea5e9; border-radius: 6px;">
+                        Download Receipt
+                    </a>
+                    <a href="mailto:info.curioustra@gmail.com" style="color: #ffffff; text-decoration: none; font-weight: 500; padding: 0.5rem; background: #0ea5e9; border-radius: 6px;">
+                        Contact Support
+                    </a>
+                </div>
             </div>
         </div>
 
         <!-- Footer -->
         <footer style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 2rem; text-align: center; border-radius: 20px 20px 0 0;">
-        <div style="max-width: 400px; margin: 0 auto;">
+            <div style="max-width: 400px; margin: 0 auto;">
                 <div style="font-size: 0.875rem; line-height: 1.6;">
                     <p style="margin: 0.5rem 0; color: #e2e8f0;">
                         © {{ date('Y') }} CuriousTra. All rights reserved.
@@ -98,18 +111,7 @@
                         <a href="mailto:info.curioustra@gmail.com" style="color: #7dd3fc; text-decoration: none;">info.curioustra@gmail.com</a>
                     </p>
                 </div>
-                <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center;">
-                    <a href="{{ route('welcome') }}" style="color: #7dd3fc; text-decoration: none;">
-                        <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                        </svg>
-                    </a>
-                    <a href="{{ route('welcome') }}" style="color: #7dd3fc; text-decoration: none;">
-                        <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm3 8h-1.35c-.538 0-.65.221-.65.778v1.222h2l-.209 2h-1.791v7h-3v-7h-2v-2h2v-2.308c0-1.769.931-2.692 3.029-2.692h1.971v3z"/>
-                        </svg>
-                    </a>
-                </div>
+            </div>
         </footer>
     </div>
 </body>

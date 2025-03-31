@@ -38,6 +38,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
+Route::get('/newsletter/verify/{token}', [NewsletterController::class, 'verify'])->name('newsletter.verify');
+Route::post('/newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
+
 // Admin Routes
 Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     
@@ -165,15 +169,21 @@ Route::middleware(UserMiddleware::class)->group(function () {
 
     // Cabs Page
     Route::get('/cabs', [CabController::class, 'index'])->name('cabs');
+    Route::post('/cabs/check-availability', [CabBookingController::class, 'checkAvailability'])->name('cabs.check-availability');
+    Route::get('/cabs/availability-calendar', [CabBookingController::class, 'getAvailabilityCalendar'])->name('cabs.availability-calendar');
     Route::post('cabs/book', [CabBookingController::class, 'store'])->name('cabs.book');
     Route::post('cabs/payment', [CabBookingController::class, 'verifyPayment'])->name('cabs.payment');
     Route::get('/cabs/{booking}/download-receipt', [CabBookingController::class, 'downloadReceipt'])->name('cabs.download-receipt');
+    Route::post('cabs/refund', [CabBookingController::class, 'refund'])->name('cabs.refund');
 
     // Guide Page
     Route::get('/guides', [GuideController::class, 'index'])->name('guides');
+    Route::post('/guides/check-availability', [GuideBookingController::class, 'checkAvailability'])->name('guides.check-availability');
+    Route::get('/guides/availability-calendar', [GuideBookingController::class, 'availabilityCalendar'])->name('guides.availability-calendar');
     Route::post('guides/book', [GuideBookingController::class, 'store'])->name('guides.book');
     Route::post('guides/payment', [GuideBookingController::class, 'verifyPayment'])->name('guides.payment');
     Route::get('/guides/{booking}/download-receipt', [GuideBookingController::class, 'downloadReceipt'])->name('guides.download-receipt');
+    Route::post('guides/refund', [GuideBookingController::class, 'refund'])->name('guides.refund');
 
     // Gallery Page
     Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');

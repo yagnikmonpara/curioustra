@@ -10,7 +10,7 @@ import axios from "axios";
 axios.defaults.withCredentials = true;
 
 const Packages = ({packages}) => {
-    const { csrf_token, auth } = usePage().props;
+    const { csrf_token } = usePage().props;
     const [search, setSearch] = useState("");
     const [selectedPackage, setSelectedPackage] = useState(null);
     const [showBookingModal, setShowBookingModal] = useState(false);
@@ -368,8 +368,21 @@ const Packages = ({packages}) => {
                             </div>
                         </div>
                         <div className="flex justify-end mt-6 space-x-4">
-                            <button className="btn btn-secondary" onClick={() => handleBookNow(selectedPackage)}>Book Now</button>
-                            <button className="btn btn-outline" onClick={() => setSelectedPackage(null)}>Close</button>
+                            <button 
+                                className="btn btn-outline" 
+                                onClick={() => {
+                                    handleBookNow(selectedPackage);
+                                    setShowBookingModal(true);
+                                }}
+                            >
+                                <ion-icon name="cart-outline"></ion-icon> Book Now
+                            </button>
+                            <button 
+                                className="btn btn-outline" 
+                                onClick={() => setSelectedPackage(null)}
+                            >
+                                Close
+                            </button>
                         </div>
                     </motion.div>
                 </motion.div>

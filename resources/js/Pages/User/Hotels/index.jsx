@@ -1,80 +1,178 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head } from "@inertiajs/react";
-import { useState } from "react";
+import { Head, usePage } from "@inertiajs/react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Dialog } from '@headlessui/react';
 import Carousel from "@/Components/Carousel";
+import axios from "axios";
 import "../../../../css/Hotels.css";
 
-const Hotels = () => {
+axios.defaults.withCredentials = true;
+
+const Hotels = ({ hotels }) => {
+    const { csrf_token } = usePage().props;
     const [search, setSearch] = useState("");
     const [selectedHotel, setSelectedHotel] = useState(null);
+    const [showBookingModal, setShowBookingModal] = useState(false);
+    const [formData, setFormData] = useState({
+        check_in_date: '',
+        check_out_date: '',
+        number_of_guests: 1,
+        additional_info: ''
+    });
+    const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
 
-    const hotels = [
-        {
-            id: 1,
-            name: "Luxury Beach Resort",
-            description: "A luxurious beachfront resort offering world-class amenities and stunning ocean views.",
-            address: "123 Beach Road",
-            city: "Bali",
-            country: "Indonesia",
-            stars: 5,
-            price_per_night: 300,
-            amenities: ["Spa", "Pool", "Restaurant", "Free Wi-Fi"],
-            images: [
-                "/images/hotels/hotel-1.jpg",
-                "/images/hotels/hotel-2.jpg",
-                "/images/hotels/hotel-3.jpg"
-            ]
-        },
-        {
-            id: 2,
-            name: "Mountain View Lodge",
-            description: "A cozy lodge nestled in the mountains, perfect for nature lovers and adventurers.",
-            address: "456 Mountain Road",
-            city: "Switzerland",
-            country: "Switzerland",
-            stars: 4,
-            price_per_night: 200,
-            amenities: ["Spa", "Restaurant", "Free Wi-Fi", "Hiking Trails"],
-            images: [
-                "/images/hotels/hotel-4.jpg",
-                "/images/hotels/hotel-5.jpg",
-                "/images/hotels/hotel-6.jpg"
-            ]
-        },
-        {
-            id: 3,
-            name: "City Central Hotel",
-            description: "A modern hotel located in the heart of the city, close to major attractions and business districts.",
-            address: "789 Main Street",
-            city: "New York",
-            country: "USA",
-            stars: 4,
-            price_per_night: 250,
-            amenities: ["Gym", "Restaurant", "Free Wi-Fi", "Conference Rooms"],
-            images: [
-                "/images/hotels/hotel-7.jpg",
-                "/images/hotels/hotel-8.jpg",
-                "/images/hotels/hotel-9.jpg"
-            ]
-        },
-        {
-            id: 4,
-            name: "Desert Oasis Resort",
-            description: "A luxurious resort in the middle of the desert, offering a unique and tranquil experience.",
-            address: "101 Desert Road",
-            city: "Dubai",
-            country: "UAE",
-            stars: 5,
-            price_per_night: 400,
-            amenities: ["Spa", "Pool", "Restaurant", "Free Wi-Fi", "Private Beach"],
-            images: [
-                "/images/hotels/hotel-10.jpg",
-                "/images/hotels/hotel-11.jpg",
-                "/images/hotels/hotel-12.jpg"
-            ]
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf_token;
+        
+        return () => document.body.removeChild(script);
+    }, [csrf_token]);
+
+    const handlePayment = async () => {
+        try {
+            const response = await axios.post(route('hotels.book'), {
+                hotel_id: selectedHotel.id,
+                ...formData
+            });
+
+            const options = {
+                key: response.data.razorpay_key,
+                amount: response.data.amount,
+                currency: 'INR',
+                order_id: response.data.order_id,
+                handler: async (razorpayResponse) => {
+                    try {
+                        const verifyResponse = await axios.post(
+                            route('hotels.payment'), 
+                            { payment_id: razorpayResponse.razorpay_payment_id }
+                        );
+                        
+                        if (verifyResponse.data.success) {
+                            window.location.href = verifyResponse.data.redirect;
+                        }
+                    } catch (error) {
+                        alert('Payment verification failed: ' + error.response?.data?.error);
+                    }
+                },
+                prefill: response.data.user,
+                theme: { color: '#3385ff' }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+        } catch (error) {
+            alert('Booking failed: ' + error.response?.data?.error);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
+
+    const BookingModal = () => {
+        const validateForm = () => {
+            const newErrors = {};
+            if (!formData.check_in_date) newErrors.check_in_date = 'Check-in date required';
+            if (!formData.check_out_date) newErrors.check_out_date = 'Check-out date required';
+            if (formData.number_of_guests < 1) newErrors.number_of_guests = 'At least 1 guest required';
+            
+            setErrors(newErrors);
+            return Object.keys(newErrors).length === 0;
+        };
+
+        const handleSubmit = (e) => {
+            e.preventDefault();
+            if (!validateForm()) return;
+            
+            setLoading(true);
+            handlePayment();
+        };
+
+        const calculateNights = () => {
+            if (!formData.check_in_date || !formData.check_out_date) return 0;
+            const start = new Date(formData.check_in_date);
+            const end = new Date(formData.check_out_date);
+            return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        };
+
+        const totalPrice = selectedHotel 
+            ? calculateNights() * selectedHotel.price_per_night * formData.number_of_guests
+            : 0;
+
+        return (
+            <Dialog open={showBookingModal} onClose={() => setShowBookingModal(false)} className="relative z-50">
+                <div className="fixed inset-0 bg-black/30" />
+                <div className="fixed inset-0 flex items-center justify-center p-4">
+                    <Dialog.Panel className="w-full max-w-md bg-white rounded-lg p-6">
+                        <Dialog.Title className="text-xl font-bold mb-4">
+                            Book {selectedHotel?.name}
+                        </Dialog.Title>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label>Check-in Date</label>
+                                <input
+                                    type="date"
+                                    min={new Date().toISOString().split('T')[0]}
+                                    value={formData.check_in_date}
+                                    onChange={e => setFormData({ ...formData, check_in_date: e.target.value })}
+                                    className={`w-full p-2 border rounded ${errors.check_in_date ? 'border-red-500' : ''}`}
+                                />
+                                {errors.check_in_date && <p className="text-red-500 text-sm">{errors.check_in_date}</p>}
+                            </div>
+
+                            <div>
+                                <label>Check-out Date</label>
+                                <input
+                                    type="date"
+                                    min={formData.check_in_date}
+                                    value={formData.check_out_date}
+                                    onChange={e => setFormData({ ...formData, check_out_date: e.target.value })}
+                                    className={`w-full p-2 border rounded ${errors.check_out_date ? 'border-red-500' : ''}`}
+                                />
+                                {errors.check_out_date && <p className="text-red-500 text-sm">{errors.check_out_date}</p>}
+                            </div>
+
+                            <div>
+                                <label>Number of Guests</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value={formData.number_of_guests}
+                                    onChange={e => setFormData({ ...formData, number_of_guests: e.target.value })}
+                                    className={`w-full p-2 border rounded ${errors.number_of_guests ? 'border-red-500' : ''}`}
+                                />
+                                {errors.number_of_guests && <p className="text-red-500 text-sm">{errors.number_of_guests}</p>}
+                            </div>
+
+                            <div className="flex justify-between items-center mt-4">
+                                <div>
+                                    <p className="font-semibold">
+                                        Total: ₹{totalPrice.toFixed(2)}
+                                        <span className="text-sm text-gray-600 ml-2">
+                                            ({calculateNights()} nights × {formData.number_of_guests} guests)
+                                        </span>
+                                    </p>
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Processing...' : 'Proceed to Pay'}
+                                </button>
+                            </div>
+                        </form>
+                    </Dialog.Panel>
+                </div>
+            </Dialog>
+        );
+    };
 
     const HotelCard = ({ hotel }) => {
         const [isHovered, setIsHovered] = useState(false);
@@ -136,16 +234,16 @@ const Hotels = () => {
                 </div>
 
                 <div className="card-price">
-                    {/* <div className="wrapper">
+                    <div className="wrapper">
                         <div className="card-rating">
                             {[...Array(5)].map((_, i) => (
                                 <ion-icon
                                     key={i}
-                                    name={i < Math.floor(hotel.stars) ? "star" : (i < hotel.stars ? "star-half" : "star-outline")}
+                                    name={i < Math.floor(hotel.stars) ? "star" : (i === Math.floor(hotel.stars) && hotel.stars % 1 !== 0 ? "star-half" : "star-outline")}
                                 ></ion-icon>
                             ))}
                         </div>
-                    </div> */}
+                    </div>
 
                     <div className="action-buttons">
                         <button className="btn btn-secondary" onClick={() => setSelectedHotel(hotel)}>View More</button>
@@ -162,8 +260,9 @@ const Hotels = () => {
         hotel.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    const handleBookNow = async (hotelId) => {
-        // Handle booking logic
+    const handleBookNow = (hotel) => {
+        setSelectedHotel(hotel);
+        setShowBookingModal(true);
     };
 
     return (
@@ -242,12 +341,26 @@ const Hotels = () => {
                             </div>
                         </div>
                         <div className="flex justify-end mt-6 space-x-4">
-                            <button className="btn btn-secondary" onClick={() => handleBookNow(selectedHotel.id)}>Book Now</button>
-                            <button className="btn btn-outline" onClick={() => setSelectedHotel(null)}>Close</button>
+                            <button 
+                                className="btn btn-outline" 
+                                onClick={() => {
+                                    handleBookNow(selectedHotel);
+                                    setShowBookingModal(true);
+                                }}
+                            >
+                                <ion-icon name="cart-outline"></ion-icon> Book Now
+                            </button>
+                            <button 
+                                className="btn btn-outline" 
+                                onClick={() => setSelectedHotel(null)}
+                            >
+                                Close
+                            </button>
                         </div>
                     </motion.div>
                 </motion.div>
             )}
+            {showBookingModal && <BookingModal />}
         </AuthenticatedLayout>
     );
 };
