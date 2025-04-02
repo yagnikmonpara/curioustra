@@ -5,39 +5,34 @@ namespace App\Http\Controllers;
 use App\Models\Gallery;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class GalleryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $gallery = Gallery::All();
+        $userPhotos = auth()->check() ? Gallery::where('user_id', auth()->id())->get() : [];
+        $allPhotos = Gallery::latest()->get();
+        
         return Inertia::render('User/Gallery/index', [
-            'gallery' => $gallery,
+            'userPhotos' => $userPhotos,
+            'allPhotos' => $allPhotos
         ]);
     }
 
     public function list()
     {
-        $gallery = Gallery::All();
+        $gallery = Gallery::all();
         return Inertia::render('Admin/Gallery/index', [
             'gallery' => $gallery,
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return Inertia::render('User/Gallery/create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -49,11 +44,8 @@ class GalleryController extends Controller
         
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/Gallery');
-            $image->move($imagePath, $imageName);
-            $imagePath = '/images/Gallery/' . $imageName;
+            $path = $request->file('image')->store('gallery', 'public');
+            $imagePath = Storage::url($path);
         }
     
         Gallery::create([
@@ -66,9 +58,6 @@ class GalleryController extends Controller
         return redirect()->back()->with('success', 'Image added successfully');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Gallery $gallery)
     {
         return Inertia::render('Admin/Gallery/show', [
@@ -76,9 +65,6 @@ class GalleryController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Gallery $gallery)
     {
         return Inertia::render('Admin/Gallery/edit', [
@@ -86,9 +72,6 @@ class GalleryController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Gallery $gallery)
     {
         $data = $request->validate([
@@ -99,34 +82,30 @@ class GalleryController extends Controller
         $gallery->caption = $data['caption'];
 
         if ($request->hasFile('image')) {
-            if ($gallery->image_path) {
-                $oldImagePath = public_path($gallery->image_path);
-                if (file_exists($oldImagePath)) {
-                    unlink($oldImagePath);
-                }
+            // Delete old image
+            if ($gallery->image) {
+                $oldPath = str_replace('/storage/', '', $gallery->image);
+                Storage::disk('public')->delete($oldPath);
             }
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $imagePath = public_path('images/Gallery');
-            $image->move($imagePath, $imageName);
-            $gallery->image_path = '/images/Gallery/' . $imageName;
+            // Store new image
+            $path = $request->file('image')->store('gallery', 'public');
+            $gallery->image = Storage::url($path);
         }
 
-        $gallery->update($data);
+        $gallery->save();
 
         return redirect()->back()->with('success', 'Gallery image updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Gallery $gallery)
     {
-        if ($gallery->image_path) {
-            $imagePath = public_path($gallery->image_path);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
+        if ($gallery->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized action');
+        }
+
+        if ($gallery->image) {
+            $path = str_replace('/storage/', '', $gallery->image);
+            Storage::disk('public')->delete($path);
         }
 
         $gallery->delete();

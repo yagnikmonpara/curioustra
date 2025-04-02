@@ -77,19 +77,17 @@
 </head>
 <body>
     @if($booking->payment_status === 'paid')
-    <div class="watermark">PAID</div>
+        <div class="watermark">PAID</div>
     @endif
 
     <div class="header">
         <div>
+            @if(file_exists($company['logo']))
             <img src="{{ $company['logo'] }}" class="logo" alt="CuriousTra Logo">
+            @else
+            <h2 style="color: #0ea5e9;">CuriousTra</h2>
+            @endif
             <h1 style="color: #0ea5e9; margin: 0.5rem 0; font-size: 24px;">Cab Booking Receipt</h1>
-        </div>
-        <div class="company-info">
-            <h2 style="margin: 0; color: #0f172a;">{{ $company['name'] }}</h2>
-            <p style="margin: 0.25rem 0;">{{ $company['address'] }}</p>
-            <p style="margin: 0.25rem 0;">{{ $company['email'] }}</p>
-            <p style="margin: 0.25rem 0;">{{ $company['phone'] }}</p>
         </div>
     </div>
 

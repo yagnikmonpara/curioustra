@@ -19,6 +19,7 @@ class GuideBooking extends Model
         'user_id',
         'guide_id',
         'start_time',
+        'end_time',
         'duration_hours',
         'meeting_location',
         'total_price',
@@ -37,6 +38,7 @@ class GuideBooking extends Model
      */
     protected $casts = [
         'start_time' => 'datetime',
+        'end_time' => 'datetime',
         'total_price' => 'decimal:2'
     ];
 
@@ -64,16 +66,6 @@ class GuideBooking extends Model
     public function guide(): BelongsTo
     {
         return $this->belongsTo(Guide::class);
-    }
-
-    /**
-     * Calculate the end time of the booking.
-     *
-     * @return \Illuminate\Support\Carbon
-     */
-    public function getEndTimeAttribute()
-    {
-        return $this->start_time->copy()->addHours($this->duration_hours);
     }
 
     /**

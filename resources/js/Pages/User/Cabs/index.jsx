@@ -14,7 +14,6 @@ const Cabs = ({ cabs }) => {
     const [bookingCab, setBookingCab] = useState(null);
     const [availability, setAvailability] = useState(null);
     const [estimatedDuration, setEstimatedDuration] = useState(1);
-    const [showCalendar, setShowCalendar] = useState(false);
     const [calendarData, setCalendarData] = useState([]);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -781,7 +780,7 @@ const Cabs = ({ cabs }) => {
         <AuthenticatedLayout>
             <Head title="Cabs" />
 
-            {/* <style jsx global>{`
+            <style jsx global>{`
                 .no-scrollbar::-webkit-scrollbar {
                     display: none;
                 }
@@ -789,7 +788,7 @@ const Cabs = ({ cabs }) => {
                     -ms-overflow-style: none;  
                     scrollbar-width: none; 
                 }
-            `}</style> */}
+            `}</style>
 
             <section className="py-16 bg-gray-50 dark:bg-gray-900">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">

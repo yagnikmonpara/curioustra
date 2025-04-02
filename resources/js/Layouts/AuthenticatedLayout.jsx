@@ -118,7 +118,7 @@ const AuthenticatedLayout = ({ children }) => {
                         </motion.div>
 
                         <div className="hidden md:flex items-center gap-8">
-                            {['home', 'destinations', 'packages', 'hotels', 'cabs', 'guides', 'gallery'].map((routeName) => (
+                            {['home', 'destinations', 'packages', 'cabs', 'guides', 'gallery'].map((routeName) => (
                             // {['home'].map((routeName) => (
                                 <motion.div
                                     key={routeName}
@@ -214,7 +214,7 @@ const AuthenticatedLayout = ({ children }) => {
                             className="overflow-hidden"
                         >
                             <div className="px-4 pb-4 space-y-1">
-                                {['home', 'destinations', 'packages', 'hotels', 'cabs', 'guides', 'gallery'].map((routeName) => (
+                                {['home', 'destinations', 'packages', 'cabs', 'guides', 'gallery'].map((routeName) => (
                                     <motion.div
                                         key={routeName}
                                         variants={navVariants}

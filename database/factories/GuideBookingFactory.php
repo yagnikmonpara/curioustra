@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Guide;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class GuideBookingFactory extends Factory
@@ -19,6 +20,7 @@ class GuideBookingFactory extends Factory
             'user_id' => User::factory(),
             'guide_id' => $guide->id,
             'start_time' => $startTime,
+            'end_time' => Carbon::instance($startTime)->addHours($duration),
             'duration_hours' => $duration,
             'meeting_location' => $this->faker->city,
             'total_price' => $duration * $guide->price_per_hour,

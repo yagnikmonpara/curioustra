@@ -12,8 +12,26 @@ class GuideController extends Controller
 {
     public function index()
     {
+        $guides = Guide::withCount(['bookings as tours_completed' => function($query) {
+            $query->where('status', 'completed');
+        }])->get();
+
         return Inertia::render('User/Guides/index', [
-            'guides' => Guide::all(),
+            'guides' => $guides->map(function($guide) {
+                return [
+                    'id' => $guide->id,
+                    'name' => $guide->name,
+                    'bio' => $guide->bio,
+                    'specialization' => $guide->specialization,
+                    'location' => $guide->location,
+                    'price_per_hour' => $guide->price_per_hour,
+                    'rating' => $guide->rating,
+                    'profile_picture' => $guide->profile_picture,
+                    'languages' => $guide->languages ? explode(',', $guide->languages) : [],
+                    'tours_completed' => $guide->tours_completed,
+                    'contact_number' => $guide->contact_number
+                ];
+            })
         ]);
     }
 

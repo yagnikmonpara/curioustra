@@ -20,6 +20,9 @@ use App\Http\Controllers\GuideBookingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\BookingsController;
+use App\Http\Controllers\NewsletterController;
 
 // Guest Routes
 Route::get('/', function () {
@@ -143,14 +146,10 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
 // User Routes
 Route::middleware(UserMiddleware::class)->group(function () {
     // Home Page
-    Route::get('/home', function () {
-        return Inertia::render('User/Home'); 
-    })->name('home');
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     // Booking Page
-    Route::get('/bookings', function () {
-        return Inertia::render('User/Bookings/index');
-    })->name('bookings');
+    Route::get('/bookings', [BookingsController::class, 'index'])->name('bookings');
 
     // Destionations Page
     Route::get('/destinations', [DestinationController::class, 'index'])->name('destinations');
@@ -158,32 +157,36 @@ Route::middleware(UserMiddleware::class)->group(function () {
     // Packages Page
     Route::get('/packages', [PackageController::class, 'index'])->name('packages');
     Route::post('packages/book', [PackageBookingController::class, 'store'])->name('packages.book');
-    Route::post('packages/payment', [PackageBookingController::class, 'verifyPayment'])->name('packages.payment');
+    Route::post('/packages/payment', [PackageBookingController::class, 'verifyPayment'])->name('packages.payment');
+    Route::post('/packages/refund', [PackageBookingController::class, 'refund'])->name('packages.refund');
+    Route::post('/packages/cancel', [PackageBookingController::class, 'cancelBooking'])->name('packages.cancel');
     Route::get('/packages/{booking}/download-receipt', [PackageBookingController::class, 'downloadReceipt'])->name('packages.download-receipt');
 
     // Hotel Page
     Route::get('/hotels', [HotelController::class, 'index'])->name('hotels');
-    Route::post('hotels/book', [HotelBookingController::class, 'store'])->name('hotels.book');
-    Route::post('hotels/payment', [HotelBookingController::class, 'verifyPayment'])->name('hotels.payment');
+    Route::post('/hotels/book', [HotelBookingController::class, 'store'])->name('hotels.book');
+    Route::post('/hotels/payment', [HotelBookingController::class, 'verifyPayment'])->name('hotels.payment');
     Route::get('/hotels/{booking}/download-receipt', [HotelBookingController::class, 'downloadReceipt'])->name('hotels.download-receipt');
 
     // Cabs Page
     Route::get('/cabs', [CabController::class, 'index'])->name('cabs');
     Route::post('/cabs/check-availability', [CabBookingController::class, 'checkAvailability'])->name('cabs.check-availability');
     Route::get('/cabs/availability-calendar', [CabBookingController::class, 'getAvailabilityCalendar'])->name('cabs.availability-calendar');
-    Route::post('cabs/book', [CabBookingController::class, 'store'])->name('cabs.book');
-    Route::post('cabs/payment', [CabBookingController::class, 'verifyPayment'])->name('cabs.payment');
+    Route::post('/cabs/book', [CabBookingController::class, 'store'])->name('cabs.book');
+    Route::post('/cabs/payment', [CabBookingController::class, 'verifyPayment'])->name('cabs.payment');
+    Route::post('/cabs/cancel', [CabBookingController::class, 'cancelBooking'])->name('cabs.cancel');
     Route::get('/cabs/{booking}/download-receipt', [CabBookingController::class, 'downloadReceipt'])->name('cabs.download-receipt');
-    Route::post('cabs/refund', [CabBookingController::class, 'refund'])->name('cabs.refund');
+    Route::post('/cabs/refund', [CabBookingController::class, 'refund'])->name('cabs.refund');
 
     // Guide Page
     Route::get('/guides', [GuideController::class, 'index'])->name('guides');
     Route::post('/guides/check-availability', [GuideBookingController::class, 'checkAvailability'])->name('guides.check-availability');
     Route::get('/guides/availability-calendar', [GuideBookingController::class, 'availabilityCalendar'])->name('guides.availability-calendar');
-    Route::post('guides/book', [GuideBookingController::class, 'store'])->name('guides.book');
-    Route::post('guides/payment', [GuideBookingController::class, 'verifyPayment'])->name('guides.payment');
+    Route::post('/guides/book', [GuideBookingController::class, 'store'])->name('guides.book');
+    Route::post('/guides/payment', [GuideBookingController::class, 'verifyPayment'])->name('guides.payment');
     Route::get('/guides/{booking}/download-receipt', [GuideBookingController::class, 'downloadReceipt'])->name('guides.download-receipt');
-    Route::post('guides/refund', [GuideBookingController::class, 'refund'])->name('guides.refund');
+    Route::post('/guides/refund', [GuideBookingController::class, 'refund'])->name('guides.refund');
+    Route::post('/guides/cancel', [GuideBookingController::class, 'cancelBooking'])->name('guides.cancel');
 
     // Gallery Page
     Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');
@@ -200,6 +203,11 @@ Route::middleware(UserMiddleware::class)->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::post('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+    // Newsletter
+    Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
+    Route::get('/newsletter/verify/{token}', [NewsletterController::class, 'verify'])->name('newsletter.verify');
+    Route::post('/newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 });
 
 require __DIR__.'/auth.php';

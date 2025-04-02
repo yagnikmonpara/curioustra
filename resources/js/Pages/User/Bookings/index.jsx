@@ -1,55 +1,121 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import "../../../../css/Bookings.css";
+import axios from "axios";
 
-const Bookings = () => {
+const Bookings = ({ packageBookings, cabBookings, guideBookings }) => {
     const [search, setSearch] = useState("");
-    const [selectedBooking, setSelectedBooking] = useState(null);
 
-    // Sample booking data (replace with actual data fetching)
-    const bookings = [
-        { 
-            id: 1,
-            type: 'Package', 
-            details: { name: 'Adventure Tour', price: '$500', date: '2024-04-01' }, 
-            status: 'pending' 
-        },
-        { 
-            id: 2,
-            type: 'Hotel', 
-            details: { name: 'Luxury Hotel', location: 'Paris', checkIn: '2024-04-10', checkOut: '2024-04-15' }, 
-            status: 'confirmed' 
-        },
-        { 
-            id: 3,
-            type: 'Cab', 
-            details: { pickup: 'Airport', dropoff: 'Hotel', date: '2024-04-05', time: '10:00 AM' }, 
-            status: 'pending' 
-        },
-        { 
-            id: 6,
-            type: 'Guide', 
-            details: { name: 'John Doe', expertise: 'Hiking', date: '2024-04-18' }, 
-            status: 'confirmed' 
-        },
-        // ... more bookings
+    // Merge all bookings with type identifiers
+    const allBookings = [
+        ...packageBookings.map(b => ({ ...b, type: 'package', uniqueKey: `package_${b.id}` })),
+        ...cabBookings.map(b => ({ ...b, type: 'cab', uniqueKey: `cab_${b.id}` })),
+        ...guideBookings.map(b => ({ ...b, type: 'guide', uniqueKey: `guide_${b.id}` })),
     ];
 
-    // Function to cancel a booking (only if status is 'pending')
-    const cancelBooking = (id) => {
-        const booking = bookings.find((booking) => booking.id === id);
-        if (booking && booking.status === 'pending') {
-            alert(`Booking ${id} has been canceled.`);
-            // Add logic to update the booking status in the backend
-        } else {
-            alert('You can only cancel pending bookings.');
+    const getStatusColor = (status) => {
+        switch (status.toLowerCase()) {
+            case 'pending': return 'bg-yellow-500/10 text-yellow-700 ring-1 ring-yellow-500/20';
+            case 'confirmed': return 'bg-blue-500/10 text-blue-700 ring-1 ring-blue-500/20';
+            case 'in-progress': return 'bg-purple-500/10 text-purple-700 ring-1 ring-purple-500/20';
+            case 'completed': return 'bg-green-500/10 text-green-700 ring-1 ring-green-500/20';
+            case 'cancelled': return 'bg-red-500/10 text-red-700 ring-1 ring-red-500/20';
+            default: return 'bg-gray-500/10 text-gray-700 ring-1 ring-gray-500/20';
         }
     };
 
-    const filteredBookings = bookings.filter((booking) =>
-        booking.type.toLowerCase().includes(search.toLowerCase())
+    const handleCancel = async (booking) => {
+        if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+
+        try {
+            switch (booking.type) {
+                case 'package':
+                    await axios.post(route('packages.cancel', booking.id));
+                    break;
+                case 'cab':
+                    await axios.post(route('cabs.cancel', booking.id));
+                    break;
+                case 'guide':
+                    await axios.post(route('guides.cancel', booking.id));
+                    break;
+                default:
+                    alert('Cancellation not available for this booking type');
+                    return;
+            }
+
+            router.reload({ only: ['packageBookings', 'cabBookings', 'guideBookings'] });
+        } catch (error) {
+            alert('Cancellation failed: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
+    const handleDownloadReceipt = async (booking) => {
+        try {
+            let endpoint;
+            switch (booking.type) {
+                case 'package':
+                    endpoint = route('packages.download-receipt', booking.id);
+                    break;
+                case 'cab':
+                    endpoint = route('cabs.download-receipt', booking.id);
+                    break;
+                case 'guide':
+                    endpoint = route('guides.download-receipt', booking.id);
+                    break;
+                default:
+                    return;
+            }
+    
+            const response = await axios.get(endpoint, { 
+                responseType: 'blob',
+                validateStatus: (status) => status === 200 // Only 200 is valid
+            });
+    
+            // Create blob URL
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `receipt-${booking.type}-${booking.id}.pdf`);
+            document.body.appendChild(link);
+            
+            // Trigger download
+            link.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+    
+        } catch (error) {
+            console.error('Download failed:', error);
+            
+            // Try to get error message from response if available
+            let errorMessage = 'Failed to download receipt';
+            if (error.response) {
+                try {
+                    const text = await error.response.data.text();
+                    const json = JSON.parse(text);
+                    errorMessage = json.message || errorMessage;
+                } catch (e) {
+                    errorMessage = error.response.statusText || errorMessage;
+                }
+            } else {
+                errorMessage = error.message || errorMessage;
+            }
+            
+            alert(errorMessage);
+        }
+    };
+
+    const filteredBookings = allBookings.filter(booking =>
+        booking.type.toLowerCase().includes(search.toLowerCase()) ||
+        booking.status.toLowerCase().includes(search.toLowerCase()) ||
+        booking.payment_id?.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -71,85 +137,110 @@ const Bookings = () => {
                         </p>
                     </motion.div>
 
-                    <div className="search-box">
+                    <div className="flex flex-col gap-4 mb-8">
                         <input
                             type="text"
-                            placeholder="Search Bookings..."
+                            placeholder="Search bookings by type..."
+                            className="w-96 mx-auto p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
+                        <div className="text-sm text-gray-500 text-center">
+                            Showing {filteredBookings.length} bookings
+                        </div>
                     </div>
 
-                    <div className="booking-list">
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {filteredBookings.length === 0 && (
+                            <div className="text-center py-12 col-span-full">
+                                <div className="text-gray-500 mb-4">✈️</div>
+                                <h3 className="text-lg font-medium text-gray-900">No bookings found</h3>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Try adjusting your search or create a new booking
+                                </p>
+                            </div>
+                        )}
                         {filteredBookings.map((booking) => (
                             <motion.div
-                                key={booking.id}
-                                className="booking-card"
+                                key={booking.uniqueKey}
+                                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: booking.id * 0.1 }}
+                                transition={{ duration: 0.3 }}
                             >
-                                <div className="card-content">
-                                    <h3 className="h3 card-title">{booking.type} Booking</h3>
-                                    <ul className="card-meta-list">
-                                        {Object.entries(booking.details).map(([key, value]) => (
-                                            <li key={key} className="card-meta-item">
-                                                <div className="meta-box">
-                                                    <ion-icon name="information-circle"></ion-icon>
-                                                    <p className="text"><strong>{key}:</strong> {value}</p>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <div className="booking-status">
-                                        <p><strong>Status:</strong> <span className={`status-${booking.status}`}>{booking.status}</span></p>
+                                <div className="p-6 space-y-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-3">
+                                            <div>
+                                                <h3 className="text-lg font-semibold capitalize">
+                                                    {booking.type} Booking
+                                                </h3>
+                                                <p className="text-sm text-gray-500">
+                                                    
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(booking.status)}`}>
+                                            {booking.status}
+                                        </span>
                                     </div>
-                                    {booking.status === 'pending' && (
-                                        <button
-                                            className="btn btn-secondary"
-                                            onClick={() => cancelBooking(booking.id)}
-                                        >
-                                            Cancel Booking
-                                        </button>
-                                    )}
+
+                                    <div className="space-y-3 text-gray-600">
+                                        {booking.type === 'package' && (
+                                            <>
+                                                <p><span className="font-medium">Package:</span> {booking.package?.title}</p>
+                                                <p><span className="font-medium">Start Date:</span> {new Date(booking.start_date).toLocaleDateString()}</p>
+                                                <p><span className="font-medium">Travelers:</span> {booking.number_of_people}</p>
+                                                <p><span className="font-medium">Total:</span> ₹{booking.total_price}</p>
+                                                <p><span className="font-medium">Payment ID:</span> {booking.payment_id || 'N/A'}</p>
+                                            </>
+                                        )}
+
+                                        {booking.type === 'cab' && (
+                                            <>
+                                                <p><span className="font-medium">Cab:</span> {booking.cab?.make} {booking.cab?.model}</p>
+                                                <p><span className="font-medium">Pickup:</span> {booking.pickup_location}</p>
+                                                <p><span className="font-medium">Dropoff:</span> {booking.dropoff_location}</p>
+                                                <p><span className="font-medium">When:</span> {new Date(booking.pickup_time).toLocaleString()}</p>
+                                                <p><span className="font-medium">Payment ID:</span> {booking.payment_id || 'N/A'}</p>
+                                            </>
+                                        )}
+
+                                        {booking.type === 'guide' && (
+                                            <>
+                                                <p><span className="font-medium">Guide:</span> {booking.guide?.name}</p>
+                                                <p><span className="font-medium">Meeting At:</span> {booking.meeting_location}</p>
+                                                <p><span className="font-medium">Duration:</span> {booking.duration_hours} hours</p>
+                                                <p><span className="font-medium">Total:</span> ₹{booking.total_price}</p>
+                                                <p><span className="font-medium">Payment ID:</span> {booking.payment_id || 'N/A'}</p>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-4 space-y-2">
+                                        {booking.status.toLowerCase() === 'pending' ? (
+                                            <button
+                                                onClick={() => handleCancel(booking)}
+                                                className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
+                                            >
+                                                Cancel Booking
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleDownloadReceipt(booking)}
+                                                className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
+                                            >
+                                                Download Receipt
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
-
-            {selectedBooking && (
-                <motion.div
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                >
-                    <motion.div
-                        className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-                        initial={{ scale: 0.9 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0.9 }}
-                    >
-                        <div className="flex flex-col md:flex-row gap-6">
-                            <div className="flex-1">
-                                <h3 className="h3 mb-4">{selectedBooking.type} Booking</h3>
-                                <ul className="space-y-2 mt-4">
-                                    {Object.entries(selectedBooking.details).map(([key, value]) => (
-                                        <li key={key}><strong>{key}:</strong> {value}</li>
-                                    ))}
-                                    <li><strong>Status:</strong> <span className={`status-${selectedBooking.status}`}>{selectedBooking.status}</span></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div className="flex justify-end mt-6 space-x-4">
-                            <button className="btn btn-outline" onClick={() => setSelectedBooking(null)}>Close</button>
-                        </div>
-                    </motion.div>
-                </motion.div>
-            )}
         </AuthenticatedLayout>
     );
 };

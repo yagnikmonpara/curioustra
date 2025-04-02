@@ -34,10 +34,10 @@ export default function AdminLayout({ children }) {
                         <Link href={route('admin.packages')}>
                             <span className="material-symbols-outlined"> package </span>Packages</Link>
                     </li>
-                    <li>
+                    {/* <li>
                         <Link href={route('admin.hotels')}>
                             <span className="material-symbols-outlined"> hotel </span>Hotels</Link>
-                    </li>
+                    </li> */}
                     <li>
                         <Link href={route('admin.cabs')}>
                             <span className="material-symbols-outlined"> local_taxi </span>Cabs</Link>
@@ -65,9 +65,9 @@ export default function AdminLayout({ children }) {
                     <li>
                         <Link href={route('admin.package-bookings')}><span className="material-symbols-outlined"> folder </span>Package Bookings</Link>
                     </li>
-                    <li>
+                    {/* <li>
                         <Link href={route('admin.hotel-bookings')}><span className="material-symbols-outlined"> folder </span>Hotel Bookings</Link>
-                    </li>
+                    </li> */}
                     <li>
                         <Link href={route('admin.cab-bookings')}><span className="material-symbols-outlined"> folder </span>Cab Bookings</Link>
                     </li>

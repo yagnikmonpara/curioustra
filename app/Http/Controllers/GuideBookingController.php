@@ -39,218 +39,222 @@ class GuideBookingController extends Controller
     }
 
     public function checkAvailability(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'guide_id' => 'required|exists:guides,id',
-                'booking_date' => 'required|date_format:Y-m-d',
-                'booking_time' => 'required|date_format:H:i',
-                'duration_hours' => 'required|numeric|min:1'
-            ]);
+{
+    try {
+        $validated = $request->validate([
+            'guide_id' => 'required|exists:guides,id',
+            'start_time' => 'required|date_format:Y-m-d H:i:s',
+            'duration_hours' => 'required|numeric|min:1'
+        ]);
 
-            $guide = Guide::findOrFail($validated['guide_id']);
-            
-            if ($guide->status !== 'available') {
-                return response()->json([
-                    'available' => false,
-                    'message' => 'Guide is currently unavailable',
-                ], 400);
-            }
-
-            $startTime = Carbon::parse($validated['booking_date'].' '.$validated['booking_time']);
-            $endTime = $startTime->copy()->addHours($validated['duration_hours']);
-
-            $isAvailable = !$guide->bookings()
-                ->where(function($query) use ($startTime, $endTime) {
-                    $query->whereBetween('booking_date', [$startTime, $endTime])
-                          ->orWhereBetween('end_time', [$startTime, $endTime])
-                          ->orWhere(function($q) use ($startTime, $endTime) {
-                              $q->where('booking_date', '<', $startTime)
-                                ->where('end_time', '>', $endTime);
-                          });
-                })
-                ->whereIn('status', ['confirmed', 'in-progress', 'pending'])
-                ->exists();
-
-            return response()->json([
-                'available' => $isAvailable,
-                'message' => $isAvailable ? 'Guide available' : 'Already booked',
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Availability check failed: '.$e->getMessage());
-            return response()->json(['error' => 'Server error'], 500);
+        $guide = Guide::findOrFail($validated['guide_id']);
+        
+        if ($guide->status !== 'available') {
+            return response()->json(['available' => false], 400);
         }
+
+        $startTime = Carbon::parse($validated['start_time']);
+        $endTime = $startTime->copy()->addHours($validated['duration_hours']);
+
+        $isAvailable = !$guide->bookings()
+            ->where(function($query) use ($startTime, $endTime) {
+                $query->whereBetween('start_time', [$startTime, $endTime])
+                      ->orWhereBetween('end_time', [$startTime, $endTime])
+                      ->orWhere(function($q) use ($startTime, $endTime) {
+                          $q->where('start_time', '<', $startTime)
+                            ->where('end_time', '>', $endTime);
+                      });
+            })
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->exists();
+
+        return response()->json(['available' => $isAvailable]);
+
+    } catch (\Exception $e) {
+        Log::error('Availability check failed: '.$e->getMessage());
+        return response()->json(['error' => 'Server error'], 500);
+    }
+}
+
+public function availabilityCalendar(Request $request)
+{
+    $request->validate([
+        'guide_id' => 'required|exists:guides,id',
+        'month' => 'required|integer|between:1,12',
+        'year' => 'required|integer'
+    ]);
+
+    $guide = Guide::findOrFail($request->guide_id);
+    $start = Carbon::create($request->year, $request->month, 1);
+    $end = $start->copy()->endOfMonth();
+
+    // Get all bookings that overlap with the month
+    $bookings = $guide->bookings()
+        ->where(function($query) use ($start, $end) {
+            $query->whereBetween('start_time', [$start, $end])
+                  ->orWhereBetween('end_time', [$start, $end])
+                  ->orWhere(function($q) use ($start, $end) {
+                      $q->where('start_time', '<', $start)
+                        ->where('end_time', '>', $end);
+                  });
+        })
+        ->whereIn('status', ['confirmed', 'in-progress', 'pending'])
+        ->get(['start_time', 'end_time']);
+
+    $calendar = [];
+    $currentDay = $start->copy();
+
+    while ($currentDay <= $end) {
+        $isAvailable = true;
+
+        // Check against all bookings
+        foreach ($bookings as $booking) {
+            $bookingStart = Carbon::parse($booking->start_time);
+            $bookingEnd = Carbon::parse($booking->end_time);
+            $dayStart = $currentDay->copy()->startOfDay();
+            $dayEnd = $currentDay->copy()->endOfDay();
+
+            if ($bookingStart->lte($dayEnd) && $bookingEnd->gte($dayStart)) {
+                $isAvailable = false;
+                break;
+            }
+        }
+
+        $calendar[] = [
+            'date' => $currentDay->format('Y-m-d'),
+            'available' => $isAvailable && $guide->status === 'available',
+            'day' => $currentDay->day
+        ];
+
+        $currentDay->addDay();
     }
 
-    public function availabilityCalendar(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'guide_id' => 'required|exists:guides,id',
-                'month' => 'required|integer|between:1,12',
-                'year' => 'required|integer|min:2020'
-            ]);
-
-            $guide = Guide::findOrFail($validated['guide_id']);
-            $month = $validated['month'];
-            $year = $validated['year'];
-
-            $start = Carbon::create($year, $month, 1);
-            $end = $start->copy()->endOfMonth();
-
-            $bookings = $guide->bookings()
-                ->whereBetween('booking_date', [$start, $end])
-                ->whereIn('status', ['confirmed', 'in-progress'])
-                ->get(['booking_date', 'end_time']);
-
-            $calendar = [];
-            foreach ($start->daysUntil($end) as $day) {
-                $isAvailable = !$bookings->contains(function ($booking) use ($day) {
-                    return $day->between(
-                        $booking->booking_date->startOfDay(),
-                        $booking->end_time->endOfDay()
-                    );
-                });
-
-                $calendar[] = [
-                    'date' => $day->format('Y-m-d'),
-                    'available' => $isAvailable && $guide->status === 'available'
-                ];
-            }
-
-            return response()->json([
-                'calendar' => $calendar,
-                'guide' => $guide->only('id', 'name', 'status')
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to fetch availability calendar',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
+    return response()->json([
+        'calendar' => $calendar,
+        'guide_status' => $guide->status
+    ]);
+}
 
     public function store(Request $request)
-    {
-        DB::beginTransaction();
-        try {
-            $validated = $request->validate([
-                'guide_id' => 'required|exists:guides,id',
-                'booking_date' => 'required|date_format:Y-m-d',
-                'booking_time' => 'required|date_format:H:i',
-                'duration_hours' => 'required|numeric|min:1',
-                'meeting_location' => 'required|string|max:255',
-                'additional_info' => 'nullable|string',
-            ]);
+{
+    DB::beginTransaction();
+    try {
+        $validated = $request->validate([
+            'guide_id' => 'required|exists:guides,id',
+            'booking_date' => 'required|date_format:Y-m-d',
+            'booking_time' => 'required|date_format:H:i',
+            'duration_hours' => 'required|integer|min:1|max:8',
+            'meeting_location' => 'required|string|max:255'
+        ]);
     
-            $guide = Guide::findOrFail($validated['guide_id']);
-            $user = Auth::user();
-            
-            if ($guide->status !== 'available') {
-                throw new \Exception('Guide unavailable');
-            }
-
-            $startTime = Carbon::parse($validated['booking_date'].' '.$validated['booking_time']);
-            $endTime = $startTime->copy()->addHours($validated['duration_hours']);
-
-            $isBooked = $guide->bookings()
-                ->where(function($query) use ($startTime, $endTime) {
-                    $query->whereBetween('booking_date', [$startTime, $endTime])
-                          ->orWhereBetween('end_time', [$startTime, $endTime])
-                          ->orWhere(function($q) use ($startTime, $endTime) {
-                              $q->where('booking_date', '<', $startTime)
-                                ->where('end_time', '>', $endTime);
-                          });
-                })
-                ->whereIn('status', ['confirmed', 'in-progress'])
-                ->exists();
-
-            if ($isBooked) {
-                throw new \Exception('Time slot unavailable');
-            }
-
-            $totalPrice = $validated['duration_hours'] * $guide->price_per_hour;
-
-            $razorpay = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
-
-            $order = $razorpay->order->create([
-                'amount' => round($totalPrice * 100),
-                'currency' => 'INR',
-                'receipt' => 'guide_'.uniqid(),
-                'notes' => [
-                    'user_id' => $user->id,
-                    'guide_id' => $guide->id,
-                    'booking_details' => json_encode($validated),
-                    'total_price' => $totalPrice,
-                ],
-                'payment_capture' => 1
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'order_id' => $order->id,
-                'amount' => $order->amount,
-                'user' => $user->only('name', 'email', 'phone')
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Booking error: '.$e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 400);
+        $guide = Guide::findOrFail($validated['guide_id']);
+        $user = Auth::user();
+        
+        if ($guide->status !== 'available') {
+            throw new \Exception('Guide unavailable');
         }
-    }
+        
+        $startTime = Carbon::parse($validated['booking_date'].' '.$validated['booking_time'])
+            ->setTimezone(config('app.timezone'));
+        $endTime = $startTime->copy()->addHours($validated['duration_hours']);
 
-    public function verifyPayment(Request $request)
-    {
-        DB::beginTransaction();
-        try {
-            $request->validate([
-                'payment_id' => 'required|string'
-            ]);
+        $isBooked = $guide->bookings()
+            ->where(function($query) use ($startTime, $endTime) {
+                $query->whereBetween('start_time', [$startTime, $endTime])
+                      ->orWhereBetween('end_time', [$startTime, $endTime])
+                      ->orWhere(function($q) use ($startTime, $endTime) {
+                          $q->where('start_time', '<', $startTime)
+                            ->where('end_time', '>', $endTime);
+                      });
+            })
+            ->whereIn('status', ['pending', 'confirmed', 'completed'])
+            ->exists();
 
-            $razorpay = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
-            $payment = $razorpay->payment->fetch($request->payment_id);
-
-            if ($payment->status !== 'captured') {
-                throw new \Exception('Payment not captured');
-            }
-
-            $order = $razorpay->order->fetch($payment->order_id);
-            $notes = $order->notes;
-            $bookingDetails = json_decode($notes['booking_details'], true);
-
-            $booking = GuideBooking::create([
-                'user_id' => $notes['user_id'],
-                'guide_id' => $notes['guide_id'],
-                'rate_per_hour' => Guide::find($notes['guide_id'])->price_per_hour,
-                'booking_date' => Carbon::parse($bookingDetails['booking_date'].' '.$bookingDetails['booking_time']),
-                'end_time' => Carbon::parse($bookingDetails['booking_date'].' '.$bookingDetails['booking_time'])
-                    ->addHours($bookingDetails['duration_hours']),
-                'duration_hours' => $bookingDetails['duration_hours'],
-                'meeting_location' => $bookingDetails['meeting_location'],
-                'total_price' => $notes['total_price'],
-                'payment_id' => $payment->id,
-                'status' => 'confirmed'
-            ]);
-
-            $this->sendStatusEmail($booking, 'confirmed');
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'redirect' => route('bookings'),
-                'booking' => $booking
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Payment verification failed: '.$e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 400);
+        if ($isBooked) {
+            throw new \Exception('Time slot unavailable');
         }
+
+        $totalPrice = $validated['duration_hours'] * $guide->price_per_hour;
+
+        $razorpay = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+
+        $order = $razorpay->order->create([
+            'amount' => round($totalPrice * 100),
+            'currency' => 'INR',
+            'receipt' => 'guide_'.uniqid(),
+            'notes' => [
+                'user_id' => $user->id,
+                'guide_id' => $guide->id,
+                'booking_details' => json_encode($validated),
+                'total_price' => $totalPrice,
+            ],
+            'payment_capture' => 1
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'razorpay_key' => env('RAZORPAY_KEY_ID'),
+            'order_id' => $order->id,
+            'amount' => $order->amount,
+            'user' => $user->only('name', 'email', 'phone')
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Booking error: '.$e->getMessage());
+        return response()->json(['error' => $e->getMessage()], 400);
     }
+}
+
+public function verifyPayment(Request $request)
+{
+    DB::beginTransaction();
+    try {
+        $request->validate([
+            'payment_id' => 'required|string'
+        ]);
+
+        $razorpay = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+        $payment = $razorpay->payment->fetch($request->payment_id);
+
+        if ($payment->status !== 'captured') {
+            throw new \Exception('Payment not captured');
+        }
+
+        $order = $razorpay->order->fetch($payment->order_id);
+        $notes = $order->notes;
+        $bookingDetails = json_decode($notes['booking_details'], true);
+
+        $booking = GuideBooking::create([
+            'user_id' => $notes['user_id'],
+            'guide_id' => $notes['guide_id'],
+            'rate_per_hour' => Guide::find($notes['guide_id'])->price_per_hour,
+            'start_time' => Carbon::parse($bookingDetails['booking_date'].' '.$bookingDetails['booking_time']),
+            'end_time' => Carbon::parse($bookingDetails['booking_date'].' '.$bookingDetails['booking_time'])
+                ->addHours($bookingDetails['duration_hours']),
+            'duration_hours' => $bookingDetails['duration_hours'],
+            'meeting_location' => $bookingDetails['meeting_location'],
+            'total_price' => $notes['total_price'],
+            'payment_id' => $payment->id,
+            'status' => 'confirmed'
+        ]);
+
+        $this->sendStatusEmail($booking, 'confirmed');
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'redirect' => route('bookings'),
+            'booking' => $booking
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Payment verification failed: '.$e->getMessage());
+        return response()->json(['error' => $e->getMessage()], 400);
+    }
+}
 
     private function sendStatusEmail(GuideBooking $booking, string $status)
     {

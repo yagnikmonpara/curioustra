@@ -6,6 +6,21 @@ import { Dialog, Transition } from '@headlessui/react';
 import axios from "axios";
 import { format, isToday, addMonths, subMonths } from 'date-fns';
 
+const normalizeLanguages = (languages) => {
+    if (!languages) return [];
+    if (Array.isArray(languages)) return languages;
+    if (typeof languages === 'string') {
+        try {
+            // Try to parse if it's a JSON string
+            const parsed = JSON.parse(languages);
+            return Array.isArray(parsed) ? parsed : languages.split(',').map(l => l.trim());
+        } catch {
+            return languages.split(',').map(l => l.trim());
+        }
+    }
+    return [];
+};
+
 // Icon components
 const StarIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#2D336B]" viewBox="0 0 20 20" fill="currentColor">
@@ -62,7 +77,7 @@ const Guides = ({ guides }) => {
 
     useEffect(() => {
         if (window.Razorpay) return;
-        
+
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.async = true;
@@ -86,11 +101,7 @@ const Guides = ({ guides }) => {
     // Enhanced filtered guides calculation
     const filteredGuides = useMemo(() => {
         return guides.filter(guide => {
-            const guideLanguages = Array.isArray(guide.languages)
-                ? guide.languages
-                : typeof guide.languages === 'string'
-                    ? guide.languages.split(',').map(l => l.trim())
-                    : [];
+            const guideLanguages = normalizeLanguages(guide.languages);
 
             const matchesSearch = `${guide.name} ${guide.specialization} ${guide.bio}`
                 .toLowerCase()
@@ -101,17 +112,18 @@ const Guides = ({ guides }) => {
 
             const matchesLanguages = searchFilters.languages.length === 0 ||
                 searchFilters.languages.every(lang =>
-                    guideLanguages.map(l => l.toLowerCase()).includes(lang.toLowerCase())
+                    guideLanguages.some(guideLang =>
+                        guideLang.toLowerCase().includes(lang.toLowerCase())
+                    )
                 );
 
             const matchesPrice = guide.price_per_hour >= searchFilters.priceRange[0] &&
                 guide.price_per_hour <= searchFilters.priceRange[1];
 
-            // Updated line to handle undefined/null ratings
             const matchesRating = (guide.rating || 0) >= searchFilters.rating;
 
             const matchesLocation = !searchFilters.location ||
-                guide.location.toLowerCase().includes(searchFilters.location.toLowerCase());
+                (guide.location && guide.location.toLowerCase().includes(searchFilters.location.toLowerCase()));
 
             return matchesSearch && matchesSpecialization && matchesLanguages &&
                 matchesPrice && matchesRating && matchesLocation;
@@ -119,24 +131,25 @@ const Guides = ({ guides }) => {
     }, [guides, searchQuery, searchFilters]);
 
     const fetchAvailabilityCalendar = async () => {
-        if (!selectedGuide) return;
+        if (!selectedGuide?.id) return;
 
         setLoading(true);
         try {
             const response = await axios.get(route('guides.availability-calendar'), {
                 params: {
                     guide_id: selectedGuide.id,
-                    month: currentDate.getMonth() + 1, // JavaScript months are 0-11
+                    month: currentDate.getMonth() + 1,
                     year: currentDate.getFullYear()
-                },
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
                 }
             });
 
-            if (response.data && response.data.calendar) {
-                setCalendarData(response.data.calendar);
+            if (response.data?.calendar) {
+                // Ensure calendar data is in the correct format
+                const formattedCalendar = response.data.calendar.map(item => ({
+                    date: item.date,
+                    available: Boolean(item.available)
+                }));
+                setCalendarData(formattedCalendar);
             } else {
                 throw new Error('Invalid calendar data format');
             }
@@ -146,6 +159,7 @@ const Guides = ({ guides }) => {
                 ...prev,
                 calendar: error.response?.data?.message || 'Failed to load availability calendar'
             }));
+            setCalendarData([]);
         } finally {
             setLoading(false);
         }
@@ -180,15 +194,13 @@ const Guides = ({ guides }) => {
 
         setPaymentProcessing(true);
         try {
-            const [bookingDate, bookingTime] = bookingDetails.start_time.split('T');
-
+            const [date, time] = bookingDetails.start_time.split('T');
             const response = await axios.post(route('guides.book'), {
                 guide_id: selectedGuide.id,
-                booking_date: bookingDate,
-                booking_time: bookingTime,
+                booking_date: date,
+                booking_time: time,
                 duration_hours: bookingDetails.duration,
-                meeting_location: bookingDetails.meeting_location,
-                _token: auth.csrf_token
+                meeting_location: bookingDetails.meeting_location
             });
 
             const options = {
@@ -199,12 +211,13 @@ const Guides = ({ guides }) => {
                 handler: async (razorpayResponse) => {
                     try {
                         await axios.post(route('guides.payment'), {
-                            payment_id: razorpayResponse.razorpay_payment_id,
-                            _token: auth.csrf_token
+                            payment_id: razorpayResponse.razorpay_payment_id
                         });
                         window.location.href = route('bookings');
                     } catch (error) {
-                        setErrors(prev => ({ ...prev, payment: 'Payment verification failed' }));
+                        setErrors({
+                            payment: error.response?.data?.error || 'Payment verification failed'
+                        });
                     }
                 },
                 prefill: {
@@ -217,11 +230,11 @@ const Guides = ({ guides }) => {
 
             const razorpay = new window.Razorpay(options);
             razorpay.open();
+
         } catch (error) {
-            setErrors(prev => ({
-                ...prev,
-                booking: error.response?.data?.message || 'Booking failed. Please try again.'
-            }));
+            setErrors({
+                payment: error.response?.data?.error || 'Payment initiation failed'
+            });
         } finally {
             setPaymentProcessing(false);
         }
@@ -231,27 +244,39 @@ const Guides = ({ guides }) => {
     const CalendarView = () => {
         const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
         const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-        // Get today's date in YYYY-MM-DD format for comparison
         const today = format(new Date(), 'yyyy-MM-dd');
 
+        // Generate day cells with proper padding
         const days = Array.from({ length: firstDayOfMonth }, () => null)
             .concat(...Array.from({ length: daysInMonth }, (_, i) => {
                 const day = i + 1;
                 const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
                 const dateStr = format(date, 'yyyy-MM-dd');
                 const dayData = calendarData.find(d => d.date === dateStr);
-
-                // Check if date is in the past
                 const isPastDate = dateStr < today;
 
                 return {
                     day,
                     date: dateStr,
                     available: dayData ? dayData.available : false,
-                    isToday: isToday(date),
                     isPastDate
                 };
             }));
+
+        // Date selection handler
+        const handleDateSelect = (dateStr) => {
+            if (!dateStr) return;
+
+            // Keep existing time or use current time
+            const currentTime = bookingDetails.start_time
+                ? bookingDetails.start_time.slice(11, 16)
+                : format(new Date(), 'HH:mm');
+
+            setBookingDetails(prev => ({
+                ...prev,
+                start_time: `${dateStr}T${currentTime}`
+            }));
+        };
 
         return (
             <div className="mt-4">
@@ -299,51 +324,27 @@ const Guides = ({ guides }) => {
 
                         <div className="grid grid-cols-7 gap-1">
                             {days.map((day, index) => {
-                                const isSelected = bookingDetails.start_time.startsWith(day?.date || '');
-                                const isPastDate = day?.date && new Date(day.date) < new Date(new Date().setHours(0, 0, 0, 0));
+                                const isSelected = bookingDetails.start_time?.startsWith(day?.date || '');
+                                const isAvailable = day?.available && !day?.isPastDate;
 
                                 return (
                                     <button
                                         key={index}
-                                        className={`
-            p-2 text-center border rounded-lg h-12 flex flex-col items-center justify-center transition-all
-            ${!day ? 'bg-gray-50' : ''}
-            ${day?.available && !day?.isPastDate ?
-                                                'bg-green-50 hover:bg-green-100 cursor-pointer' :
-                                                'bg-red-50 hover:bg-red-100 cursor-not-allowed'
-                                            }
-            ${day?.isToday ? 'border-2 border-blue-500' : 'border-gray-200'}
-            ${isSelected ? 'ring-2 ring-[#2D336B] bg-[#2D336B]/10' : ''}
-        `}
-                                        onClick={() => {
-                                            if (day?.available && !day?.isPastDate) {
-                                                const currentTime = bookingDetails.start_time
-                                                    ? bookingDetails.start_time.slice(11, 16)
-                                                    : '12:00';
-                                                setBookingDetails(prev => ({
-                                                    ...prev,
-                                                    start_time: `${day.date}T${currentTime}`
-                                                }));
-                                            }
-                                        }}
-                                        disabled={!day?.available || day?.isPastDate}
-                                        aria-label={`${day?.day || ''} ${day?.available ? 'Available' : 'Unavailable'}`}
+                                        className={`p-2 text-center border rounded h-12 flex items-center justify-center 
+                                ${!day ? 'bg-gray-100' :
+                                                isAvailable ?
+                                                    'bg-green-100 hover:bg-green-200 cursor-pointer' :
+                                                    'bg-red-100 hover:bg-red-200 cursor-not-allowed'}
+                                ${day?.date === today ? 'border-2 border-blue-500' : 'border-gray-200'}
+                                ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+                                        onClick={() => day && handleDateSelect(day.date)}
+                                        disabled={!day || !isAvailable}
                                     >
                                         {day && (
-                                            <>
-                                                <span className={`
-                          text-sm font-medium
-                          ${day.available && !isPastDate ?
-                                                        (isSelected ? 'text-[#2D336B] font-bold' : 'text-green-800') :
-                                                        'text-red-800'
-                                                    }
-                        `}>
-                                                    {day.day}
-                                                </span>
-                                                {day.isToday && (
-                                                    <span className="w-1 h-1 rounded-full bg-blue-500 mt-1"></span>
-                                                )}
-                                            </>
+                                            <span className={`font-medium ${isAvailable ? 'text-green-800' : 'text-red-800'
+                                                }`}>
+                                                {day.day}
+                                            </span>
                                         )}
                                     </button>
                                 );
@@ -372,11 +373,7 @@ const Guides = ({ guides }) => {
 
     const GuideCard = ({ guide }) => {
         const [isHovered, setIsHovered] = useState(false);
-        const languages = useMemo(() => {
-            if (Array.isArray(guide.languages)) return guide.languages;
-            if (typeof guide.languages === 'string') return guide.languages.split(',').map(l => l.trim());
-            return [];
-        }, [guide.languages]);
+        const languages = normalizeLanguages(guide.languages);
 
         return (
             <motion.div
@@ -407,7 +404,7 @@ const Guides = ({ guides }) => {
                             <h3 className="text-2xl font-bold mb-1">{guide.name}</h3>
                             <p className="text-sm text-gray-300 mb-3">{guide.specialization}</p>
                             <div className="flex flex-wrap gap-2 mb-4">
-                                {languages.map(lang => (
+                                {languages.slice(0, 3).map(lang => (
                                     <span
                                         key={lang}
                                         className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium capitalize"
@@ -436,9 +433,22 @@ const Guides = ({ guides }) => {
                                 <LocationIcon />
                                 <span>{guide.location}</span>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <StarIcon />
-                                <span>{guide.rating} • {guide.tours_completed} tours</span>
+                            <div className="flex items-center gap-1">
+                                <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                        <svg
+                                            key={i}
+                                            className={`h-5 w-5 ${i < Math.floor(guide.rating) ? 'text-yellow-400' : 'text-gray-300'}`}
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+                                    ))}
+                                </div>
+                                <span className="text-gray-600">
+                                    {guide.rating?.toFixed(1) || '4.5'} ({guide.tours_completed}+ tours)
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -523,17 +533,6 @@ const Guides = ({ guides }) => {
 
                                     <div className="bg-white rounded-xl p-4 shadow-sm flex-1">
                                         <CalendarView />
-                                    </div>
-
-                                    <div className="mt-4 text-white text-sm">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-4 h-4 rounded-sm bg-green-100 border border-green-300"></div>
-                                            <span>Available</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 rounded-sm bg-red-100 border border-red-300"></div>
-                                            <span>Unavailable</span>
-                                        </div>
                                     </div>
                                 </div>
 
@@ -651,6 +650,12 @@ const Guides = ({ guides }) => {
                                                 </div>
                                             </div>
 
+                                            {errors.payment && (
+                                                <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                                                    {errors.payment}
+                                                </div>
+                                            )}
+
                                             {/* Payment Button */}
                                             <button
                                                 type="button"
@@ -680,11 +685,7 @@ const Guides = ({ guides }) => {
 
     const GuideDetailsModal = () => {
         if (!selectedGuide) return null;
-        const languages = useMemo(() => {
-            if (Array.isArray(selectedGuide.languages)) return selectedGuide.languages;
-            if (typeof selectedGuide.languages === 'string') return selectedGuide.languages.split(',').map(l => l.trim());
-            return [];
-        }, [selectedGuide.languages]);
+        const languages = normalizeLanguages(selectedGuide.languages);
 
         return (
             <Dialog open={!!selectedGuide} onClose={() => setSelectedGuide(null)} className="relative z-50">
@@ -839,7 +840,6 @@ const Guides = ({ guides }) => {
                                                 className="px-6 py-3 bg-gradient-to-r from-[#2D336B] to-[#7886C7] text-white rounded-lg hover:opacity-90 transition-opacity font-medium shadow-md"
                                                 onClick={() => {
                                                     setShowBookingModal(true);
-                                                    setSelectedGuide(null);
                                                 }}
                                             >
                                                 Book This Guide
@@ -999,6 +999,7 @@ const Guides = ({ guides }) => {
                                         />
                                     </div>
 
+                                    {/* Languages Filter */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Languages (comma separated)
@@ -1007,14 +1008,17 @@ const Guides = ({ guides }) => {
                                             type="text"
                                             placeholder="e.g., English, Spanish, French"
                                             className="w-full p-2 border rounded-lg"
-                                            value={searchFilters.languagesInput}
+                                            value={searchFilters.languagesInput || ''}
                                             onChange={(e) => {
-                                                const langs = e.target.value.split(',')
-                                                    .map(l => l.trim().toLowerCase());
+                                                const input = e.target.value;
+                                                const langs = input.split(',')
+                                                    .map(l => l.trim())
+                                                    .filter(l => l.length > 0);
+
                                                 setSearchFilters(prev => ({
                                                     ...prev,
                                                     languages: langs,
-                                                    languagesInput: e.target.value
+                                                    languagesInput: input
                                                 }));
                                             }}
                                         />

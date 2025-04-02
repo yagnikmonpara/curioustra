@@ -79,4 +79,21 @@ class Guide extends Model
     {
         return $query->where('status', 'active');
     }
+
+    public function isAvailableBetween($start, $end)
+{
+    if ($this->status !== 'available') return false;
+
+    return !$this->bookings()
+        ->where(function($query) use ($start, $end) {
+            $query->whereBetween('start_time', [$start, $end])
+                  ->orWhereBetween('end_time', [$start, $end])
+                  ->orWhere(function($q) use ($start, $end) {
+                      $q->where('start_time', '<', $start)
+                        ->where('end_time', '>', $end);
+                  });
+        })
+        ->whereIn('status', ['confirmed', 'pending'])
+        ->exists();
+}
 }

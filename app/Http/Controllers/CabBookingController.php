@@ -388,8 +388,22 @@ public function getAvailabilityCalendar(Request $request)
     }
 
     public function downloadReceipt(CabBooking $booking)
-    {
+{
+    try {
+        // Authorization check - only booking owner or admin can download
+        if (Auth::id() !== $booking->user_id && !Auth::user()->isAdmin()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Load relationships
         $booking->load(['cab', 'user']);
+
+        // Verify the logo file exists
+        $logoPath = public_path('/images/logo.png');
+        if (!file_exists($logoPath)) {
+            \Log::warning("Logo file not found at: " . $logoPath);
+            $logoPath = null; // Will handle this in the view
+        }
 
         $data = [
             'booking' => $booking,
@@ -398,15 +412,24 @@ public function getAvailabilityCalendar(Request $request)
                 'address' => 'Surat, Gujarat, India - 395006',
                 'email' => 'info.curioustra@gmail.com',
                 'phone' => '+91 800####4591',
-                'logo' => public_path('images/logo.png')
+                'logo' => $logoPath
             ]
         ];
 
-        $pdf = Pdf::loadView('pdfs.cabReceipt', $data)->setPaper('a4', 'portrait');
+        // Generate PDF
+        $pdf = Pdf::loadView('pdfs.cabReceipt', $data)
+            ->setPaper('a4', 'portrait')
+            ->setOption('isRemoteEnabled', true);
+
         $filename = "CabReceipt-{$booking->id}.pdf";
 
         return $pdf->download($filename);
+
+    } catch (\Exception $e) {
+        \Log::error("Receipt generation failed for booking {$booking->id}: " . $e->getMessage());
+        abort(500, 'Failed to generate receipt. Please try again later.');
     }
+}
 
     public function refund(Request $request)
 {
