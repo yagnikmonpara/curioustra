@@ -392,7 +392,7 @@ const Guides = ({ guides }) => {
                         loading="lazy"
                         onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = '/images/default-guide.jpg';
+                            e.target.src = '/images/default-guide.png';
                         }}
                     />
 
@@ -540,9 +540,13 @@ const Guides = ({ guides }) => {
                                     <form onSubmit={(e) => e.preventDefault()}>
                                         <div className="flex items-center gap-4 mb-6">
                                             <img
-                                                src={selectedGuide.profile_picture || '/images/default-guide.jpg'}
+                                                src={selectedGuide.profile_picture || '/images/default-guide.png'}
                                                 alt={selectedGuide.name}
                                                 className="w-16 h-16 rounded-full object-cover border-2 border-[#2D336B]"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = '/images/default-guide.png';
+                                                }}
                                             />
                                             <div>
                                                 <Dialog.Title className="text-2xl font-bold text-gray-800">
@@ -716,9 +720,13 @@ const Guides = ({ guides }) => {
                                 <div className="w-full md:w-1/3 bg-gradient-to-b from-[#2D336B] to-[#7886C7] p-8 text-white">
                                     <div className="flex flex-col items-center">
                                         <img
-                                            src={selectedGuide?.profile_picture || '/images/default-guide.jpg'}
+                                            src={selectedGuide?.profile_picture || '/images/default-guide.png'}
                                             alt={selectedGuide?.name}
                                             className="w-40 h-40 object-cover rounded-full border-4 border-white shadow-lg mb-6"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = '/images/default-guide.png';
+                                            }}
                                         />
                                         <h2 className="text-2xl font-bold text-center mb-1">{selectedGuide?.name}</h2>
                                         <p className="text-gray-200 text-center mb-6">{selectedGuide?.specialization}</p>
