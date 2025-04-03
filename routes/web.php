@@ -159,7 +159,7 @@ Route::middleware(UserMiddleware::class)->group(function () {
     Route::post('packages/book', [PackageBookingController::class, 'store'])->name('packages.book');
     Route::post('/packages/payment', [PackageBookingController::class, 'verifyPayment'])->name('packages.payment');
     Route::post('/packages/refund', [PackageBookingController::class, 'refund'])->name('packages.refund');
-    Route::post('/packages/cancel', [PackageBookingController::class, 'cancelBooking'])->name('packages.cancel');
+    Route::post('/packages/{booking}/cancel', [PackageBookingController::class, 'cancelBooking'])->name('packages.cancel');
     Route::get('/packages/{booking}/download-receipt', [PackageBookingController::class, 'downloadReceipt'])->name('packages.download-receipt');
 
     // Hotel Page
@@ -174,7 +174,7 @@ Route::middleware(UserMiddleware::class)->group(function () {
     Route::get('/cabs/availability-calendar', [CabBookingController::class, 'getAvailabilityCalendar'])->name('cabs.availability-calendar');
     Route::post('/cabs/book', [CabBookingController::class, 'store'])->name('cabs.book');
     Route::post('/cabs/payment', [CabBookingController::class, 'verifyPayment'])->name('cabs.payment');
-    Route::post('/cabs/cancel', [CabBookingController::class, 'cancelBooking'])->name('cabs.cancel');
+    Route::post('/cabs/{booking}/cancel', [CabBookingController::class, 'cancelBooking'])->name('cabs.cancel');
     Route::get('/cabs/{booking}/download-receipt', [CabBookingController::class, 'downloadReceipt'])->name('cabs.download-receipt');
     Route::post('/cabs/refund', [CabBookingController::class, 'refund'])->name('cabs.refund');
 

@@ -2,30 +2,64 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage } from "@inertiajs/react";
 import axios from "axios";
 import { Dialog } from '@headlessui/react';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { motion } from "framer-motion";
 import { format } from 'date-fns';
 
+const useCalendar = (cabId) => {
+    const [calendarData, setCalendarData] = useState([]);
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    const fetchAvailabilityCalendar = useCallback(async () => {
+        if (!cabId) return;
+
+        try {
+            const response = await axios.get(route('cabs.availability-calendar'), {
+                params: {
+                    cab_id: cabId,
+                    month: currentDate.getMonth() + 1,
+                    year: currentDate.getFullYear()
+                }
+            });
+            setCalendarData(response.data.calendar);
+        } catch (error) {
+            console.error('Calendar fetch error:', error);
+            setCalendarData([]);
+        }
+    }, [cabId, currentDate]);
+
+    const handleMonthChange = useCallback((increment) => {
+        setCurrentDate(prev => new Date(prev.setMonth(prev.getMonth() + increment)));
+    }, []);
+
+    useEffect(() => {
+        fetchAvailabilityCalendar();
+    }, [fetchAvailabilityCalendar]);
+
+    return {
+        calendarData,
+        currentDate,
+        handleMonthChange
+    };
+};
+
 const Cabs = ({ cabs }) => {
-    const { csrf_token } = usePage().props;
+    // const { csrf_token } = usePage().props;
     const [search, setSearch] = useState("");
     const [selectedCab, setSelectedCab] = useState(null);
     const [showBookingModal, setShowBookingModal] = useState(false);
     const [bookingCab, setBookingCab] = useState(null);
     const [availability, setAvailability] = useState(null);
     const [estimatedDuration, setEstimatedDuration] = useState(1);
-    const [calendarData, setCalendarData] = useState([]);
-    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    const [formData, setFormData] = useState({
+    const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
+    const [localFormData, setLocalFormData] = useState({
         pickup_time: '',
         distance_km: 1,
         pickup_location: '',
         dropoff_location: '',
         additional_info: ''
     });
-    const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
     const [isMobile, setIsMobile] = useState(false);
     const [searchFilters, setSearchFilters] = useState({
         make: '',
@@ -35,170 +69,137 @@ const Cabs = ({ cabs }) => {
         location: ''
     });
     const [showFilters, setShowFilters] = useState(false);
+    const closeBookingModal = useCallback(() => setShowBookingModal(false), []);
+
+    // Memoized filtered cabs
+    const filteredCabs = useMemo(() => {
+        return cabs.filter(cab => {
+            const searchString = `${cab.make} ${cab.model} ${cab.location} ${cab.driver_name}`.toLowerCase();
+            const matchesSearch = searchString.includes(search.toLowerCase());
+            const matchesMake = !searchFilters.make || cab.make.toLowerCase().includes(searchFilters.make.toLowerCase());
+            const matchesModel = !searchFilters.model || cab.model.toLowerCase().includes(searchFilters.model.toLowerCase());
+            const matchesPrice = cab.price_per_km >= searchFilters.priceRange[0] && cab.price_per_km <= searchFilters.priceRange[1];
+            const matchesCapacity = !searchFilters.capacity || cab.capacity >= parseInt(searchFilters.capacity);
+            const matchesLocation = !searchFilters.location || cab.location.toLowerCase().includes(searchFilters.location.toLowerCase());
+
+            return matchesSearch && matchesMake && matchesModel && matchesPrice && matchesCapacity && matchesLocation;
+        });
+    }, [cabs, search, searchFilters.make, searchFilters.model,
+        searchFilters.priceRange[0], searchFilters.priceRange[1],
+        searchFilters.capacity, searchFilters.location]);
+
+    const resetFilters = useCallback(() => {
+        setSearchFilters({
+            make: '',
+            model: '',
+            priceRange: [0, 100],
+            capacity: '',
+            location: ''
+        });
+        setSearch('');
+    }, []);
 
     useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth <= 768);
-        };
-
+        const checkMobile = () => setIsMobile(window.innerWidth <= 768);
         window.addEventListener('resize', checkMobile);
         checkMobile();
-
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     useEffect(() => {
+        // Check if Razorpay is already loaded
+        if (window.Razorpay) return;
+        console.log('Razorpay script loading...');
+
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.async = true;
         document.body.appendChild(script);
 
-        axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf_token;
         axios.defaults.withCredentials = true;
 
-        return () => document.body.removeChild(script);
-    }, [csrf_token]);
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
 
-    const fetchAvailabilityCalendar = async () => {
+    // Availability check
+    const checkAvailability = useCallback(async (formData) => {
+        console.log('checkAvailability called');
         try {
-            const response = await axios.get(route('cabs.availability-calendar'), {
-                params: {
-                    cab_id: bookingCab?.id,
-                    month: currentMonth,
-                    year: currentYear
-                }
+            const formattedPickupTime = format(new Date(formData.pickup_time), 'yyyy-MM-dd HH:mm:ss');
+            const response = await axios.post(route('cabs.check-availability'), {
+                cab_id: bookingCab.id,
+                pickup_time: formattedPickupTime,
+                duration_hours: estimatedDuration
             });
-            setCalendarData(response.data.calendar);
-            console.log("Calendar data:", response.data.calendar);
+            setAvailability(response.data.available);
+            return response.data.available;
         } catch (error) {
-            console.error('Calendar data fetch failed:', error);
-            setCalendarData([]);
+            console.error('Availability check failed:', error);
+            setAvailability(false);
+            return false;
         }
-    };
+    }, [bookingCab, estimatedDuration]);
 
-    const handleMonthChange = (increment) => {
-        const newDate = new Date(currentYear, currentMonth - 1 + increment, 1);
-        setCurrentMonth(newDate.getMonth() + 1);
-        setCurrentYear(newDate.getFullYear());
-    };
+    // Payment handling
+    const handlePayment = useCallback(async (formData) => {
+        console.log('handlePayment called');
+        try {
+            setLoading(true);
+            const pickupTime = new Date(formData.pickup_time);
+            const dropoffTime = new Date(pickupTime.getTime() + estimatedDuration * 60 * 60 * 1000);
 
-    useEffect(() => {
-        if (bookingCab) {
-            fetchAvailabilityCalendar();
-        }
-    }, [currentMonth, currentYear, bookingCab]);
-
-    useEffect(() => {
-        if (showBookingModal && bookingCab) {
-            // Initialize pickup time with current datetime if not set
-            if (!formData.pickup_time) {
-                const now = new Date();
-                const initialDateTime = format(now, "yyyy-MM-dd'T'HH:mm");
-                setFormData(prev => ({
-                    ...prev,
-                    pickup_time: initialDateTime
-                }));
-            }
-            fetchAvailabilityCalendar();
-        }
-    }, [showBookingModal, bookingCab]);
-
-    const CalendarView = () => {
-        if (!calendarData) return (
-            <div className="flex justify-center py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-        );
-
-        const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay();
-        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-
-        const days = [];
-        for (let i = 0; i < firstDayOfMonth; i++) {
-            days.push(null);
-        }
-
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const dayData = calendarData.find(d => d.date === dateStr);
-
-            const isAvailable = dayData ? dayData.available : true;
-
-            days.push({
-                day,
-                date: dateStr,
-                available: isAvailable
+            const bookingResponse = await axios.post(route('cabs.book'), {
+                cab_id: bookingCab.id,
+                ...formData,
+                pickup_time: format(pickupTime, 'yyyy-MM-dd HH:mm:ss'),
+                dropoff_time: format(dropoffTime, 'yyyy-MM-dd HH:mm:ss'),
             });
+
+            const options = {
+                key: bookingResponse.data.razorpay_key,
+                amount: bookingResponse.data.amount,
+                currency: 'INR',
+                order_id: bookingResponse.data.order_id,
+                handler: async (razorpayResponse) => {
+                    try {
+                        const verifyResponse = await axios.post(
+                            route('cabs.payment'),
+                            { payment_id: razorpayResponse.razorpay_payment_id }
+                        );
+                        if (verifyResponse.data.success) {
+                            alert('Booking confirmed! Redirecting...');
+                            window.location.href = verifyResponse.data.redirect;
+                        }
+                    } catch (error) {
+                        alert(`Payment failed: ${error.response?.data?.error || error.message}`);
+                    }
+                },
+                prefill: bookingResponse.data.user,
+                theme: { color: '#3385ff' },
+                modal: { ondismiss: () => setShowBookingModal(false) }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+
+        } catch (error) {
+            alert(`Booking error: ${error.message}`);
+        } finally {
+            setLoading(false);
         }
+    }, [bookingCab, estimatedDuration]);
 
-        return (
-            <div className="mt-4">
-                <div className="flex justify-between items-center mb-4">
-                    <button
-                        onClick={() => handleMonthChange(-1)}
-                        className="p-2 rounded hover:bg-[#FFF2F2] text-[#2D336B]"
-                    >
-                        &lt; Previous
-                    </button>
-                    <h3 className="font-semibold text-[#2D336B]">
-                        {new Date(currentYear, currentMonth - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                    </h3>
-                    <button
-                        onClick={() => handleMonthChange(1)}
-                        className="p-2 rounded hover:bg-[#FFF2F2] text-[#2D336B]"
-                    >
-                        Next &gt;
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-7 gap-1">
-                    {days.map((day, index) => (
-                        <div
-                            key={index}
-                            className={`p-2 text-center border rounded h-12 flex items-center justify-center ${day
-                                ? day.available
-                                    ? 'bg-green-100 hover:bg-green-200 cursor-pointer'
-                                    : 'bg-red-100 hover:bg-red-200 cursor-not-allowed'
-                                : 'bg-gray-100'
-                                } ${day?.date === new Date().toISOString().split('T')[0]
-                                    ? 'border-2 border-blue-500'
-                                    : 'border-gray-200'
-                                } transition-colors duration-200`}
-                            onClick={() => {
-                                if (day?.available) {
-                                    const currentDate = new Date();
-                                    const currentTime = formData.pickup_time
-                                        ? new Date(formData.pickup_time).toTimeString().slice(0, 5)
-                                        : currentDate.toTimeString().slice(0, 5);
-
-                                    const newDateTime = `${day.date}T${currentTime}`;
-
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        pickup_time: newDateTime
-                                    }));
-                                }
-                            }}
-                        >
-                            {day && (
-                                <span className={`font-medium ${day.available ? 'text-green-800' : 'text-red-800'
-                                    }`}>
-                                    {day.day}
-                                </span>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
-    };
-
-    const ImageGallery = ({ images }) => {
+    const ImageGallery = memo(({ images }) => {
         const [mainImage, setMainImage] = useState(0);
-        const formattedImages = images.map(img => ({
-            src: img.src,
-            alt: img.alt
-        }));
+        const formattedImages = useMemo(() =>
+            (images || []).map(img => ({
+                src: img.startsWith('http') ? img : img,
+                alt: `Cab image`
+            })),
+            [images]
+        );
 
         return (
             <div className="relative h-full w-full">
@@ -210,7 +211,7 @@ const Cabs = ({ cabs }) => {
                             className="w-full h-full object-cover rounded-lg"
                             onError={(e) => {
                                 e.target.onerror = null;
-                                e.target.src = '/images/default-car.png'; // This now points to the correct location
+                                e.target.src = '/images/default-car.png';
                             }}
                         />
                     ) : (
@@ -219,7 +220,6 @@ const Cabs = ({ cabs }) => {
                         </div>
                     )}
                 </div>
-
                 {formattedImages.length > 1 && (
                     <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
                         {formattedImages.map((_, index) => (
@@ -227,21 +227,25 @@ const Cabs = ({ cabs }) => {
                                 key={index}
                                 className={`w-3 h-3 rounded-full ${index === mainImage ? 'bg-[#2D336B]' : 'bg-white'}`}
                                 onClick={() => setMainImage(index)}
+                                aria-label={`Select image ${index + 1}`}
                             />
                         ))}
                     </div>
                 )}
             </div>
         );
-    };
+    });
 
-    const CabCard = ({ cab }) => {
+    // Cab Card Component
+    const CabCard = memo(({ cab, onSelect, onBook }) => {
         const [isHovered, setIsHovered] = useState(false);
-
-        const cabImages = cab.images?.map(img => ({
-            src: img.startsWith('http') ? img : img, // Remove leading slash
-            alt: `${cab.make} ${cab.model}`
-        })) || [];
+        const cabImages = useMemo(() =>
+            (cab.images || []).map(img => ({
+                src: img.startsWith('http') ? img : img,
+                alt: `${cab.make} ${cab.model}`
+            })),
+            [cab.images]
+        );
 
         return (
             <motion.div
@@ -254,25 +258,25 @@ const Cabs = ({ cabs }) => {
                 onHoverEnd={() => setIsHovered(false)}
             >
                 <div className="relative h-[200px] w-full overflow-hidden">
-                    <div className="h-full w-full">
-                        {cabImages.length > 0 ? (
-                            <img
-                                src={cabImages[0].src.startsWith('http') ?
-                                    cabImages[0].src :
-                                    cabImages[0].src} // Remove /storage/ prefix
-                                alt={cab?.make}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = '/images/default-car.png';
-                                }}
-                            />
-                        ) : (
-                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                <span className="text-gray-500">No image available</span>
-                            </div>
-                        )}
-                    </div>
+                    {/* Cab image display */}
+                    {cabImages.length > 0 ? (
+                        <img
+                            src={cabImages[0].src}
+                            alt={cabImages[0].alt}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/images/default-car.png';
+                            }}
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <span className="text-gray-500">No image available</span>
+                        </div>
+                    )}
+
+                    {/* Hover overlay */}
                     <motion.div
                         className="absolute inset-0 bg-black/50 flex items-center justify-center"
                         animate={{ opacity: isHovered ? 1 : 0 }}
@@ -295,10 +299,10 @@ const Cabs = ({ cabs }) => {
                     </motion.div>
                 </div>
 
+                {/* Cab details */}
                 <div className="p-4">
                     <h3 className="text-xl font-semibold text-[#2D336B]">{cab.make} {cab.model}</h3>
                     <p className="text-gray-600 mt-1">Driver: {cab.driver_name}</p>
-
                     <ul className="mt-4 space-y-2">
                         <li className="flex items-center gap-2 text-sm">
                             <ion-icon name="call" className="text-[#7886C7]"></ion-icon>
@@ -315,19 +319,19 @@ const Cabs = ({ cabs }) => {
                     </ul>
                 </div>
 
+                {/* Action buttons */}
                 <div className="p-4 border-t border-gray-100 flex justify-between gap-3">
                     <button
-                        className="px-4 py-2 bg-[#2D336B] text-white rounded-lg hover:bg-[#7886C7] transition-colors text-sm"
-                        onClick={() => setSelectedCab(cab)}
+                        className="px-6 py-3 bg-[#2D336B] text-white rounded-lg hover:bg-[#7886C7] transition-colors text-base flex-grow"
+                        onClick={() => onSelect(cab)}
+                        aria-label={`View details for ${cab.make} ${cab.model}`}
                     >
-                        View More
+                        View Details
                     </button>
                     <button
-                        className="px-4 py-2 border border-[#2D336B] text-[#2D336B] rounded-lg hover:bg-[#7886C7]/10 transition-colors text-sm flex items-center gap-1"
-                        onClick={() => {
-                            setBookingCab(cab);
-                            setShowBookingModal(true);
-                        }}
+                        className="px-6 py-3 border border-[#2D336B] text-[#2D336B] rounded-lg hover:bg-[#7886C7]/10 transition-colors text-base flex-grow flex items-center justify-center gap-1"
+                        onClick={() => onBook(cab)}
+                        aria-label={`Book ${cab.make} ${cab.model}`}
                     >
                         <ion-icon name="cart-outline"></ion-icon>
                         Book Now
@@ -335,222 +339,195 @@ const Cabs = ({ cabs }) => {
                 </div>
             </motion.div>
         );
-    };
+    });
 
-    const checkAvailability = async () => {
-        try {
-            const formattedPickupTime = format(new Date(formData.pickup_time), 'yyyy-MM-dd HH:mm:ss');
-            const response = await axios.post(route('cabs.check-availability'), {
-                cab_id: bookingCab.id,
-                pickup_time: formattedPickupTime,
-                duration_hours: estimatedDuration
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrf_token
-                }
-            });
+    // Booking Modal Component
+    const BookingModal = memo(({ bookingCab, isMobile, onClose }) => {
+        console.log('BookingModal called');
 
-            setAvailability(response.data.available);
-            return response.data.available;
-        } catch (error) {
-            console.error('Availability check failed:', error);
-            setAvailability(false);
-            return false;
-        }
-    };
+        const { calendarData, currentDate, handleMonthChange } = useCalendar(bookingCab?.id);
+        const [localErrors, setLocalErrors] = useState({});
+        const [localFormData, setLocalFormData] = useState({
+            pickup_time: '',
+            distance_km: 1,
+            pickup_location: '',
+            dropoff_location: '',
+            additional_info: ''
+        });
 
-    const handlePayment = async () => {
-        try {
-            setLoading(true);
-
-            // 1. First check availability with fresh data
-            const formattedPickupTime = format(new Date(formData.pickup_time), 'yyyy-MM-dd HH:mm:ss');
-            const availabilityResponse = await axios.post(route('cabs.check-availability'), {
-                cab_id: bookingCab.id,
-                pickup_time: formattedPickupTime,
-                duration_hours: estimatedDuration
-            });
-
-            if (!availabilityResponse.data.available) {
-                throw new Error(availabilityResponse.data.message || 'Cab no longer available');
+        // Initialize form when cab is selected
+        useEffect(() => {
+            if (showBookingModal && bookingCab) {
+                const now = new Date();
+                setLocalFormData({
+                    pickup_time: format(now, "yyyy-MM-dd'T'HH:mm"),
+                    distance_km: 1,
+                    pickup_location: '',
+                    dropoff_location: '',
+                    additional_info: ''
+                });
             }
+        }, [showBookingModal, bookingCab]);
 
-            // 2. Calculate dropoff time
-            const pickupTime = new Date(formData.pickup_time);
-            const dropoffTime = new Date(pickupTime.getTime() + estimatedDuration * 60 * 60 * 1000);
+        // Input change handler
+        const handleInputChange = useCallback((e) => {
+            const { name, value } = e.target;
+            setLocalFormData(prev => ({ ...prev, [name]: value }));
+            setLocalErrors(prev => ({ ...prev, [name]: '' }));
+        }, []);
 
-            // 3. Create booking request
-            const bookingResponse = await axios.post(route('cabs.book'), {
-                cab_id: bookingCab.id,
-                pickup_location: formData.pickup_location,
-                dropoff_location: formData.dropoff_location,
-                pickup_time: format(pickupTime, 'yyyy-MM-dd HH:mm:ss'),
-                dropoff_time: format(dropoffTime, 'yyyy-MM-dd HH:mm:ss'),
-                distance_km: formData.distance_km,
-                additional_info: formData.additional_info,
-            });
-
-            // 4. Setup Razorpay with proper error handling
-            const options = {
-                key: bookingResponse.data.razorpay_key,
-                amount: bookingResponse.data.amount,
-                currency: 'INR',
-                order_id: bookingResponse.data.order_id,
-                handler: async (razorpayResponse) => {
-                    try {
-                        const verifyResponse = await axios.post(
-                            route('cabs.payment'),
-                            { payment_id: razorpayResponse.razorpay_payment_id }
-                        );
-
-                        if (verifyResponse.data.success) {
-                            window.location.href = verifyResponse.data.redirect;
-                        } else {
-                            throw new Error(verifyResponse.data.error || 'Payment verification failed');
-                        }
-                    } catch (error) {
-                        console.error('Verification failed:', error);
-
-                        // Show appropriate error message
-                        let errorMessage = error.response?.data?.error || error.message;
-
-                        if (error.response?.status === 400) {
-                            errorMessage = error.response.data.error || 'Cab is no longer available';
-                        } else {
-                            errorMessage = 'Payment verification failed. Please contact support.';
-                        }
-
-                        alert(errorMessage);
-
-                        // Reset form
-                        setShowBookingModal(false);
-                        setFormData({
-                            pickup_time: '',
-                            distance_km: 1,
-                            pickup_location: '',
-                            dropoff_location: '',
-                            additional_info: ''
-                        });
-                    }
-                },
-                prefill: bookingResponse.data.user,
-                theme: { color: '#3385ff' },
-                modal: {
-                    ondismiss: () => {
-                        if (!loading) {
-                            alert('Payment window closed. Your booking is not confirmed yet.');
-                        }
-                    }
-                }
-            };
-
-            const rzp = new window.Razorpay(options);
-            rzp.open();
-
-        } catch (error) {
-            console.error('Booking Error:', error);
-
-            let errorMessage = 'Booking failed. Please try again.';
-            if (error.response?.data?.error) {
-                errorMessage = error.response.data.error;
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-
-            alert(errorMessage);
-
-            // Reset availability status
-            setAvailability(null);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!validateForm()) return;
-
-        setLoading(true);
-        try {
-            const isAvailable = await checkAvailability();
-            if (!isAvailable) {
-                alert('This cab is already booked for the selected time');
-                return;
-            }
-
-            await handlePayment();
-        } catch (error) {
-            console.error('Booking process error:', error);
-            alert('Error processing booking: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const BookingModal = () => {
-        const validateForm = () => {
+        // Form validation
+        const validateForm = useCallback(() => {
             const newErrors = {};
-            if (!formData.pickup_time) newErrors.pickup_time = 'Pickup time is required';
-            if (!formData.pickup_location) newErrors.pickup_location = 'Pickup location is required';
-            if (!formData.dropoff_location) newErrors.dropoff_location = 'Dropoff location is required';
-            if (formData.distance_km < 1) newErrors.distance_km = 'Distance must be at least 1 km';
+            if (!localFormData.pickup_time) newErrors.pickup_time = 'Pickup time is required';
+            if (!localFormData.pickup_location.trim()) newErrors.pickup_location = 'Pickup location is required';
+            if (!localFormData.dropoff_location.trim()) newErrors.dropoff_location = 'Dropoff location is required';
+            if (localFormData.distance_km < 1) newErrors.distance_km = 'Distance must be at least 1 km';
 
-            setErrors(newErrors);
+            setLocalErrors(newErrors);
             return Object.keys(newErrors).length === 0;
-        };
+        }, [localFormData]);
 
-        const handleSubmit = async (e) => {
+        // Form submission
+        const handleSubmit = useCallback(async (e) => {
             e.preventDefault();
             if (!validateForm()) return;
 
             setLoading(true);
             try {
-                const isAvailable = await checkAvailability();
+                const isAvailable = await checkAvailability(localFormData);
                 if (!isAvailable) {
                     alert('This cab is already booked for the selected time');
                     return;
                 }
-                await handlePayment();
+
+                await handlePayment(localFormData);
+
             } catch (error) {
-                alert('Error processing payment: ' + error.message);
+                alert('Booking error: ' + error.message);
             } finally {
                 setLoading(false);
             }
-        };
+        }, [localFormData, validateForm, checkAvailability, handlePayment]);
 
-        const handleInputChange = (e) => {
-            const { name, value } = e.target;
-            setFormData(prev => ({
-                ...prev,
-                [name]: value
-            }));
-        };
+        // Calendar view component
+        const CalendarView = useMemo(() => () => {
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1;
+            const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+            return (
+                <div className="mt-4">
+                    <div className="flex justify-between items-center mb-4">
+                        <button
+                            onClick={() => handleMonthChange(-1)}
+                            className="p-2 rounded-lg hover:bg-[#FFF2F2] text-[#2D336B] disabled:opacity-50 transition-colors"
+                            disabled={currentDate <= new Date() && currentDate.getMonth() <= new Date().getMonth()}
+                            aria-label="Previous month"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+
+                        <h3 className="font-semibold text-lg text-[#2D336B]">
+                            {format(currentDate, 'MMMM yyyy')}
+                        </h3>
+
+                        <button
+                            onClick={() => handleMonthChange(1)}
+                            className="p-2 rounded-lg hover:bg-[#FFF2F2] text-[#2D336B] transition-colors"
+                            aria-label="Next month"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                            <div key={day} className="text-center text-sm font-medium text-[#64748b] p-2">
+                                {day}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1">
+                        {Array(firstDayOfMonth).fill(null).map((_, index) => (
+                            <div key={`empty-${index}`} className="bg-gray-100 h-12" />
+                        ))}
+
+                        {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
+                            const date = new Date(currentYear, currentMonth - 1, day);
+                            const dateStr = format(date, 'yyyy-MM-dd');
+                            const dayData = calendarData.find(d => d.date === dateStr);
+                            const isPastDate = dateStr < today;
+
+                            return (
+                                <div
+                                    key={day}
+                                    className={`p-2 text-center border rounded h-12 flex items-center justify-center 
+                                        ${dayData?.available && !isPastDate ?
+                                            'bg-green-100 hover:bg-green-200 cursor-pointer' :
+                                            'bg-red-100 hover:bg-red-200 cursor-not-allowed'}
+                                        ${dateStr === today ? 'border-2 border-blue-500' : 'border-gray-200'}`}
+                                    onClick={() => {
+                                        if (dayData?.available && !isPastDate) {
+                                            const currentTime = localFormData.pickup_time ?
+                                                new Date(localFormData.pickup_time).toTimeString().slice(0, 5) :
+                                                new Date().toTimeString().slice(0, 5);
+
+                                            setLocalFormData(prev => ({
+                                                ...prev,
+                                                pickup_time: `${dateStr}T${currentTime}`
+                                            }));
+                                        }
+                                    }}
+                                >
+                                    <span className={`font-medium ${dayData?.available && !isPastDate ? 'text-green-800' : 'text-red-800'}`}>
+                                        {day}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex justify-center gap-4 mt-4 text-sm">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-sm bg-green-100 border border-green-300"></div>
+                            <span>Available</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-sm bg-red-100 border border-red-300"></div>
+                            <span>Booked</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-sm bg-gray-100 border border-gray-300"></div>
+                            <span>Past Date</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }, [calendarData, currentDate, localFormData.pickup_time]);
 
         return (
-            <Dialog
-                open={showBookingModal}
-                onClose={() => {
-                    if (!loading) {
-                        setShowBookingModal(false);
-                    }
-                }}
-                className="relative z-50"
-            >
+            <Dialog open={showBookingModal} onClose={onClose} className="relative z-50">
                 <div className="fixed inset-0 bg-[#2D336B]/30 backdrop-blur-sm" aria-hidden="true" />
                 <div className="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
                     <Dialog.Panel className="w-full max-w-4xl bg-white rounded-xl shadow-2xl overflow-hidden border border-[#A9B5DF] max-h-[90vh] overflow-y-auto">
                         <div className="flex flex-col md:flex-row h-full">
-                            {/* Left Column - Calendar */}
+                            {/* Calendar Section */}
                             <div className={`w-full ${isMobile ? '' : 'md:w-1/2'} p-6 bg-[#2D336B]`}>
                                 <div className="flex justify-between items-center mb-6">
                                     <Dialog.Title className="text-2xl font-bold text-white">
                                         Select Date & Time
                                     </Dialog.Title>
                                     <button
-                                        onClick={() => setShowBookingModal(false)}
+                                        onClick={onClose}
                                         className="p-2 rounded-full hover:bg-[#A9B5DF]/20 text-white"
+                                        aria-label="Close booking modal"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -566,19 +543,7 @@ const Cabs = ({ cabs }) => {
                                     <h3 className="font-semibold text-[#2D336B] mb-2">Cab Details</h3>
                                     <div className="flex items-center gap-3">
                                         <div className="w-16 h-16 bg-[#FFF2F2] rounded-lg overflow-hidden">
-                                            {bookingCab?.images?.[0] && (
-                                                <img
-                                                    src={bookingCab.images[0].startsWith('http') ?
-                                                        bookingCab.images[0] :
-                                                        bookingCab.images[0]} // Remove /storage/ prefix
-                                                    alt={bookingCab?.make}
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = '/images/default-car.png';
-                                                    }}
-                                                />
-                                            )}
+                                            <ImageGallery images={bookingCab?.images || []} />
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-[#2D336B]">{bookingCab?.make} {bookingCab?.model}</h4>
@@ -589,13 +554,14 @@ const Cabs = ({ cabs }) => {
                                 </div>
                             </div>
 
-                            {/* Right Column - Booking Form */}
+                            {/* Booking Form Section */}
                             <div className={`w-full ${isMobile ? '' : 'md:w-1/2'} p-6 overflow-y-auto`}>
                                 <Dialog.Title className="text-2xl font-bold text-[#2D336B] mb-6">
                                     Complete Your Booking
                                 </Dialog.Title>
 
                                 <form onSubmit={handleSubmit} className="space-y-5">
+                                    {/* Form fields */}
                                     <div className="space-y-1">
                                         <label className="block text-sm font-medium text-[#2D336B]">
                                             Estimated Trip Duration (hours)
@@ -607,9 +573,11 @@ const Cabs = ({ cabs }) => {
                                             onChange={(e) => setEstimatedDuration(Math.max(1, Number(e.target.value)))}
                                             min="1"
                                             required
+                                            aria-label="Estimated trip duration"
                                         />
                                     </div>
 
+                                    {/* Pickup time input */}
                                     <div className="space-y-1">
                                         <label className="block text-sm font-medium text-[#2D336B]">
                                             Pickup Time
@@ -617,14 +585,18 @@ const Cabs = ({ cabs }) => {
                                         <input
                                             type="datetime-local"
                                             name="pickup_time"
-                                            className={`w-full p-3 border ${errors.pickup_time ? 'border-red-500' : 'border-[#A9B5DF]'} rounded-lg focus:ring-2 focus:ring-[#7886C7] focus:border-[#7886C7]`}
-                                            value={formData.pickup_time}
+                                            className={`w-full p-3 border ${localErrors.pickup_time ? 'border-red-500' : 'border-[#A9B5DF]'} rounded-lg focus:ring-2 focus:ring-[#7886C7] focus:border-[#7886C7]`}
+                                            value={localFormData.pickup_time}
                                             onChange={handleInputChange}
                                             min={new Date().toISOString().slice(0, 16)}
                                             required
+                                            aria-invalid={!!localErrors.pickup_time}
+                                            aria-describedby="pickupTimeError"
                                         />
-                                        {errors.pickup_time && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.pickup_time}</p>
+                                        {localErrors.pickup_time && (
+                                            <p id="pickupTimeError" className="text-red-500 text-sm mt-1">
+                                                {localErrors.pickup_time}
+                                            </p>
                                         )}
                                         {availability === false && (
                                             <p className="text-red-500 text-sm mt-1">
@@ -638,6 +610,7 @@ const Cabs = ({ cabs }) => {
                                         )}
                                     </div>
 
+                                    {/* Pickup location input */}
                                     <div className="space-y-1">
                                         <label className="block text-sm font-medium text-[#2D336B]">
                                             Pickup Location
@@ -645,16 +618,21 @@ const Cabs = ({ cabs }) => {
                                         <input
                                             type="text"
                                             name="pickup_location"
-                                            className={`w-full p-3 border ${errors.pickup_location ? 'border-red-500' : 'border-[#A9B5DF]'} rounded-lg focus:ring-2 focus:ring-[#7886C7] focus:border-[#7886C7]`}
-                                            value={formData.pickup_location}
+                                            className={`w-full p-3 border ${localErrors.pickup_location ? 'border-red-500' : 'border-[#A9B5DF]'} rounded-lg focus:ring-2 focus:ring-[#7886C7] focus:border-[#7886C7]`}
+                                            value={localFormData.pickup_location}
                                             onChange={handleInputChange}
                                             required
+                                            aria-invalid={!!localErrors.pickup_location}
+                                            aria-describedby="pickupLocationError"
                                         />
-                                        {errors.pickup_location && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.pickup_location}</p>
+                                        {localErrors.pickup_location && (
+                                            <p id="pickupLocationError" className="text-red-500 text-sm mt-1">
+                                                {localErrors.pickup_location}
+                                            </p>
                                         )}
                                     </div>
 
+                                    {/* Dropoff location input */}
                                     <div className="space-y-1">
                                         <label className="block text-sm font-medium text-[#2D336B]">
                                             Dropoff Location
@@ -662,16 +640,21 @@ const Cabs = ({ cabs }) => {
                                         <input
                                             type="text"
                                             name="dropoff_location"
-                                            className={`w-full p-3 border ${errors.dropoff_location ? 'border-red-500' : 'border-[#A9B5DF]'} rounded-lg focus:ring-2 focus:ring-[#7886C7] focus:border-[#7886C7]`}
-                                            value={formData.dropoff_location}
+                                            className={`w-full p-3 border ${localErrors.dropoff_location ? 'border-red-500' : 'border-[#A9B5DF]'} rounded-lg focus:ring-2 focus:ring-[#7886C7] focus:border-[#7886C7]`}
+                                            value={localFormData.dropoff_location}
                                             onChange={handleInputChange}
                                             required
+                                            aria-invalid={!!localErrors.dropoff_location}
+                                            aria-describedby="dropoffLocationError"
                                         />
-                                        {errors.dropoff_location && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.dropoff_location}</p>
+                                        {localErrors.dropoff_location && (
+                                            <p id="dropoffLocationError" className="text-red-500 text-sm mt-1">
+                                                {localErrors.dropoff_location}
+                                            </p>
                                         )}
                                     </div>
 
+                                    {/* Distance input */}
                                     <div className="space-y-1">
                                         <label className="block text-sm font-medium text-[#2D336B]">
                                             Distance (km)
@@ -679,22 +662,27 @@ const Cabs = ({ cabs }) => {
                                         <input
                                             type="number"
                                             name="distance_km"
-                                            className={`w-full p-3 border ${errors.distance_km ? 'border-red-500' : 'border-[#A9B5DF]'} rounded-lg focus:ring-2 focus:ring-[#7886C7] focus:border-[#7886C7]`}
-                                            value={formData.distance_km}
-                                            onChange={(e) => {
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    distance_km: Math.max(1, Number(e.target.value))
-                                                }));
-                                            }}
+                                            className={`w-full p-3 border ${localErrors.distance_km ? 'border-red-500' : 'border-[#A9B5DF]'} rounded-lg focus:ring-2 focus:ring-[#7886C7] focus:border-[#7886C7]`}
+                                            value={localFormData.distance_km}
+                                            onChange={(e) => handleInputChange({
+                                                target: {
+                                                    name: "distance_km",
+                                                    value: Math.max(1, Number(e.target.value))
+                                                }
+                                            })}
                                             min="1"
                                             required
+                                            aria-invalid={!!localErrors.distance_km}
+                                            aria-describedby="distanceError"
                                         />
-                                        {errors.distance_km && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.distance_km}</p>
+                                        {localErrors.distance_km && (
+                                            <p id="distanceError" className="text-red-500 text-sm mt-1">
+                                                {localErrors.distance_km}
+                                            </p>
                                         )}
                                     </div>
 
+                                    {/* Price calculation */}
                                     <div className="pt-4 border-t border-[#A9B5DF]">
                                         <div className="flex justify-between items-center mb-2">
                                             <p className="text-sm text-[#7886C7]">Price per km</p>
@@ -702,21 +690,22 @@ const Cabs = ({ cabs }) => {
                                         </div>
                                         <div className="flex justify-between items-center mb-2">
                                             <p className="text-sm text-[#7886C7]">Distance</p>
-                                            <p className="font-medium text-[#2D336B]">{formData.distance_km} km</p>
+                                            <p className="font-medium text-[#2D336B]">{localFormData.distance_km} km</p>
                                         </div>
                                         <div className="flex justify-between items-center pt-2 border-t border-[#A9B5DF]">
                                             <p className="text-sm font-semibold text-[#2D336B]">Total Amount</p>
                                             <p className="text-xl font-bold text-[#2D336B]">
-                                                ₹{(bookingCab?.price_per_km * formData.distance_km).toFixed(2)}
+                                                ₹{(bookingCab?.price_per_km * localFormData.distance_km).toFixed(2)}
                                             </p>
                                         </div>
                                     </div>
 
+                                    {/* Form actions */}
                                     <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
                                         <button
                                             type="button"
-                                            onClick={() => setShowBookingModal(false)}
-                                            className="px-6 py-3 border border-[#A9B5DF] rounded-lg hover:bg-[#FFF2F2] transition-colors text-[#2D336B] font-medium"
+                                            onClick={onClose}
+                                            className="px-6 py-3 border border-[#A9B5DF] text-[#2D336B] rounded-lg hover:bg-[#FFF2F2] transition-colors font-medium"
                                             disabled={loading}
                                         >
                                             Cancel
@@ -735,7 +724,7 @@ const Cabs = ({ cabs }) => {
                                                     Processing...
                                                 </>
                                             ) : (
-                                                `Pay ₹${(bookingCab?.price_per_km * formData.distance_km).toFixed(2)}`
+                                                `Pay ₹${(bookingCab?.price_per_km * localFormData.distance_km).toFixed(2)}`
                                             )}
                                         </button>
                                     </div>
@@ -746,35 +735,7 @@ const Cabs = ({ cabs }) => {
                 </div>
             </Dialog>
         );
-    };
-
-    const filteredCabs = cabs.filter(cab => {
-        // Basic search
-        const matchesSearch = `${cab.make} ${cab.model} ${cab.location} ${cab.driver_name}`
-            .toLowerCase()
-            .includes(search.toLowerCase());
-
-        // Advanced filters
-        const matchesMake = !searchFilters.make || cab.make.toLowerCase().includes(searchFilters.make.toLowerCase());
-        const matchesModel = !searchFilters.model || cab.model.toLowerCase().includes(searchFilters.model.toLowerCase());
-        const matchesPrice = cab.price_per_km >= searchFilters.priceRange[0] &&
-            cab.price_per_km <= searchFilters.priceRange[1];
-        const matchesCapacity = !searchFilters.capacity || cab.capacity >= parseInt(searchFilters.capacity);
-        const matchesLocation = !searchFilters.location || cab.location.toLowerCase().includes(searchFilters.location.toLowerCase());
-
-        return matchesSearch && matchesMake && matchesModel && matchesPrice && matchesCapacity && matchesLocation;
     });
-
-    const resetFilters = () => {
-        setSearchFilters({
-            make: '',
-            model: '',
-            priceRange: [0, 1000],
-            capacity: '',
-            location: ''
-        });
-        setSearch('');
-    };
 
     return (
         <AuthenticatedLayout>
@@ -799,15 +760,14 @@ const Cabs = ({ cabs }) => {
                         viewport={{ once: true }}
                     >
                         <p className="section-subtitle text-[#7886C7] mb-2">Find Your Ride</p>
-                        <h2 className="h2 section-title text-3xl sm:text-4xl font-bold text-[#2D336B] mb-4">
-                            Available Cabs
-                        </h2>
+                        <h2 className="h2 section-title text-3xl sm:text-4xl font-bold text-[#2D336B] mb-4">Available Cabs</h2>
                         <p className="section-text text-gray-600 max-w-2xl mx-auto">
                             Discover our fleet of comfortable and reliable cabs. Book your ride now for a seamless travel experience.
                         </p>
                     </motion.div>
 
-                    <div className="search-container mt-8 px-4">
+                    {/* Search and Filters Section */}
+                    <div className="mt-8 px-4">
                         <div className="bg-white rounded-lg shadow-md p-4">
                             <div className="flex flex-col md:flex-row gap-4">
                                 <div className="relative flex-grow">
@@ -820,17 +780,20 @@ const Cabs = ({ cabs }) => {
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         className="w-full p-3 pl-10 rounded-lg border border-[#A9B5DF] focus:ring-2 focus:ring-[#7886C7] focus:border-[#7886C7]"
+                                        aria-label="Search cabs"
                                     />
                                 </div>
                                 <button
                                     onClick={() => setShowFilters(!showFilters)}
-                                    className="px-4 py-3 bg-[#2D336B] text-white rounded-lg hover:bg-[#7886C7] transition-colors flex items-center justify-center gap-2"
+                                    className="px-6 py-3 bg-[#2D336B] text-white rounded-lg hover:bg-[#7886C7] transition-colors flex items-center justify-center gap-2"
+                                    aria-label={`${showFilters ? 'Hide' : 'Show'} filters`}
                                 >
                                     <ion-icon name={showFilters ? "filter" : "filter-outline"}></ion-icon>
                                     {showFilters ? 'Hide Filters' : 'Show Filters'}
                                 </button>
                             </div>
 
+                            {/* Advanced Filters */}
                             {showFilters && (
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
@@ -874,7 +837,7 @@ const Cabs = ({ cabs }) => {
                                                     type="number"
                                                     placeholder="Max"
                                                     value={searchFilters.priceRange[1]}
-                                                    onChange={(e) => setSearchFilters({ ...searchFilters, priceRange: [searchFilters.priceRange[0], parseInt(e.target.value) || 1000] })}
+                                                    onChange={(e) => setSearchFilters({ ...searchFilters, priceRange: [searchFilters.priceRange[0], parseInt(e.target.value) || 100] })}
                                                     className="w-full p-2 border border-[#A9B5DF] rounded-lg"
                                                 />
                                             </div>
@@ -917,35 +880,36 @@ const Cabs = ({ cabs }) => {
                         </div>
                     </div>
 
+                    {/* Cabs List */}
                     {filteredCabs.length === 0 ? (
                         <div className="text-center py-12">
-                            <h3 className="text-xl font-medium text-[#2D336B]">No cabs found matching your criteria</h3>
-                            <p className="text-gray-500 mt-2">Try adjusting your search filters</p>
+                            <h2 className="text-xl font-medium text-[#2D336B]">No cabs found matching your criteria</h2>
                             <button
                                 onClick={resetFilters}
-                                className="mt-4 px-4 py-2 bg-[#2D336B] text-white rounded-lg hover:bg-[#7886C7] transition-colors"
+                                className="mt-4 px-6 py-3 bg-[#2D336B] text-white rounded-lg hover:bg-[#7886C7] transition-colors"
                             >
                                 Reset All Filters
                             </button>
                         </div>
                     ) : (
-                        <div className="cab-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 px-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 px-4">
                             {filteredCabs.map(cab => (
-                                <motion.div
+                                <CabCard
                                     key={cab.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.5 }}
-                                >
-                                    <CabCard cab={cab} />
-                                </motion.div>
+                                    cab={cab}
+                                    onSelect={setSelectedCab}
+                                    onBook={(cab) => {
+                                        setBookingCab(cab);
+                                        setShowBookingModal(true);
+                                    }}
+                                />
                             ))}
                         </div>
                     )}
                 </div>
             </section>
 
+            {/* Selected Cab Details */}
             {selectedCab && (
                 <motion.div
                     className="fixed inset-0 bg-[#2D336B]/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -959,7 +923,6 @@ const Cabs = ({ cabs }) => {
                         animate={{ scale: 1 }}
                         exit={{ scale: 0.9 }}
                     >
-                        {/* Header with close button */}
                         <div className="flex justify-between items-center p-6 border-b border-[#A9B5DF]">
                             <h3 className="text-2xl font-bold text-[#2D336B]">
                                 {selectedCab.make} {selectedCab.model}
@@ -974,22 +937,16 @@ const Cabs = ({ cabs }) => {
                             </button>
                         </div>
 
-                        {/* Scrollable content container */}
-                        <div className="flex-1 overflow-y-auto"> {/* This is now the single scroll container */}
+                        <div className="flex-1 overflow-y-auto">
                             <div className="flex flex-col md:flex-row">
-                                {/* Left Column - Cab Images */}
                                 <div className="w-full md:w-1/2 p-6 bg-[#7886C7]/10">
                                     <div className="h-96 rounded-lg overflow-hidden border border-[#A9B5DF] bg-white">
                                         <ImageGallery
-                                            images={(selectedCab.images || []).map(img => ({
-                                                src: img,
-                                                alt: `${selectedCab.make} ${selectedCab.model}`
-                                            }))}
+                                            images={selectedCab.images || []}
                                         />
                                     </div>
                                 </div>
 
-                                {/* Right Column - Cab Details */}
                                 <div className="w-full md:w-1/2 p-6">
                                     <div className="space-y-6">
                                         <div>
@@ -1026,10 +983,9 @@ const Cabs = ({ cabs }) => {
                             </div>
                         </div>
 
-                        {/* Footer with buttons */}
                         <div className="flex flex-col sm:flex-row justify-end gap-3 p-6 border-t border-[#A9B5DF]">
                             <button
-                                className="px-6 py-3 border border-[#A9B5DF] rounded-lg hover:bg-[#7886C7]/10 transition-colors text-[#2D336B] font-medium"
+                                className="px-6 py-3 border border-[#A9B5DF] text-[#2D336B] rounded-lg hover:bg-[#7886C7]/10 transition-colors font-medium"
                                 onClick={() => setSelectedCab(null)}
                             >
                                 Close
@@ -1049,7 +1005,13 @@ const Cabs = ({ cabs }) => {
                 </motion.div>
             )}
 
-            {showBookingModal && <BookingModal />}
+            {showBookingModal && (
+                <BookingModal
+                    bookingCab={bookingCab}
+                    isMobile={isMobile}
+                    onClose={closeBookingModal}
+                />
+            )}
         </AuthenticatedLayout>
     );
 };

@@ -478,39 +478,62 @@ public function getAvailabilityCalendar(Request $request)
     }
 
     public function cancelBooking(CabBooking $booking)
-    {
-        try {
-            if ($booking->status === 'cancelled') {
-                return back()->with('error', 'Booking already cancelled');
-            }
-
-            // Process refund if payment exists
-            if ($booking->payment_id) {
-                $razorpay = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
-                $refund = $razorpay->payment
-                    ->fetch($booking->payment_id)
-                    ->refund([
-                        'amount' => $booking->total_price * 100,
-                        'speed' => 'normal'
-                    ]);
-
-                $booking->update([
-                    'refund_id' => $refund->id,
-                    'payment_status' => 'refunded'
-                ]);
-            }
-
-            $booking->update(['status' => 'cancelled']);
-            Cab::where('id', $booking->cab_id)->update(['status' => 'available']);
-
-            $this->sendStatusEmail($booking, 'cancelled');
-
-            return back()->with('success', 'Booking cancelled successfully');
-
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error cancelling booking: '.$e->getMessage());
+{
+    try {
+        // Authorization check
+        if (Auth::id() !== $booking->user_id && !Auth::user()->isAdmin()) {
+            return response()->json(['error' => 'Unauthorized action'], 403);
         }
+
+        if ($booking->status === 'cancelled') {
+            return response()->json(['error' => 'Booking already cancelled'], 400);
+        }
+
+        $refundData = null;
+
+        // Process refund only if payment exists and status allows cancellation
+        if ($booking->payment_id && in_array($booking->status, ['confirmed', 'pending'])) {
+            $razorpay = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+            
+            $refund = $razorpay->payment
+                ->fetch($booking->payment_id)
+                ->refund([
+                    'amount' => $booking->total_price * 100,
+                    'speed' => 'normal'
+                ]);
+
+            $booking->update([
+                'refund_id' => $refund->id,
+                'payment_status' => 'refunded'
+            ]);
+
+            $refundData = [
+                'id' => $refund->id,
+                'amount' => $refund->amount / 100,
+                'status' => $refund->status,
+                'created_at' => Carbon::createFromTimestamp($refund->created_at)->toDateTimeString()
+            ];
+        }
+
+        $booking->update(['status' => 'cancelled']);
+        Cab::where('id', $booking->cab_id)->update(['status' => 'available']);
+
+        $this->sendStatusEmail($booking, 'cancelled');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking cancelled successfully',
+            'refund' => $refundData,
+            'booking' => $booking->fresh()->load('cab')
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error("Cancel booking failed: ".$e->getMessage());
+        return response()->json([
+            'error' => 'Cancellation failed: '.$e->getMessage()
+        ], 500);
     }
+}
 
     public function completeBooking(CabBooking $booking)
     {

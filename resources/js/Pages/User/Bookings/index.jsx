@@ -27,22 +27,24 @@ const Bookings = ({ packageBookings, cabBookings, guideBookings }) => {
 
     const handleCancel = async (booking) => {
         if (!window.confirm('Are you sure you want to cancel this booking?')) return;
-
+        
         try {
-            switch (booking.type) {
-                case 'package':
-                    await axios.post(route('packages.cancel', booking.id));
-                    break;
-                case 'cab':
-                    await axios.post(route('cabs.cancel', booking.id));
-                    break;
-                case 'guide':
-                    await axios.post(route('guides.cancel', booking.id));
-                    break;
-                default:
-                    alert('Cancellation not available for this booking type');
-                    return;
-            }
+            const response = await axios.post(`/packages/${booking.id}/cancel`);
+            console.log('Cancellation successful:', response.data);
+            // switch (booking.type) {
+            //     case 'package':
+            //         await axios.post(route('packages.cancel', booking.id));
+            //         break;
+            //     case 'cab':
+            //         await axios.post(route('cabs.cancel', booking.id));
+            //         break;
+            //     case 'guide':
+            //         await axios.post(route('guides.cancel', booking.id));
+            //         break;
+            //     default:
+            //         alert('Cancellation not available for this booking type');
+            //         return;
+            // }
 
             router.reload({ only: ['packageBookings', 'cabBookings', 'guideBookings'] });
         } catch (error) {
@@ -67,9 +69,8 @@ const Bookings = ({ packageBookings, cabBookings, guideBookings }) => {
                     return;
             }
     
-            const response = await axios.get(endpoint, { 
-                responseType: 'blob',
-                validateStatus: (status) => status === 200 // Only 200 is valid
+            const response = await axios.get(`${endpoint}`, {
+                responseType: 'blob'
             });
     
             // Create blob URL

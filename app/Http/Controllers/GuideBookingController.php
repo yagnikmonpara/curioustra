@@ -89,17 +89,13 @@ public function availabilityCalendar(Request $request)
     $end = $start->copy()->endOfMonth();
 
     // Get all bookings that overlap with the month
-    $bookings = $guide->bookings()
-        ->where(function($query) use ($start, $end) {
-            $query->whereBetween('start_time', [$start, $end])
-                  ->orWhereBetween('end_time', [$start, $end])
-                  ->orWhere(function($q) use ($start, $end) {
-                      $q->where('start_time', '<', $start)
-                        ->where('end_time', '>', $end);
-                  });
-        })
-        ->whereIn('status', ['confirmed', 'in-progress', 'pending'])
-        ->get(['start_time', 'end_time']);
+    $bookings = GuideBooking::where('guide_id', $guide->id)
+    ->whereIn('status', ['confirmed', 'in-progress'])
+    ->whereBetween('start_time', [$start, $end])
+    ->selectRaw('DATE(start_time) as date, COUNT(*) as count')
+    ->groupBy('date')
+    ->get()
+    ->keyBy('date');
 
     $calendar = [];
     $currentDay = $start->copy();
