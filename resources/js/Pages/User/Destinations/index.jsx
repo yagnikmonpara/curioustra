@@ -46,7 +46,6 @@ const RatingStars = ({ rating }) => {
 };
 
 const DestinationCard = ({ destination }) => {
-    console.log(destination);
     
     const [isHovered, setIsHovered] = useState(false);
 

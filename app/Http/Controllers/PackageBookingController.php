@@ -291,9 +291,6 @@ class PackageBookingController extends Controller
 
     public function cancelBooking(PackageBooking $booking)
     {
-        if (!Auth::user()->isAdmin() && Auth::id() !== $booking->user_id) {
-            abort(403, 'Unauthorized action.');
-        }
 
         try {
             if ($booking->payment_status === 'paid') {
@@ -365,10 +362,6 @@ class PackageBookingController extends Controller
 
     public function downloadReceipt(PackageBooking $booking)
     {
-        // Authorization - only booking owner or admin can download
-        if (Auth::id() !== $booking->user_id && !Auth::user()->isAdmin()) {
-            abort(403, 'Unauthorized action.');
-        }
 
         $booking->load(['package', 'user']);
 

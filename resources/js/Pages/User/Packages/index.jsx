@@ -49,11 +49,11 @@ const Packages = ({ packages = [] }) => {
         setShowBookingModal(true);
     };
 
-    const handlePayment = async () => {
+    const handlePayment = async (formData) => {
         try {
             const bookingData = {
                 package_id: selectedPackage?.id,
-                start_date: new Date(formData.start_date).toISOString().split('T')[0],
+                start_date: formData.start_date,
                 number_of_people: Number(formData.number_of_people),
                 additional_notes: formData.additional_notes || null
             };
@@ -276,7 +276,7 @@ const Packages = ({ packages = [] }) => {
                     return;
                 }
 
-                await handlePayment();
+                await handlePayment(formData);
             } catch (error) {
                 alert('Error: ' + error.message);
             } finally {

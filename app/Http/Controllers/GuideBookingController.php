@@ -29,8 +29,6 @@ class GuideBookingController extends Controller
 
     public function list()
     {
-        Gate::authorize('admin-access');
-        
         return Inertia::render('Admin/GuideBookings/index', [
             'bookings' => GuideBooking::with(['user', 'guide'])
                 ->latest()
@@ -311,7 +309,6 @@ public function verifyPayment(Request $request)
 
     public function confirmBooking(GuideBooking $booking)
     {
-        Gate::authorize('admin-access');
         
         if (!$booking->canBeConfirmed()) {
             return back()->with('error', 'Booking cannot be confirmed in current state');
@@ -327,7 +324,6 @@ public function verifyPayment(Request $request)
     {
         DB::beginTransaction();
         try {
-            Gate::authorize('cancel', $booking);
 
             if ($booking->isCancelled()) {
                 return back()->with('error', 'Already cancelled');
@@ -363,7 +359,6 @@ public function verifyPayment(Request $request)
 
     public function completeBooking(GuideBooking $booking)
     {
-        Gate::authorize('admin-access');
         
         if (!$booking->canBeCompleted()) {
             return back()->with('error', 'Invalid status transition');
@@ -377,7 +372,6 @@ public function verifyPayment(Request $request)
 
     public function inProgressBooking(GuideBooking $booking)
     {
-        Gate::authorize('admin-access');
         
         if (!$booking->canStart()) {
             return back()->with('error', 'Invalid status transition');

@@ -6,7 +6,6 @@ use App\Models\Guide;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Gate;
 
 class GuideController extends Controller
 {
@@ -38,7 +37,6 @@ class GuideController extends Controller
 
     public function list()
     {
-        Gate::authorize('admin-access');
         
         return Inertia::render('Admin/Guides/index', [
             'guides' => Guide::all(),
@@ -47,14 +45,12 @@ class GuideController extends Controller
 
     public function create()
     {
-        Gate::authorize('admin-access');
         
         return Inertia::render('Admin/Guides/create');
     }
 
     public function store(Request $request)
     {
-        Gate::authorize('admin-access');
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -93,7 +89,6 @@ class GuideController extends Controller
 
     public function edit(Guide $guide)
     {
-        Gate::authorize('admin-access');
         
         return Inertia::render('Admin/Guides/edit', compact('guide'));
     }
@@ -135,7 +130,6 @@ class GuideController extends Controller
 
     public function destroy(Guide $guide)
     {
-        Gate::authorize('admin-access');
         
         if ($guide->profile_picture) {
             Storage::disk('public')->delete(

@@ -390,10 +390,7 @@ public function getAvailabilityCalendar(Request $request)
     public function downloadReceipt(CabBooking $booking)
 {
     try {
-        // Authorization check - only booking owner or admin can download
-        if (Auth::id() !== $booking->user_id && !Auth::user()->isAdmin()) {
-            abort(403, 'Unauthorized action.');
-        }
+       
 
         // Load relationships
         $booking->load(['cab', 'user']);
@@ -480,10 +477,6 @@ public function getAvailabilityCalendar(Request $request)
     public function cancelBooking(CabBooking $booking)
 {
     try {
-        // Authorization check
-        if (Auth::id() !== $booking->user_id && !Auth::user()->isAdmin()) {
-            return response()->json(['error' => 'Unauthorized action'], 403);
-        }
 
         if ($booking->status === 'cancelled') {
             return response()->json(['error' => 'Booking already cancelled'], 400);
