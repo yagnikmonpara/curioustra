@@ -14,10 +14,6 @@ use Database\Seeders\PackageSeeder;
 use Database\Seeders\ContactSeeder;
 use Database\Seeders\GallerySeeder;
 use Database\Seeders\ReviewSeeder;
-use Database\Seeders\PackageBookingSeeder;
-use Database\Seeders\HotelBookingSeeder;
-use Database\Seeders\CabBookingSeeder;
-use Database\Seeders\GuideBookingSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -43,10 +39,6 @@ class DatabaseSeeder extends Seeder
             ContactSeeder::class,
             GallerySeeder::class,
             ReviewSeeder::class,
-            PackageBookingSeeder::class,
-            HotelBookingSeeder::class,
-            CabBookingSeeder::class,
-            GuideBookingSeeder::class,
         ]);
     }
 }

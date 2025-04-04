@@ -45,7 +45,7 @@ class ContactController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|numeric|max:10',
+            'phone' => 'required|string|min:10|max:15|regex:/^[0-9]+$/',
             'subject' => 'nullable|string|max:255',
             'message' => 'required|string',
             'response' => 'nullable|string',
@@ -53,7 +53,7 @@ class ContactController extends Controller
 
         Contact::create($request->all());
 
-        return redirect()->back()->with('success', 'Your message has been sent successfully!');
+        return redirect()->back()->with('success', 'Your Enquiry has been sent successfully!');
     }
 
     /**

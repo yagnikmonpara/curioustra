@@ -120,32 +120,26 @@ const Packages = ({ packages = [] }) => {
 
         const formattedImages = useMemo(() =>
             images.map(img => ({
-                src: (typeof img === 'string' ? img : img?.src) || '',
+                src: (typeof img === 'string' ? img : img?.src) || '/images/default-package.png',
                 alt: (typeof img === 'string' ? 'Package image' : img?.alt) || 'Package image'
-            })).filter(img => img.src.startsWith('http') || img.src.startsWith('/')),
+            })).filter(img => img.src),
             [images]
         );
 
         return (
             <div className="relative h-full w-full">
                 <div className="h-full w-full overflow-hidden">
-                    {formattedImages.length > 0 ? (
-                        <img
-                            src={formattedImages[mainImage]?.src}
-                            alt={formattedImages[mainImage]?.alt}
-                            className="w-full h-full object-cover rounded-lg transition-opacity duration-300"
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = '/images/default-package.png';
-                            }}
-                        />
-                    ) : (
-                        <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-lg">
-                            <span className="text-gray-500">No image available</span>
-                        </div>
-                    )}
+                    <img
+                        src={formattedImages[mainImage]?.src || '/images/default-package.png'}
+                        alt={formattedImages[mainImage]?.alt || 'Package image'}
+                        className="w-full h-full object-cover rounded-lg transition-opacity duration-300"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/images/default-package.png';
+                        }}
+                    />
                 </div>
-
+    
                 {formattedImages.length > 1 && (
                     <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
                         {formattedImages.map((_, index) => (

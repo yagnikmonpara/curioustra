@@ -109,7 +109,6 @@ const Cabs = ({ cabs }) => {
     useEffect(() => {
         // Check if Razorpay is already loaded
         if (window.Razorpay) return;
-        console.log('Razorpay script loading...');
 
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -125,7 +124,6 @@ const Cabs = ({ cabs }) => {
 
     // Availability check
     const checkAvailability = useCallback(async (formData) => {
-        console.log('checkAvailability called');
         try {
             const formattedPickupTime = format(new Date(formData.pickup_time), 'yyyy-MM-dd HH:mm:ss');
             const response = await axios.post(route('cabs.check-availability'), {
@@ -159,6 +157,8 @@ const Cabs = ({ cabs }) => {
 
             const options = {
                 key: bookingResponse.data.razorpay_key,
+                name: 'CuriousTra',
+                logo: '/images/logo.png',
                 amount: bookingResponse.data.amount,
                 currency: 'INR',
                 order_id: bookingResponse.data.order_id,
@@ -169,7 +169,6 @@ const Cabs = ({ cabs }) => {
                             { payment_id: razorpayResponse.razorpay_payment_id }
                         );
                         if (verifyResponse.data.success) {
-                            alert('Booking confirmed! Redirecting...');
                             window.location.href = verifyResponse.data.redirect;
                         }
                     } catch (error) {

@@ -11,29 +11,30 @@ use Illuminate\Support\Facades\Gate;
 class GuideController extends Controller
 {
     public function index()
-    {
-        $guides = Guide::withCount(['bookings as tours_completed' => function($query) {
-            $query->where('status', 'completed');
-        }])->get();
+{
+    $guides = Guide::withCount(['bookings as tours_completed' => function($query) {
+        $query->where('status', 'completed');
+    }])
+    ->get()
+    ->map(function($guide) {
+        return [
+            'id' => $guide->id,
+            'name' => $guide->name,
+            'bio' => $guide->bio,
+            'specialization' => $guide->specialization,
+            'location' => $guide->location,
+            'price_per_hour' => $guide->price_per_hour,
+            'rating' => $guide->rating,
+            'profile_picture' => $guide->profile_picture,
+            'languages' => $guide->languages,
+            'tours_completed' => $guide->tours_completed,
+            'contact_number' => $guide->contact_number,
+            'status' => $guide->status
+        ];
+    });
 
-        return Inertia::render('User/Guides/index', [
-            'guides' => $guides->map(function($guide) {
-                return [
-                    'id' => $guide->id,
-                    'name' => $guide->name,
-                    'bio' => $guide->bio,
-                    'specialization' => $guide->specialization,
-                    'location' => $guide->location,
-                    'price_per_hour' => $guide->price_per_hour,
-                    'rating' => $guide->rating,
-                    'profile_picture' => $guide->profile_picture,
-                    'languages' => $guide->languages ? explode(',', $guide->languages) : [],
-                    'tours_completed' => $guide->tours_completed,
-                    'contact_number' => $guide->contact_number
-                ];
-            })
-        ]);
-    }
+    return Inertia::render('User/Guides/index', ['guides' => $guides]);
+}
 
     public function list()
     {
@@ -58,15 +59,21 @@ class GuideController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'bio' => 'nullable|string',
-            'specialization' => 'required|string|max:255',
             'contact_number' => 'required|string|max:20',
             'email' => 'required|email|max:255|unique:guides',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'languages' => 'required|string',
+            'languages' => 'required|array|min:1',
+            'languages.*' => 'required|string|max:50',
+            'specialization' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
             'price_per_hour' => 'required|numeric|min:0',
-            'status' => 'required|string|in:available,unavailable',
+            'rating' => 'required|numeric|min:0|max:5',
+            'tours_completed' => 'required|numeric|min:0',
+            'status' => 'required|string|in:active,inactive',
         ]);
 
+        $validated['languages'] = implode(',', $validated['languages']);
+        
         $guide = Guide::create($validated);
 
         if ($request->hasFile('profile_picture')) {
@@ -103,8 +110,11 @@ class GuideController extends Controller
             'email' => 'required|email|max:255|unique:guides,email,'.$guide->id,
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'languages' => 'required|string',
+            'location' => 'required|string|max:255',
             'price_per_hour' => 'required|numeric|min:0',
-            'status' => 'required|string|in:available,unavailable',
+            'rating' => 'required|numeric|min:0|max:5',
+            'tours_completed' => 'required|numeric|min:0',
+            'status' => 'required|string|in:active,inactive',
         ]);
 
         $guide->update($validated);

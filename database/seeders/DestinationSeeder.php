@@ -2,14 +2,266 @@
 
 namespace Database\Seeders;
 
-use App\Models\Destination;
 use Illuminate\Database\Seeder;
-use Database\Factories\DestinationFactory;
+use App\Models\Destination;
 
 class DestinationSeeder extends Seeder
 {
     public function run()
     {
-        Destination::factory()->count(50)->create();
+        $destinations = [
+            [
+                'name' => 'Santorini',
+                'description' => 'Greek island paradise with whitewashed buildings and stunning sunsets over the Aegean Sea.',
+                'location' => 'Santorini',
+                'country' => 'Greece',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Santorini.jpg", "/storage/destinations/Santorini1.jpg", "/storage/destinations/Santorini2.jpg"],
+            ],
+            [
+                'name' => 'Banff National Park',
+                'description' => 'Canadian Rocky Mountain paradise with glacial lakes and wildlife.',
+                'location' => 'Alberta',
+                'country' => 'Canada',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Banff National Park.jpg", "/storage/destinations/Banff National Park1.jpg", "/storage/destinations/Banff National Park2.jpg"],
+            ],
+            [
+                'name' => 'Marrakech',
+                'description' => 'Vibrant Moroccan city with bustling souks and historic medinas.',
+                'location' => 'Marrakesh-Safi',
+                'country' => 'Morocco',
+                'rating' => 4,
+                'images' => ["/storage/destinations/Marrakech.jpg", "/storage/destinations/Marrakech1.jpg", "/storage/destinations/Marrakech2.jpg"],
+            ],
+            [
+                'name' => 'Great Barrier Reef',
+                'description' => 'World\'s largest coral reef system teeming with marine life.',
+                'location' => 'Queensland',
+                'country' => 'Australia',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Great Barrier Reef.jpg", "/storage/destinations/Great Barrier Reef2.jpg"],
+            ],
+            [
+                'name' => 'Petra',
+                'description' => 'Ancient rose-red city carved into Jordanian cliffs.',
+                'location' => 'Ma\'an Governorate',
+                'country' => 'Jordan',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Petra.jpg"],
+            ],
+            [
+                'name' => 'Prague',
+                'description' => 'Medieval European capital famous for Gothic architecture and Charles Bridge.',
+                'location' => 'Prague',
+                'country' => 'Czech Republic',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Prague.jpg", "/storage/destinations/Prague1.jpg", "/storage/destinations/Prague2.jpg"],
+            ],
+            [
+                'name' => 'Serengeti National Park',
+                'description' => 'African savanna renowned for the Great Migration of wildebeest.',
+                'location' => 'Mara Region',
+                'country' => 'Tanzania',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Serengeti National Park.jpg", "/storage/destinations/Serengeti National Park1.jpg"],
+            ],
+            [
+                'name' => 'Hong Kong',
+                'description' => 'Skyscraper-filled financial hub blending Chinese and British influences.',
+                'location' => 'Hong Kong',
+                'country' => 'China',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Hong Kong.jpg", "/storage/destinations/Hong Kong1.jpg", "/storage/destinations/Hong Kong2.jpg"],
+            ],
+            [
+                'name' => 'Amsterdam',
+                'description' => 'Canalside city with historic museums and cycling culture.',
+                'location' => 'North Holland',
+                'country' => 'Netherlands',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Amsterdam.jpg", "/storage/destinations/Amsterdam1.jpg"],
+            ],
+            [
+                'name' => 'Hawaii Volcanoes National Park',
+                'description' => 'Dynamic landscape featuring active volcanoes and unique ecosystems.',
+                'location' => 'Hawaii',
+                'country' => 'USA',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Hawaii Volcanoes National Park.jpg", "/storage/destinations/Hawaii Volcanoes National Park1.jpg"],
+            ],
+            [
+                'name' => 'Dubrovnik',
+                'description' => 'Adriatic coastal city with medieval walls and Game of Thrones filming locations.',
+                'location' => 'Dubrovnik-Neretva',
+                'country' => 'Croatia',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Dubrovnik.jpg", "/storage/destinations/Dubrovnik1.jpg"],
+            ],
+            [
+                'name' => 'Angkor Wat',
+                'description' => 'Massive temple complex and UNESCO site in the Cambodian jungle.',
+                'location' => 'Siem Reap',
+                'country' => 'Cambodia',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Angkor Wat.jpg", "/storage/destinations/Angkor Wat1.jpg"],
+            ],
+            [
+                'name' => 'San Francisco',
+                'description' => 'Hilly California city known for the Golden Gate Bridge and cable cars.',
+                'location' => 'California',
+                'country' => 'USA',
+                'rating' => 5,
+                'images' => ["/storage/destinations/San Francisco.jpg", "/storage/destinations/San Francisco1.jpg"],
+            ],
+            [
+                'name' => 'Northern Lights (Aurora Borealis)',
+                'description' => 'Natural light display visible in Arctic regions during winter months.',
+                'location' => 'Tromsø',
+                'country' => 'Norway',
+                'rating' => 5,
+                'images' => ["/storage/destinations/NorthernLights (Aurora Borealis).jpg"],
+            ],
+            [
+                'name' => 'Bali',
+                'description' => 'Indonesian island famous for volcanic landscapes, temples, and beaches.',
+                'location' => 'Bali',
+                'country' => 'Indonesia',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Bali.jpg", "/storage/destinations/Bali1.jpg"],
+            ],
+            [
+                'name' => 'Victoria Falls',
+                'description' => 'Massive waterfall straddling the border of Zambia and Zimbabwe.',
+                'location' => 'Livingstone',
+                'country' => 'Zambia',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Victoria Falls.jpg"],
+            ],
+            [
+                'name' => 'Singapore',
+                'description' => 'Ultra-modern city-state with futuristic gardens and diverse cuisine.',
+                'location' => 'Singapore',
+                'country' => 'Singapore',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Singapore.jpg", "/storage/destinations/Singapore1.jpg"],
+            ],
+            [
+                'name' => 'Yellowstone National Park',
+                'description' => 'First national park in the world featuring geysers and hot springs.',
+                'location' => 'Wyoming',
+                'country' => 'USA',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Yellowstone National Park.jpg", "/storage/destinations/Yellowstone National Park1.jpg"],
+            ],
+            [
+                'name' => 'Moscow',
+                'description' => 'Russian capital showcasing Kremlin architecture and Red Square.',
+                'location' => 'Moscow',
+                'country' => 'Russia',
+                'rating' => 4,
+                'images' => ["/storage/destinations/Moscow.jpg"],
+            ],
+            [
+                'name' => 'Sahara Desert',
+                'description' => 'Vast desert landscape offering camel treks and stargazing opportunities.',
+                'location' => 'Southern Provinces',
+                'country' => 'Morocco',
+                'rating' => 4,
+                'images' => ["/storage/destinations/Sahara Desert.jpg", "/storage/destinations/Sahara Desert1.jpg"],
+            ],
+            [
+                'name' => 'Florence',
+                'description' => 'Birthplace of Renaissance art and architecture, home to Michelangelo\'s David.',
+                'location' => 'Tuscany',
+                'country' => 'Italy',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Florence.jpg"],
+            ],
+            [
+                'name' => 'Galápagos Islands',
+                'description' => 'Volcanic archipelago with unique wildlife that inspired Darwin\'s theory.',
+                'location' => 'Galápagos Province',
+                'country' => 'Ecuador',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Galapagos Islands.jpg", "/storage/destinations/Galapagos Islands1.jpg"],
+            ],
+            [
+                'name' => 'Mumbai',
+                'description' => 'Bustling Indian metropolis featuring Bollywood and colonial-era architecture.',
+                'location' => 'Maharashtra',
+                'country' => 'India',
+                'rating' => 4,
+                'images' => ["/storage/destinations/Mumbai.jpg", "/storage/destinations/Mumbai1.jpg"],
+            ],
+            [
+                'name' => 'Antarctica',
+                'description' => 'Pristine frozen continent with penguin colonies and iceberg formations.',
+                'location' => 'Antarctic Peninsula',
+                'country' => 'Antarctica',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Antarctica.jpg"],
+            ],
+            [
+                'name' => 'Seoul',
+                'description' => 'High-tech South Korean capital blending ancient palaces with K-pop culture.',
+                'location' => 'Seoul',
+                'country' => 'South Korea',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Seoul.jpg", "/storage/destinations/Seoul1.jpg"],
+            ],
+            [
+                'name' => 'Niagara Falls',
+                'description' => 'Iconic waterfall system on the US-Canada border.',
+                'location' => 'Ontario',
+                'country' => 'Canada',
+                'rating' => 4,
+                'images' => ["/storage/destinations/NiagaraFalls.jpg"],
+            ],
+            [
+                'name' => 'Halong Bay',
+                'description' => 'UNESCO site with thousands of limestone islands in emerald waters.',
+                'location' => 'Quảng Ninh Province',
+                'country' => 'Vietnam',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Halong Bay.jpg", "/storage/destinations/Halong Bay1.jpg"],
+            ],
+            [
+                'name' => 'Cairo',
+                'description' => 'Gateway to the Pyramids of Giza and ancient Egyptian history.',
+                'location' => 'Cairo Governorate',
+                'country' => 'Egypt',
+                'rating' => 4,
+                'images' => ["/storage/destinations/Cairo.jpg", "/storage/destinations/Cairo1.jpg"],
+            ],
+            [
+                'name' => 'Patagonia',
+                'description' => 'Dramatic wilderness spanning Argentina and Chile with glaciers and mountains.',
+                'location' => 'Torres del Paine',
+                'country' => 'Chile',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Patagonia.jpg", "/storage/destinations/Patagonia1.jpg"],
+            ],
+            [
+                'name' => 'Amritsar',
+                'description' => 'Spiritual center of Sikhism, home to the Golden Temple.',
+                'location' => 'Punjab',
+                'country' => 'India',
+                'rating' => 5,
+                'images' => ["/storage/destinations/Amritsar.jpg", "/storage/destinations/Amritsar1.jpg"],
+            ],
+            [
+                'name' => 'Bangkok',
+                'description' => 'Vibrant Thai capital known for ornate temples and street food culture.',
+                'location' => 'Bangkok',
+                'country' => 'Thailand',
+                'rating' => 4,
+                'images' => ["/storage/destinations/Bangkok.jpg", "/storage/destinations/Bangkok2.jpg"],
+            ]
+        ];
+
+        foreach ($destinations as $destination) {
+            Destination::create($destination);
+        }
     }
 }

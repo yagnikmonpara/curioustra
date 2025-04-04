@@ -56,6 +56,13 @@ class GuideBookingController extends Controller
         $startTime = Carbon::parse($validated['start_time']);
         $endTime = $startTime->copy()->addHours($validated['duration_hours']);
 
+        if ($startTime->isPast()) {
+            return response()->json([
+                'available' => false,
+                'message' => 'Cannot book in the past'
+            ], 400);
+        }
+        
         $isAvailable = !$guide->bookings()
             ->where(function($query) use ($startTime, $endTime) {
                 $query->whereBetween('start_time', [$startTime, $endTime])

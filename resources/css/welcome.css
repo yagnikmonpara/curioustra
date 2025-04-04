@@ -57,7 +57,27 @@ body {
 .section-header {
     margin-bottom: 2rem;
 }
+.search-box {
+    margin: 2rem 0;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
 
+.search-box input {
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+    border-radius: 30px;
+    border: 2px solid #e2e8f0;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
 .section-title {
     font-family: var(--heading-font);
     font-size: 2.5rem;
