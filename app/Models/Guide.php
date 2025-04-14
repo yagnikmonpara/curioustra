@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Carbon\Carbon;
 
 class Guide extends Model
 {
@@ -12,18 +14,16 @@ class Guide extends Model
 
     protected $fillable = [
         'name',
-        'specialization',
         'bio',
+        'specialization',
+        'contact_number',
+        'profile_picture',
         'languages',
-        'experience',
         'location',
         'price_per_hour',
-        'availability_status',
-        'profile_picture',
         'rating',
         'tours_completed',
-        'contact_number',
-        'max_capacity',
+        'status' // active/inactive
     ];
 
     protected $casts = [
@@ -36,20 +36,31 @@ class Guide extends Model
         return $this->hasMany(GuideBooking::class);
     }
 
-    public function isAvailableFor($startTime, $endTime)
+    // Add accessor for availability
+    protected function isAvailable(): Attribute
     {
-        if ($this->availability_status !== 'available') {
+        return Attribute::make(
+            get: fn () => $this->status === 'active'
+        );
+    }
+
+    public function getAvailabilityForDate($date)
+    {
+        if ($this->status !== 'active') {
             return false;
         }
 
+        $start = Carbon::parse($date)->startOfDay();
+        $end = Carbon::parse($date)->endOfDay();
+
         return !$this->bookings()
-            ->where(function($query) use ($startTime, $endTime) {
-                $query->whereBetween('start_time', [$startTime, $endTime])
-                      ->orWhereBetween('end_time', [$startTime, $endTime])
-                      ->orWhere(function($q) use ($startTime, $endTime) {
-                          $q->where('start_time', '<', $startTime)
-                            ->where('end_time', '>', $endTime);
-                      });
+            ->where(function ($query) use ($start, $end) {
+                $query->whereBetween('start_time', [$start, $end])
+                    ->orWhereBetween('end_time', [$start, $end])
+                    ->orWhere(function ($q) use ($start, $end) {
+                        $q->where('start_time', '<', $start)
+                            ->where('end_time', '>', $end);
+                    });
             })
             ->whereIn('status', ['confirmed', 'in-progress'])
             ->exists();

@@ -29,12 +29,6 @@ const services = [
         url: '/images/cab.png'
     },
     {
-        title: "Hotel Reservation",
-        icon: <FaHotel />,
-        description: "Book from a wide range of hotels at your preferred destination with exclusive deals.",
-        url: '/images/hotel.png'
-    },
-    {
         title: "Provide Guides",
         icon: <FaMap />,
         description: "Experienced guides to enhance your travel experience with local insights.",

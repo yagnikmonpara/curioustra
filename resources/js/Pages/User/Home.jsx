@@ -16,11 +16,11 @@ import {
     ChatBubbleLeftRightIcon,
     ArrowRightIcon,
     InformationCircleIcon,
-    ArrowPathIcon
+    ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import '../../../css/travel.css';
 
-export default function Home() {
+export default function Home({ notifications, recentActivities }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
@@ -76,7 +76,7 @@ export default function Home() {
             title: "Community Posts",
             icon: <ChatBubbleLeftRightIcon className="h-8 w-8 text-white" />,
             description: "Engage with fellow travelers and share experiences in our active community.",
-            url: '/images/community.jpg'
+            url: '/images/community.png'
         },
         {
             title: "Provide Guides",
@@ -86,49 +86,49 @@ export default function Home() {
         },
     ];
 
-    // Notification Data
-    const notifications = [
-        {
-            id: 1,
-            title: "New Package Alert!",
-            message: "Check out our latest Luxury Beach Resort Experience in the Maldives.",
-            timestamp: "2 hours ago"
-        },
-        {
-            id: 2,
-            title: "Special Discount",
-            message: "Get 20% off on all Alpine Ski Adventure Packages. Book now!",
-            timestamp: "5 hours ago"
-        },
-        {
-            id: 3,
-            title: "Travel Advisory",
-            message: "Stay updated with the latest travel guidelines for your destination.",
-            timestamp: "1 day ago"
-        }
-    ];
+    // // Notification Data
+    // const notifications = [
+    //     {
+    //         id: 1,
+    //         title: "New Package Alert!",
+    //         message: "Check out our latest Luxury Beach Resort Experience in the Maldives.",
+    //         timestamp: "2 hours ago"
+    //     },
+    //     {
+    //         id: 2,
+    //         title: "Special Discount",
+    //         message: "Get 20% off on all Alpine Ski Adventure Packages. Book now!",
+    //         timestamp: "5 hours ago"
+    //     },
+    //     {
+    //         id: 3,
+    //         title: "Travel Advisory",
+    //         message: "Stay updated with the latest travel guidelines for your destination.",
+    //         timestamp: "1 day ago"
+    //     }
+    // ];
 
-    // Recent Activity Data
-    const recentActivities = [
-        {
-            id: 1,
-            activity: "Booked a trip to the Maldives",
-            user: "John Doe",
-            timestamp: "3 hours ago"
-        },
-        {
-            id: 2,
-            activity: "Saved the Amazon Rainforest Adventure package",
-            user: "Jane Smith",
-            timestamp: "6 hours ago"
-        },
-        {
-            id: 3,
-            activity: "Reviewed the Cultural Heritage Tour",
-            user: "Alice Johnson",
-            timestamp: "1 day ago"
-        }
-    ];
+    // // Recent Activity Data
+    // const recentActivities = [
+    //     {
+    //         id: 1,
+    //         activity: "Booked a trip to the Maldives",
+    //         user: "John Doe",
+    //         timestamp: "3 hours ago"
+    //     },
+    //     {
+    //         id: 2,
+    //         activity: "Saved the Amazon Rainforest Adventure package",
+    //         user: "Jane Smith",
+    //         timestamp: "6 hours ago"
+    //     },
+    //     {
+    //         id: 3,
+    //         activity: "Reviewed the Cultural Heritage Tour",
+    //         user: "Alice Johnson",
+    //         timestamp: "1 day ago"
+    //     }
+    // ];
 
     return (
         <>
@@ -178,21 +178,27 @@ export default function Home() {
                                     <h2 className="text-2xl font-bold">Notifications</h2>
                                 </div>
                                 <div className="space-y-4">
-                                    {notifications.map((notification) => (
-                                        <div key={notification.id} className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-all">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <div className="p-2 bg-blue-100 rounded-full">
-                                                    <InformationCircleIcon className="h-5 w-5 text-blue-900" />
+                                    {notifications.length > 0 ? (
+                                        notifications.map((notification) => (
+                                            <div key={notification.id} className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-all">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="p-2 bg-blue-100 rounded-full">
+                                                        <InformationCircleIcon className="h-5 w-5 text-blue-900" />
+                                                    </div>
+                                                    <h3 className="text-lg font-semibold">{notification.title}</h3>
                                                 </div>
-                                                <h3 className="text-lg font-semibold">{notification.title}</h3>
+                                                <p className="text-gray-600">{notification.message}</p>
+                                                <div className="flex items-center gap-2 mt-3 text-sm text-gray-500">
+                                                    <ClockIcon className="h-4 w-4" />
+                                                    <span>{notification.time_ago}</span>
+                                                </div>
                                             </div>
-                                            <p className="text-gray-600">{notification.message}</p>
-                                            <div className="flex items-center gap-2 mt-3 text-sm text-gray-500">
-                                                <ClockIcon className="h-4 w-4" />
-                                                <span>{notification.timestamp}</span>
-                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="p-6 text-center bg-white rounded-lg shadow-sm">
+                                            <p className="text-gray-500">No new notifications</p>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             </div>
 
@@ -203,24 +209,37 @@ export default function Home() {
                                     <h2 className="text-2xl font-bold">Recent Activity</h2>
                                 </div>
                                 <div className="space-y-4">
-                                    {recentActivities.map((activity) => (
-                                        <div key={activity.id} className="p-4 bg-blue-50 rounded-lg shadow-sm hover:shadow-md transition-all">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-white rounded-full">
-                                                    <UserIcon className="h-5 w-5 text-blue-900" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-gray-700">
-                                                        <span className="font-semibold">{activity.user}</span> {activity.activity}
-                                                    </p>
-                                                    <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                                                        <ClockIcon className="h-4 w-4" />
-                                                        <span>{activity.timestamp}</span>
+                                    {recentActivities.length > 0 ? (
+                                        recentActivities.map((activity) => (
+                                            <div key={activity.id} className="p-4 bg-blue-50 rounded-lg shadow-sm hover:shadow-md transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-white rounded-full">
+                                                        <UserIcon className="h-5 w-5 text-blue-900" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-700">
+                                                            <span className="font-semibold">{activity.user.name}</span> {activity.activity}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                                                            <ClockIcon className="h-4 w-4" />
+                                                            <span>{activity.time_ago}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center p-6 space-y-4">
+                                            <p className="text-gray-500">No recent activities yet</p>
+                                            <motion.button
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                                            >
+                                                <Link href="/packages">Explore Packages</Link>
+                                            </motion.button>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -267,6 +286,12 @@ export default function Home() {
                 {/* About Section */}
                 <section className="py-16 bg-white dark:bg-gray-900">
                     <div className="container mx-auto px-4">
+                        <div className="text-center mb-12">
+                            <h2 className="h2 section-title">About Us</h2>
+                            <p className="section-text">
+                                We are a travel company that specializes in providing personalized travel experiences to our customers.
+                            </p>
+                        </div>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                             <motion.div
                                 className="relative h-96"
@@ -276,7 +301,7 @@ export default function Home() {
                             >
                                 <div className="absolute inset-0 border-[50px] border-transparent border-r-blue-900 border-l-blue-900 transform -rotate-2">
                                     <img
-                                        src="/images/about-img.jpg"
+                                        src="/images/about.png"
                                         className="w-full h-full object-cover transform rotate-2"
                                         alt="About Us"
                                     />
@@ -323,6 +348,12 @@ export default function Home() {
                 {/* Contact Section */}
                 <section className="py-16 bg-gray-50 dark:bg-gray-900" id="contact">
                     <div className="container mx-auto px-4">
+                        <div className="text-center mb-12">
+                            <h2 className="h2 section-title">Contact Us</h2>
+                            <p className="section-text">
+                                Get in touch with us for any inquiries or questions.
+                            </p>
+                        </div>
                         <motion.div
                             className="bg-white rounded-2xl shadow-xl overflow-hidden"
                             initial={{ opacity: 0, y: 20 }}

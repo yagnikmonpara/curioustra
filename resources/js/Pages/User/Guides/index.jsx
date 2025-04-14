@@ -4,9 +4,9 @@ import { useState, useEffect, Fragment, useMemo, useCallback, memo } from "react
 import { motion } from "framer-motion";
 import { Dialog, Transition } from '@headlessui/react';
 import axios from "axios";
-import {
+import { 
     format, addMonths, subMonths, startOfMonth, endOfMonth,
-    isBefore, isSameMonth, isSameDay
+    isBefore, isSameMonth, isSameDay, startOfToday 
 } from 'date-fns';
 
 // Custom hook for calendar logic
@@ -74,22 +74,24 @@ const GuideCalendarView = memo(({
         [currentDate]
     );
 
-    const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+    const today = useMemo(() => startOfToday(), []);
 
     const days = useMemo(() => {
         const start = startOfMonth(currentDate);
         const end = endOfMonth(currentDate);
         const daysArray = [];
 
+        // Add empty days for previous month
         for (let i = 0; i < firstDayOfMonth; i++) {
             daysArray.push(null);
         }
 
+        // Fill in current month days
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
             const dateStr = format(date, 'yyyy-MM-dd');
             const dayData = calendarData.find(d => d.date === dateStr);
-            const isPast = isBefore(date, new Date()) && !isSameMonth(date, new Date());
+            const isPast = isBefore(date, today);
 
             daysArray.push({
                 day,
@@ -100,7 +102,7 @@ const GuideCalendarView = memo(({
         }
 
         return daysArray;
-    }, [calendarData, currentDate, firstDayOfMonth, daysInMonth]);
+    }, [calendarData, currentDate, firstDayOfMonth, daysInMonth, today]);
 
     return (
         <div className="mt-4">
@@ -108,7 +110,7 @@ const GuideCalendarView = memo(({
                 <button
                     onClick={() => handleMonthChange(-1)}
                     className="p-2 rounded-lg hover:bg-[#FFF2F2] text-[#2D336B] disabled:opacity-50 transition-colors"
-                    disabled={loading || !isSameMonth(addMonths(currentDate, -1), new Date())}
+                    disabled={loading || isBefore(subMonths(currentDate, 1), startOfMonth(today))}
                     aria-label="Previous month"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -150,6 +152,7 @@ const GuideCalendarView = memo(({
                         {days.map((day, index) => {
                             const isSelected = selectedDate === day?.date;
                             const isAvailable = day?.available && !day?.isPastDate;
+                            const isToday = day?.date === format(today, 'yyyy-MM-dd');
 
                             return (
                                 <button
@@ -159,7 +162,7 @@ const GuideCalendarView = memo(({
                                             isAvailable ?
                                                 'bg-green-100 hover:bg-green-200 cursor-pointer' :
                                                 'bg-red-100 hover:bg-red-200 cursor-not-allowed'}
-                                        ${day?.date === today ? 'border-2 border-blue-500' : 'border-gray-200'}
+                                        ${isToday ? 'border-2 border-blue-500' : 'border-gray-200'}
                                         ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
                                     onClick={() => day && onDateSelect(day.date)}
                                     disabled={!day || !isAvailable}
@@ -541,9 +544,24 @@ const BookingModal = memo(({ guide, onClose }) => {
 
     const handlePayment = async () => {
         if (!validateBooking()) return;
+        const availabilityCheck = await axios.post(route('guides.check-availability'), {
+            guide_id: guide.id,
+            start_time: format(new Date(bookingDetails.start_time), 'yyyy-MM-dd HH:mm:ss'),
+            duration_hours: bookingDetails.duration
+        });
+
+        if (!availabilityCheck.data.available) {
+            console.log(availabilityCheck.data);
+            setErrors({ payment: 'This time slot is no longer available' });
+            return;
+        }
         setPaymentProcessing(true);
 
+
         try {
+            if (!window.Razorpay) {
+                throw new Error('Payment gateway failed to load. Please try again.');
+            }
             const [date, time] = bookingDetails.start_time.split('T');
             const response = await axios.post(route('guides.book'), {
                 guide_id: guide.id,
@@ -584,7 +602,10 @@ const BookingModal = memo(({ guide, onClose }) => {
             rzp.open();
 
         } catch (error) {
-            setErrors({ payment: error.response?.data?.error || 'Booking failed' });
+            console.error('Payment initiation failed:', error);
+            setErrors({
+                payment: error.message || 'Failed to initialize payment gateway'
+            });
         } finally {
             setPaymentProcessing(false);
         }
@@ -796,7 +817,6 @@ const BookingModal = memo(({ guide, onClose }) => {
 });
 
 const Guides = ({ guides }) => {
-    console.log(guides);
     const { auth } = usePage().props;
     const [selectedGuide, setSelectedGuide] = useState(null);
     const [bookingGuide, setBookingGuide] = useState(null);
@@ -812,6 +832,18 @@ const Guides = ({ guides }) => {
         languagesInput: ''
     });
     const [showFilters, setShowFilters] = useState(false);
+
+    useEffect(() => {
+        if (window.Razorpay) return;
+
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.onload = () => console.log('Razorpay script loaded');
+        script.onerror = () => console.error('Failed to load Razorpay script');
+        
+        document.body.appendChild(script);
+    }, []);
 
     const filteredGuides = useMemo(() => {
         return guides.filter(guide => {

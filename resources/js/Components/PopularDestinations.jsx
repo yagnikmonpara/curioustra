@@ -289,7 +289,7 @@ export default function PopularDestinations() {
                         whileTap={{ scale: 0.95 }}
                         style={{ marginBottom: "3rem" }}
                     >
-                        <Link href="#destinations">MORE DESTINATION</Link>
+                        <Link href={route('destinations')}>MORE DESTINATION</Link>
                     </motion.button>
                 </motion.div>
             </div>

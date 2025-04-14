@@ -51,10 +51,6 @@ export default function AdminLayout({ children }) {
                             <span className="material-symbols-outlined"> folder </span>Gallery</Link>
                     </li>
                     <li>
-                        <Link href={route('admin.reviews')}>
-                            <span className="material-symbols-outlined"> rate_review </span>Reviews</Link>
-                    </li>
-                    <li>
                         <Link href={route('admin.contacts')}>
                             <span className="material-symbols-outlined"> person </span>Contacts</Link>
                     </li>

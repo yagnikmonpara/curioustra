@@ -78,7 +78,7 @@ class ContactController extends Controller
     public function markAsRead(Contact $contact)
     {
         $contact->update(['read_at' => now()]);
-        return response()->json(['success' => true]);
+        return redirect()->back();
     }
 
     public function sendResponse(Contact $contact, Request $request)

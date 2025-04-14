@@ -1,93 +1,170 @@
 import { motion } from 'framer-motion';
 import '../../css/welcome.css';
+import { useForm } from '@inertiajs/react';
+import {
+    UserIcon,
+    UsersIcon,
+    StarIcon,
+    TruckIcon,
+    MapIcon,
+    BellIcon,
+    ClockIcon,
+    MapPinIcon,
+    PhoneIcon,
+    EnvelopeIcon,
+    ChatBubbleLeftRightIcon,
+    ArrowRightIcon,
+    InformationCircleIcon,
+    ArrowPathIcon
+} from '@heroicons/react/24/outline';
 
 export default function ContactSection() {
+    const { data, setData, post, processing, errors } = useForm({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        response: '',
+        message: ''
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        post(route('contact.store'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setData({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    subject: '',
+                    response: '',
+                    message: ''
+                });
+            },
+            onError: (errors) => {
+                console.log(errors);
+            }
+        });
+    };
+
     return (
-        <motion.section 
-            className="contact section py-16 bg-white-300" 
-            id="contact"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-        >
-            <div className="container mx-auto px-6">
-                <motion.h2 
-                    className="section-title text-6xl font-extrabold text-center text-blue-900 dark:text-blue-200 font-serif mb-10"
-                    initial={{ y: 30, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.2, duration: 0.8 }}
-                >
-                    Contact Us
-                </motion.h2>
-
-                <div className="contact-grid grid md:grid-cols-2 gap-12">
-                    <motion.div 
-                        className="contact-info bg-white/90 dark:bg-blue-700 p-8 rounded-xl shadow-xl border border-blue-400 dark:border-blue-600 backdrop-blur-lg"
-                        initial={{ x: -50, opacity: 0 }}
-                        whileInView={{ x: 0, opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.4, duration: 0.8 }}
-                    >
-                        <h3 className="text-4xl font-semibold text-blue-800 dark:text-blue-200 mb-4 font-serif">Get in Touch</h3>
-                        <p className="text-gray-800 dark:text-gray-200 mb-6">We'd love to hear from you. <br/> Please fill out this form or use our contact information below.</p>
-                        
-                        <div className="contact-details space-y-4">
-                            <div className="contact-item flex items-center gap-4">
-                                <ion-icon name="location-outline" class="text-4xl text-blue-800 dark:text-blue-200" aria-label="Location"></ion-icon>
-                                <p className="text-gray-800 dark:text-gray-200">A-1201 to A-1210 Peladium Square, Dalal Street, Mumbai City, India - 40001</p>
-                            </div>
-                            <div className="contact-item flex items-center gap-4">
-                                <ion-icon name="call-outline" class="text-4xl text-blue-800 dark:text-blue-200" aria-label="Phone"></ion-icon>
-                                <p className="text-gray-800 dark:text-gray-200">+1 (234) 567-8900 / +91 38526 84393</p>
-                            </div>
-                            <div className="contact-item flex items-center gap-4">
-                                <ion-icon name="mail-outline" class="text-4xl text-blue-800 dark:text-blue-200" aria-label="Email"></ion-icon>
-                                <p className="text-gray-800 dark:text-gray-200">info@curioustra.com</p>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    <motion.form 
-                        className="contact-form bg-white/90 dark:bg-gray-800/90 p-8 rounded-xl shadow-xl border border-blue-400 dark:border-blue-600 backdrop-blur-lg"
-                        initial={{ x: 50, opacity: 0 }}
-                        whileInView={{ x: 0, opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.6, duration: 0.8 }}
-                        onSubmit={(e) => e.preventDefault()}
-                    >
-                        <div className="form-group mb-4">
-                            <label htmlFor="name" className="block font-medium text-blue-800 dark:text-blue-800 font-serif bolder">Name</label>
-                            <input type="text" id="name" name="name" required className="form-input w-full px-4 py-2 border border-blue-500 dark:border-blue-600 rounded-lg focus:ring-blue-600 focus:border-blue-600 font-serif" aria-label="Name"/>
-                        </div>
-
-                        <div className="form-group mb-4">
-                            <label htmlFor="email" className="block font-medium text-blue-800 dark:text-blue-800 font-serif bolder">Email</label>
-                            <input type="email" id="email" name="email" required className="form-input w-full px-4 py-2 border border-blue-500 dark:border-blue-600 rounded-lg focus:ring-blue-600 focus:border-blue-600 font-serif" aria-label="Email"/>
-                        </div>
-
-                        <div className="form-group mb-4">
-                            <label htmlFor="subject" className="block font-medium text-blue-800 dark:text-blue-800 font-serif bolder">Subject</label>
-                            <input type="text" id="subject" name="subject" required className="form-input w-full px-4 py-2 border border-blue-500 dark:border-blue-600 rounded-lg focus:ring-blue-600 focus:border-blue-600 font-serif" aria-label="Subject"/>
-                        </div>
-
-                        <div className="form-group mb-4">
-                            <label htmlFor="message" className="block font-medium text-blue-800 dark:text-blue-800 font-serif bolder">Message</label>
-                            <textarea id="message" name="message" rows="5" required className="form-textarea w-full px-4 py-2 border border-blue-500 dark:border-blue-600 rounded-lg focus:ring-blue-600 focus:border-blue-600 font-serif" aria-label="Message"></textarea>
-                        </div>
-
-                        <motion.button 
-                            type="submit" 
-                            className="btn w-full py-3 rounded-lg bg-blue-800 dark:bg-blue-600 text-white font-semibold shadow-lg font-serif"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+        <section className="py-16 bg-white-800" id="contact">
+                    <div className="container mx-auto px-4">
+                        <motion.div
+                            className="bg-gray-200 rounded-2xl shadow-xl overflow-hidden"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
                         >
-                            Send Message
-                        </motion.button>
-                    </motion.form>
-                </div>
-            </div>
-        </motion.section>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-8">
+                                {/* Contact Info */}
+                                <div className="space-y-8">
+                                    <div className="text-center p-6 bg-blue-50 rounded-xl">
+                                        <MapPinIcon className="h-6 w-6 text-blue-900 mx-auto mb-4" />
+                                        <h4 className="text-xl font-bold mb-2 text-blue-900">Address</h4>
+                                        <p className="text-gray-600">123 Travel Street<br />New York, USA</p>
+                                    </div>
+                                    <div className="text-center p-6 bg-blue-50 rounded-xl">
+                                        <PhoneIcon className="h-6 w-6 text-blue-900 mx-auto mb-4" />
+                                        <h4 className="text-xl font-bold mb-2 text-blue-900">Phone</h4>
+                                        <p className="text-gray-600">+1 234 567 890<br />+1 987 654 321</p>
+                                    </div>
+                                    <div className="text-center p-6 bg-blue-50 rounded-xl">
+                                        <EnvelopeIcon className="h-6 w-6 text-blue-900 mx-auto mb-4" />
+                                        <h4 className="text-xl font-bold mb-2 text-blue-900">Email</h4>
+                                        <p className="text-gray-600">info@curioustra.com<br />support@curioustra.com</p>
+                                    </div>
+                                </div>
+
+                                {/* Contact Form */}
+                                <div className="md:col-span-2">
+                                    <h3 className="text-3xl font-bold mb-6 text-blue-900">Send Us a Message</h3>
+                                    <form onSubmit={handleSubmit} className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={data.name}
+                                                    onChange={(e) => setData('name', e.target.value)}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    required
+                                                />
+                                                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                                            </div>
+                                            <div>
+                                                <label className="block text-gray-700 mb-2">Email</label>
+                                                <input
+                                                    type="email"
+                                                    value={data.email}
+                                                    onChange={(e) => setData('email', e.target.value)}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    required
+                                                />
+                                                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-gray-700 mb-2">Phone</label>
+                                            <input
+                                                type="tel"
+                                                value={data.phone}
+                                                onChange={(e) => setData('phone', e.target.value)}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                required
+                                            />
+                                            {errors.phone && <p className="text-red-500 text-sm mt-1">
+                                                {errors.phone.replace('phone', 'Phone number').replace('digits', 'digits long')}
+                                            </p>}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-gray-700 mb-2">Subject</label>
+                                            <input
+                                                type="text"
+                                                value={data.subject}
+                                                onChange={(e) => setData('subject', e.target.value)}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                required
+                                            />
+                                            {errors.subject && <p className="text-red-500 text-sm mt-1">{errors.subject}</p>}
+                                        </div>
+
+
+                                        <div>
+                                            <label className="block text-gray-700 mb-2">Message</label>
+                                            <textarea
+                                                value={data.message}
+                                                onChange={(e) => setData('message', e.target.value)}
+                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-40"
+                                                required
+                                            ></textarea>
+                                            {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
+                                        </div>
+
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            type="submit"
+                                            className="w-full bg-blue-900 text-white py-4 rounded-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2"
+                                            disabled={processing}
+                                        >
+                                            {processing ? (
+                                                <>
+                                                    <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                                                    Sending...
+                                                </>
+                                            ) : (
+                                                'Send Message'
+                                            )}
+                                        </motion.button>
+                                    </form>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                </section>
     );
 }

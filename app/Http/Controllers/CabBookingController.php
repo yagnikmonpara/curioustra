@@ -332,7 +332,7 @@ public function getAvailabilityCalendar(Request $request)
             'total_price' => $order->notes['total_price'],
             'status' => 'confirmed'
         ]);
-
+        $this->sendStatusEmail($booking, 'confirmed');
         return response()->json([
             'success' => true,
             'redirect' => route('bookings'),

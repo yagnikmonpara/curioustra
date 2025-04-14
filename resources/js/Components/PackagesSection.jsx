@@ -145,15 +145,18 @@ const PackageCard = ({ pkg }) => {
                 </div>
 
                 <p className="price">
-                    ${pkg.price}
+                    ₹{pkg.price}
                     <span>/ per person</span>
                 </p>
 
                 <div className="action-buttons">
-                    <button className="btn btn-secondary">Book Now</button>
                     <button className="btn btn-outline">
-                        <ion-icon name="heart-outline"></ion-icon>
-                        Save
+                        <ion-icon name="cart"></ion-icon>
+                        <Link href={route('login')}>Book Now</Link>
+                    </button>
+                    <button className="btn btn-outline">
+                        <ion-icon name="eye"></ion-icon>
+                        <Link href={route('login')}>View More</Link>
                     </button>
                 </div>
             </div>
@@ -200,7 +203,7 @@ const PackagesSection = () => {
                         whileTap={{ scale: 0.95 }}
                         style={{ marginTop: "3rem" }}
                     >
-                        <Link href="#packages">Explore All Packages</Link>
+                        <Link href={route('login')}>Explore All Packages</Link>
                     </motion.button>
                 </div>
             </div>

@@ -25,8 +25,8 @@ return new class extends Migration
             $table->text('special_requests')->nullable();
             $table->timestamps();
 
-            $table->index(['guide_id', 'start_time']);
-            $table->index(['user_id', 'start_time']);
+            $table->index(['guide_id', 'start_time', 'end_time']);
+            $table->index(['user_id', 'start_time', 'end_time']);
             $table->index('status');
         });
     }

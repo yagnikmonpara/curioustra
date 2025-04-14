@@ -184,7 +184,8 @@ const Cabs = ({ cabs }) => {
             rzp.open();
 
         } catch (error) {
-            alert(`Booking error: ${error.message}`);
+            console.error('Booking failed:', error);
+            setErrors({ payment: error.response?.data?.error || 'Booking failed' });
         } finally {
             setLoading(false);
         }

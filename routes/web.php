@@ -41,6 +41,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Contact Page
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::put('/contact', [ContactController::class, 'update'])->name('contact.update');
+
+// Newsletter
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
 Route::get('/newsletter/verify/{token}', [NewsletterController::class, 'verify'])->name('newsletter.verify');
 Route::post('/newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
@@ -130,10 +136,10 @@ Route::middleware(AdminMiddleware::class)->prefix('admin')->group(function () {
     Route::delete('/gallery/{gallery}', [GalleryController::class, 'destroy'])->name('admin.gallery.destroy');
 
     // Reviews Page
-    Route::get('/reviews', [ReviewController::class, 'list'])->name('admin.reviews');
-    Route::post('/reviews', [ReviewController::class, 'store'])->name('admin.reviews.store');
-    Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('admin.reviews.update');
-    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
+    // Route::get('/reviews', [ReviewController::class, 'list'])->name('admin.reviews');
+    // Route::post('/reviews', [ReviewController::class, 'store'])->name('admin.reviews.store');
+    // Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('admin.reviews.update');
+    // Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
     // Contact Page
     Route::get('/contacts', [ContactController::class, 'list'])->name('admin.contacts');
@@ -193,21 +199,12 @@ Route::middleware(UserMiddleware::class)->group(function () {
     Route::post('/gallery', [GalleryController::class, 'store'])->name('gallery.store');
     Route::delete('/gallery/{gallery}', [GalleryController::class, 'destroy'])->name('gallery.destroy');
 
-    // Contact Page
-    Route::get('/contact', [ContactController::class, 'index'])->name('contact');
-    Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
-    Route::put('/contact', [ContactController::class, 'update'])->name('contact.update');
-
     // Reviews Page
-    Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews');
-    Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
-    Route::post('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
-    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    // Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews');
+    // Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    // Route::post('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+    // Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 
-    // Newsletter
-    Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
-    Route::get('/newsletter/verify/{token}', [NewsletterController::class, 'verify'])->name('newsletter.verify');
-    Route::post('/newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 });
 
 require __DIR__.'/auth.php';

@@ -11,6 +11,54 @@ class DestinationSeeder extends Seeder
     {
         $destinations = [
             [
+                'name' => 'SAN MIGUEL',
+                'location' => 'ITALY',
+                'country' => 'Italy',
+                'description' => 'Fusce hic augue velit wisi ips quibusdam pariatur, iusto.',
+                'images' => ["/storage/destinations/popular-1.png"],
+                'rating' => 5
+            ],
+            [
+                'name' => 'BURJ KHALIFA',
+                'description' => 'Fusce hic augue velit wisi ips quibusdam pariatur, iusto.',
+                'location' => 'DUBAI',
+                'country' => 'UAE',
+                'rating' => 5,
+                'images' => ["/storage/destinations/popular-2.png"],
+            ],
+            [
+                'name' => 'KYOTO TEMPLE',
+                'location' => 'JAPAN',
+                'country' => 'Japan',
+                'description' => 'Fusce hic augue velit wisi ips quibusdam pariatur, iusto.',
+                'images' => ["/storage/destinations/popular-3.png"],
+                'rating' => 5,
+            ],
+            [
+                'name' => 'SANTORINI',
+                'location' => 'GREECE',
+                'country' => 'Greece',
+                'description' => 'Experience the stunning white architecture and blue domes of Santorini.',
+                'images' => ["/storage/destinations/popular-4.png"],
+                'rating' => 5,
+            ],
+            [
+                'name' => 'MACHU PICCHU',
+                'location' => 'PERU',
+                'country' => 'Peru',
+                'description' => 'Discover the ancient Incan citadel set high in the Andes Mountains.',
+                'images' => ["/storage/destinations/popular-5.png"],
+                'rating' => 5,
+            ],
+            [
+                'name' => 'MALDIVES',
+                'description' => 'Relax in luxury overwater villas in crystal clear turquoise waters.',
+                'location' => 'SOUTH ASIA',
+                'country' => 'Maldives',
+                'rating' => 5,
+                'images' => ["/storage/destinations/popular-6.png"],
+            ],
+            [
                 'name' => 'Santorini',
                 'description' => 'Greek island paradise with whitewashed buildings and stunning sunsets over the Aegean Sea.',
                 'location' => 'Santorini',

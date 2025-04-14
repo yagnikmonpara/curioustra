@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Notification extends Model
+class Notifications extends Model
 {
     use HasFactory;
 
@@ -18,9 +18,16 @@ class Notification extends Model
         'user_id'
     ];
 
-    // Relationship to User (if notifications are user-specific)
+    protected $dates = ['timestamp'];
+    protected $appends = ['time_ago'];
+    
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getTimeAgoAttribute()
+    {
+        return $this->timestamp->diffForHumans();
     }
 }

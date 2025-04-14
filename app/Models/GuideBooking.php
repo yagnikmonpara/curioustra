@@ -20,7 +20,7 @@ class GuideBooking extends Model
         'total_price',
         'status',
         'additional_info',
-        'location',
+        'meeting_location'
     ];
 
     protected $casts = [

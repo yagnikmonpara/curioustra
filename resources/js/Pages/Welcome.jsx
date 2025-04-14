@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 // Import Components
 import Header from '@/Components/Header';
 import HeroSection from '@/Components/HeroSection';
@@ -15,7 +15,6 @@ import Footer from '@/Components/Footer';
 import '../../css/welcome.css';
 
 export default function Welcome() {
-    const { user } = usePage().props.auth;
     const [isHeaderActive, setIsHeaderActive] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
 

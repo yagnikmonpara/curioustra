@@ -45,7 +45,7 @@ const GallerySection = () => {
                         whileTap={{ scale: 0.95 }}
                         style={{ marginTop: "3rem" }}
                     >
-                        <Link href="#gallery">Explore More!</Link>
+                        <Link href={route('gallery')}>Explore More!</Link>
                     </motion.button>
                 </div>
             </div>

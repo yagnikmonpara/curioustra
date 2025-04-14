@@ -11,6 +11,62 @@ class PackageSeeder extends Seeder
     {
         $packages = [
             [
+                'title' => "Luxury Beach Resort Experience",
+                'description' => "Indulge in a luxurious beach getaway with world-class amenities, pristine beaches, and unforgettable sunsets. Perfect for couples and families.",
+                'images' => ["/storage/packages/packege-1.jpg"],
+                'duration' => "5D/4N",
+                'pax' => 4,
+                'location' => "Maldives",
+                'country' => "Maldives",
+                'reviews' => 128,
+                'rating' => 5,
+                'price' => 1299,
+                'amenities' => ["Spa Access", "Water Sports", "Gourmet Dining"],
+                'highlights' => ["Private Beach", "Sunset Cruise", "Diving"]
+            ],
+            [
+                'title' => "Amazon Rainforest Adventure",
+                'description' => "Embark on an exciting journey through the Amazon rainforest. Experience wildlife, indigenous cultures, and breathtaking natural wonders.",
+                'images' => ["/storage/packages/packege-2.jpg"],
+                'duration' => "7D/6N",
+                'pax' => 8,
+                'location' => "Brazil",
+                'country' => "Brazil",
+                'reviews' => 95,
+                'rating' => 4.8,
+                'price' => 1599,
+                'amenities' => ["Guided Tours", "Eco Lodge", "Local Cuisine"],
+                'highlights' => ["Wildlife Safari", "Tribal Visit", "River Cruise"]
+            ],
+            [
+                'title' => "Alpine Ski Adventure Package",
+                'description' => "Experience the thrill of skiing in the majestic Alps. Perfect for both beginners and experienced skiers with professional instruction available.",
+                'images' => ["/storage/packages/packege-3.jpg"],
+                'duration' => "6D/5N",
+                'pax' => 6,
+                'location' => "Switzerland",
+                'country' => "Switzerland",
+                'reviews' => 156,
+                'rating' => 4.9,
+                'price' => 1899,
+                'amenities' => ["Ski Equipment", "Spa Access", "Mountain View"],
+                'highlights' => ["Ski Lessons", "Cable Car", "Snow Activities"]
+            ],
+            [
+                'title' => "Cultural Heritage Tour",
+                'description' => "Explore the rich history and culture of ancient civilizations. Visit iconic landmarks such as the Acropolis, the Parthenon, and the ancient ruins of Delphi.",
+                'images' => ["/storage/packages/package-4.png"],
+                'duration' => "8D/7N",
+                'pax' => 10,
+                'location' => "Greece",
+                'country' => "Greece",
+                'reviews' => 75,
+                'rating' => 4.7,
+                'price' => 1999,
+                'amenities' => ["Guided Tours", "Cultural Experiences", "Local Cuisine"],
+                'highlights' => ["Acropolis Visit", "Local Festivals", "Cooking Class"]
+            ],
+            [
                 'title' => 'Safari Adventure in Kenya',
                 'description' => 'Experience the thrill of the wild in the Masai Mara.',
                 'images' => ["/storage/packages/Safari Adventure in Kenya.jpg"],
