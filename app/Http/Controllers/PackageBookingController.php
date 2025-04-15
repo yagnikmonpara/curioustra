@@ -201,11 +201,11 @@ class PackageBookingController extends Controller
                 'end_date' => $order->notes['end_date'] ?? now()->addDays(5),
                 'number_of_people' => $order->notes['number_of_people'] ?? 1,
                 'total_price' => $order->notes['total_price'] ?? 0,
-                'status' => 'pending',
+                'status' => 'confirmed',
                 'payment_status' => 'paid',
                 'payment_id' => $payment->id
             ]);
-
+            $this->sendStatusEmail($booking, 'confirmed');
             return response()->json([
                 'success' => true,
                 'redirect' => route('bookings'),
@@ -328,13 +328,6 @@ class PackageBookingController extends Controller
 
     public function inProgressBooking(PackageBooking $booking)
     {
-        // if (!Auth::user()->isAdmin()) { // Replace isAdmin() with your actual admin check
-        //     abort(403, 'Unauthorized action.');
-        // }
-
-        if ($booking->status !== 'confirmed') {
-            return back()->with('error', 'Booking is not confirmed.');
-        }
 
         $booking->status = 'in-progress';
         $booking->save();
@@ -345,13 +338,6 @@ class PackageBookingController extends Controller
 
     public function completeBooking(PackageBooking $booking)
     {
-        // if (!Auth::user()->isAdmin()) { // Replace isAdmin() with your actual admin check
-        //     abort(403, 'Unauthorized action.');
-        // }
-
-        if ($booking->status !== 'in-progress') {
-            return back()->with('error', 'Booking is not in-progress.');
-        }
 
         $booking->status = 'completed';
         $booking->save();
@@ -362,24 +348,47 @@ class PackageBookingController extends Controller
 
     public function downloadReceipt(PackageBooking $booking)
     {
+        try {
+            $booking->load(['package', 'user']);
+            
+            // Convert dates to Carbon objects if they are strings
+            if (is_string($booking->start_date)) {
+                $booking->start_date = Carbon::parse($booking->start_date);
+            }
+            
+            if (is_string($booking->end_date)) {
+                $booking->end_date = Carbon::parse($booking->end_date);
+            }
+            
+            if (is_string($booking->booking_date)) {
+                $booking->booking_date = Carbon::parse($booking->booking_date);
+            }
+            
+            // Ensure updated_at is a Carbon object
+            if (is_string($booking->updated_at)) {
+                $booking->updated_at = Carbon::parse($booking->updated_at);
+            }
 
-        $booking->load(['package', 'user']);
+            $logoPath = public_path('/images/logo.png');
+            $data = [
+                'booking' => $booking,
+                'company' => [
+                    'name' => 'CuriousTra',
+                    'address' => 'Surat, Gujarat, India - 395006',
+                    'email' => 'info.curioustra@gmail.com',
+                    'phone' => '+91 800####4591',
+                    'logo' => file_exists($logoPath) ? $logoPath : null
+                ]
+            ];
 
-        $data = [
-            'booking' => $booking,
-            'company' => [
-                'name' => 'CuriousTra',
-                'address' => 'Surat, Gujarat, India - 395006',
-                'email' => 'info.curioustra@gmail.com',
-                'phone' => '+91 800####4591',
-                'logo' => public_path('images/logo.png')
-            ]
-        ];
+            $pdf = Pdf::loadView('pdfs.packageReceipt', $data)
+                ->setPaper('a4', 'portrait')
+                ->setOption('isRemoteEnabled', true);
 
-        $pdf = Pdf::loadView('pdfs.packageReceipt', $data)->setPaper('a4', 'portrait')->setOption('isRemoteEnabled', true);
-
-        $filename = "Receipt-{$booking->id}-" . now()->format('YmdHis') . ".pdf";
-
-        return $pdf->download($filename);
+            return $pdf->download("PackageReceipt-{$booking->id}.pdf");
+        } catch (\Exception $e) {
+            \Log::error("Receipt generation failed: {$e->getMessage()}");
+            abort(500, 'Failed to generate receipt');
+        }
     }
 }

@@ -23,6 +23,13 @@ class GuideBooking extends Model
         'meeting_location'
     ];
 
+    protected $dates = [
+        'start_time',
+        'end_time',
+        'created_at',
+        'updated_at'
+    ];
+    
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
@@ -37,5 +44,26 @@ class GuideBooking extends Model
     public function guide(): BelongsTo
     {
         return $this->belongsTo(Guide::class);
+    }
+
+    // Add status transition methods
+    public function canBeConfirmed(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function canStart(): bool
+    {
+        return $this->status === 'confirmed';
+    }
+
+    public function canBeCompleted(): bool
+    {
+        return $this->status === 'in-progress';
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === 'cancelled';
     }
 }

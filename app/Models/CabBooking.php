@@ -25,6 +25,12 @@ class CabBooking extends Model
         'additional_info',
     ];
 
+    protected $dates = [
+        'pickup_time',
+        'dropoff_time',
+        'created_at',
+        'updated_at'
+    ];
     protected $casts = [
         'pickup_time' => 'datetime',
         'dropoff_time' => 'datetime',

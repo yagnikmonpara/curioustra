@@ -1,0 +1,49 @@
+.logo {
+    width: 64px;
+    height: 64px;
+    border: 1px solid;
+    padding: 1px;
+}
+
+.line {
+    display: block;
+    width: 30px; 
+    height: 3px; 
+    background: linear-gradient(135deg, #4A90E2, #50E3C2);
+    margin: 6px 0; 
+    transition: all 0.3s ease; 
+}
+
+.line.active {
+    background: linear-gradient(135deg, #4A90E2, #50E3C2);
+    transform: rotate(45deg); 
+}
+
+.line.active:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.line.active:nth-child(2) {
+    opacity: 0;
+}
+
+.line.active:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+.bg-gradient {
+    background: linear-gradient(135deg, #F5F7FA, #D2E1E8);
+}
+
+.text-primary {
+    color: #2C3E50;
+}
+
+.hover-bg {
+    background-color: #3498DB;
+}
+
+.blur {
+    filter: blur(15px);
+    transition: filter 0.3s ease;
+}

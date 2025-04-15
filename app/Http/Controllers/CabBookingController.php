@@ -346,61 +346,69 @@ public function getAvailabilityCalendar(Request $request)
     }
 }
 
-    private function sendStatusEmail(CabBooking $booking, string $status)
-    {
-        $config = [
-            'confirmed' => [
-                'subject' => 'Cab Booking Confirmed!',
-                'color' => '#0ea5e9 0%, #22d3ee 100%',
-                'icon' => '🚖',
-                'heading' => 'Your Cab is Booked!',
-                'subHeading' => 'Ready for your journey!',
-                'content' => "Hi {$booking->user->name},<br><br>Your {$booking->cab->make} {$booking->cab->model} booking is confirmed!<br>Driver will arrive at {$booking->pickup_time->format('h:i A')} on {$booking->pickup_time->format('d M Y')}."
-            ],
-            'cancelled' => [
-                'subject' => 'Cab Booking Cancelled',
-                'color' => '#ef4444 0%, #f87171 100%',
-                'icon' => '❌',
-                'heading' => 'Booking Cancelled',
-                'subHeading' => 'We hope to see you again soon!',
-                'content' => "Hi {$booking->user->name},<br><br>Your cab booking has been cancelled.<br>Refund of ₹{$booking->total_price} will be processed within 5-7 days."
-            ],
-            'completed' => [
-                'subject' => 'Ride Completed!',
-                'color' => '#10b981 0%, #34d399 100%',
-                'icon' => '✅',
-                'heading' => 'Ride Completed Successfully!',
-                'subHeading' => 'Hope you enjoyed your ride!',
-                'content' => "Hi {$booking->user->name},<br><br>Your ride in {$booking->cab->make} {$booking->cab->model} has been completed.<br>Thank you for choosing us!"
-            ]
-        ];
+private function sendStatusEmail(CabBooking $booking, string $status)
+{
+    $config = [
+        'confirmed' => [
+            'subject' => 'Cab Booking Confirmed!',
+            'color' => '#0ea5e9 0%, #22d3ee 100%',
+            'icon' => '🚖',
+            'heading' => 'Your Cab is Booked!',
+            'subHeading' => 'Ready for your journey!',
+            'content' => "Hi {$booking->user->name},<br><br>Your {$booking->cab->make} {$booking->cab->model} booking is confirmed!<br>Driver will arrive at {$booking->pickup_time->format('h:i A')} on {$booking->pickup_time->format('d M Y')}."
+        ],
+        'cancelled' => [
+            'subject' => 'Cab Booking Cancelled',
+            'color' => '#ef4444 0%, #f87171 100%',
+            'icon' => '❌',
+            'heading' => 'Booking Cancelled',
+            'subHeading' => 'We hope to see you again soon!',
+            'content' => "Hi {$booking->user->name},<br><br>Your cab booking has been cancelled.<br>Refund of ₹{$booking->total_price} will be processed within 5-7 days."
+        ],
+        'completed' => [
+            'subject' => 'Ride Completed!',
+            'color' => '#10b981 0%, #34d399 100%',
+            'icon' => '✅',
+            'heading' => 'Ride Completed Successfully!',
+            'subHeading' => 'Hope you enjoyed your ride!',
+            'content' => "Hi {$booking->user->name},<br><br>Your ride in {$booking->cab->make} {$booking->cab->model} has been completed.<br>Thank you for choosing us!"
+        ],
+        // Add this new configuration
+        'in-progress' => [
+            'subject' => 'Ride Started!',
+            'color' => '#f59e0b 0%, #fbbf24 100%',
+            'icon' => '🚕',
+            'heading' => 'Your Ride Has Begun!',
+            'subHeading' => 'Enjoy your journey!',
+            'content' => "Hi {$booking->user->name},<br><br>Your ride in {$booking->cab->make} {$booking->cab->model} has started!<br>Driver is on the way to your pickup location."
+        ]
+    ];
 
-        Mail::to($booking->user->email)
-            ->send(new CabBookingStatusMail(
-                $booking,
-                $config[$status]['subject'],
-                $config[$status]['color'],
-                $config[$status]['icon'],
-                $config[$status]['heading'],
-                $config[$status]['subHeading'],
-                $config[$status]['content']
-            ));
-    }
+    Mail::to($booking->user->email)
+        ->send(new CabBookingStatusMail(
+            $booking,
+            $config[$status]['subject'],
+            $config[$status]['color'],
+            $config[$status]['icon'],
+            $config[$status]['heading'],
+            $config[$status]['subHeading'],
+            $config[$status]['content']
+        ));
+}
 
     public function downloadReceipt(CabBooking $booking)
 {
     try {
-       
-
         // Load relationships
         $booking->load(['cab', 'user']);
-
+        if (is_string($booking->pickup_time)) {
+            $booking->pickup_time = Carbon::parse($booking->pickup_time);
+        }
+        if (is_string($booking->dropoff_time)) {
+            $booking->dropoff_time = Carbon::parse($booking->dropoff_time);
+        }
         // Verify the logo file exists
         $logoPath = public_path('/images/logo.png');
-        if (!file_exists($logoPath)) {
-            \Log::warning("Logo file not found at: " . $logoPath);
-            $logoPath = null; // Will handle this in the view
-        }
 
         $data = [
             'booking' => $booking,
@@ -409,7 +417,7 @@ public function getAvailabilityCalendar(Request $request)
                 'address' => 'Surat, Gujarat, India - 395006',
                 'email' => 'info.curioustra@gmail.com',
                 'phone' => '+91 800####4591',
-                'logo' => $logoPath
+                'logo' => file_exists($logoPath) ? $logoPath : null
             ]
         ];
 
@@ -418,13 +426,11 @@ public function getAvailabilityCalendar(Request $request)
             ->setPaper('a4', 'portrait')
             ->setOption('isRemoteEnabled', true);
 
-        $filename = "CabReceipt-{$booking->id}.pdf";
-
-        return $pdf->download($filename);
+        return $pdf->download("CabReceipt-{$booking->id}.pdf");
 
     } catch (\Exception $e) {
-        \Log::error("Receipt generation failed for booking {$booking->id}: " . $e->getMessage());
-        abort(500, 'Failed to generate receipt. Please try again later.');
+        \Log::error("Receipt generation failed: {$e->getMessage()}");
+        abort(500, 'Failed to generate receipt');
     }
 }
 
@@ -459,9 +465,6 @@ public function getAvailabilityCalendar(Request $request)
 
     public function confirmBooking(CabBooking $booking)
     {
-        // if (!Auth::user()->isAdmin()) { // Replace isAdmin() with your actual admin check
-        //     abort(403, 'Unauthorized action.');
-        // }
 
         if ($booking->status !== 'pending') {
             return back()->with('error', 'Booking is not pending.');
@@ -513,12 +516,7 @@ public function getAvailabilityCalendar(Request $request)
 
         $this->sendStatusEmail($booking, 'cancelled');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Booking cancelled successfully',
-            'refund' => $refundData,
-            'booking' => $booking->fresh()->load('cab')
-        ]);
+        return back()->with('success', 'Booking cancelled successfully');
 
     } catch (\Exception $e) {
         \Log::error("Cancel booking failed: ".$e->getMessage());
@@ -530,14 +528,6 @@ public function getAvailabilityCalendar(Request $request)
 
     public function completeBooking(CabBooking $booking)
     {
-        // Authorization check (uncomment if needed)
-        // if (!Auth::user()->isAdmin()) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-    
-        if ($booking->status !== 'in-progress') {
-            return response()->json(['error' => 'Booking is not confirmed.'], 400);
-        }
     
         $booking->status = 'completed';
         $booking->save();
@@ -548,14 +538,6 @@ public function getAvailabilityCalendar(Request $request)
 
     public function inProgressBooking(CabBooking $booking)
     {
-        // Authorization check (uncomment if needed)
-        // if (!Auth::user()->isAdmin()) {
-        //     abort(403, 'Unauthorized action.');
-        // }
-    
-        if ($booking->status !== 'confirmed') {
-            return response()->json(['error' => 'Booking is not confirmed.'], 400);
-        }
     
         $booking->status = 'in-progress';
         $booking->save();

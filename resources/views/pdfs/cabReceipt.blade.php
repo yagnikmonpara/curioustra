@@ -82,11 +82,11 @@
 
     <div class="header">
         <div>
-            @if(file_exists($company['logo']))
+            <!-- @if(file_exists($company['logo']))
             <img src="{{ $company['logo'] }}" class="logo" alt="CuriousTra Logo">
-            @else
+            @else -->
             <h2 style="color: #0ea5e9;">CuriousTra</h2>
-            @endif
+            <!-- @endif -->
             <h1 style="color: #0ea5e9; margin: 0.5rem 0; font-size: 24px;">Cab Booking Receipt</h1>
         </div>
     </div>
@@ -122,7 +122,7 @@
             </tr>
             <tr>
                 <td>Pickup Time</td>
-                <td>{{ $booking->pickup_time->format('d M Y, h:i A') }}</td>
+                <td>{{ $booking->pickup_time ? $booking->pickup_time->format('d M Y, h:i A') : 'N/A' }}</td>
             </tr>
             <tr>
                 <td>Route</td>
@@ -183,9 +183,9 @@
             <div>
                 <h3 style="color: #0ea5e9; margin-bottom: 1rem;">Payment Method</h3>
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <img src="{{ public_path('images/razorpay-logo.png') }}" 
+                    <!-- <img src="{{ public_path('images/razorpay-logo.png') }}" 
                          style="height: 30px;" 
-                         alt="Razorpay">
+                         alt="Razorpay"> -->
                     <div>
                         <p style="margin: 0;">•••• 4242 (Visa)</p>
                         <small style="color: #64748b;">Transaction ID: {{ $booking->payment_id }}</small>

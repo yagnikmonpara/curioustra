@@ -20,6 +20,14 @@ class PackageBooking extends Model
         'end_date' => 'datetime',
     ];
 
+    protected $dates = [
+        'booking_date', 
+        'start_date',
+        'end_date',
+        'created_at',
+        'updated_at'
+    ];
+
     protected $fillable = [
         'user_id',
         'package_id',

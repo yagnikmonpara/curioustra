@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Razorpay\Api\Api;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Config;
+use Inertia\Inertia;
 
 class GuideBookingController extends Controller
 {
@@ -30,6 +31,13 @@ class GuideBookingController extends Controller
             'bookings' => GuideBooking::with(['user', 'guide'])
                 ->latest()
                 ->get()
+                ->map(function ($booking) {
+                    return [
+                        ...$booking->toArray(),
+                        'start_time' => $booking->start_time->toISOString(),
+                        'end_time' => $booking->end_time->toISOString()
+                    ];
+                })
         ]);
     }
 
@@ -222,7 +230,7 @@ class GuideBookingController extends Controller
                 'status' => 'confirmed'
             ]);
 
-            // $this->sendStatusEmail($booking, 'confirmed');
+            $this->sendStatusEmail($booking, 'confirmed');
 
             return response()->json([
                 'success' => true,
@@ -237,53 +245,91 @@ class GuideBookingController extends Controller
     }
 
     private function sendStatusEmail(GuideBooking $booking, string $status)
-    {
-        $config = [
-            'confirmed' => [
-                'subject' => 'Booking Confirmed',
-                'template' => 'emails.guide-booking-confirmed',
-            ],
-            'cancelled' => [
-                'subject' => 'Booking Cancelled',
-                'template' => 'emails.guide-booking-cancelled',
-            ],
-            'completed' => [
-                'subject' => 'Tour Completed',
-                'template' => 'emails.guide-booking-completed',
-            ],
-            'in-progress' => [
-                'subject' => 'Tour Started',
-                'template' => 'emails.guide-booking-in-progress',
-            ]
-        ];
+{
+    $config = [
+        'confirmed' => [
+            'subject' => 'Guide Booking Confirmed!',
+            'color' => '#10b981 0%, #34d399 100%', // Green gradient
+            'icon' => '✅',
+            'heading' => 'Your Guide is Confirmed!',
+            'subHeading' => 'Ready for your adventure!',
+            'content' => "Hi {$booking->user->name},<br><br>Your booking with guide {$booking->guide->name} is confirmed!<br>Meeting at {$booking->meeting_location} on {$booking->start_time->format('d M Y h:i A')}."
+        ],
+        'cancelled' => [
+            'subject' => 'Guide Booking Cancelled',
+            'color' => '#ef4444 0%, #f87171 100%', // Red gradient
+            'icon' => '❌',
+            'heading' => 'Booking Cancelled',
+            'subHeading' => 'We hope to see you again soon!',
+            'content' => "Hi {$booking->user->name},<br><br>Your booking with guide {$booking->guide->name} has been cancelled.<br>Refund of ₹{$booking->total_price} will be processed within 5-7 days."
+        ],
+        'completed' => [
+            'subject' => 'Tour Completed Successfully!',
+            'color' => '#3b82f6 0%, #60a5fa 100%', // Blue gradient
+            'icon' => '🏁',
+            'heading' => 'Tour Completed!',
+            'subHeading' => 'Thank you for choosing us!',
+            'content' => "Hi {$booking->user->name},<br><br>Your tour with {$booking->guide->name} has been successfully completed.<br>We hope you enjoyed your experience!"
+        ],
+        'in-progress' => [
+            'subject' => 'Tour Has Started!',
+            'color' => '#f59e0b 0%, #fbbf24 100%', // Amber gradient
+            'icon' => '🚶',
+            'heading' => 'Tour In Progress!',
+            'subHeading' => 'Enjoy your experience!',
+            'content' => "Hi {$booking->user->name},<br><br>Your tour with {$booking->guide->name} has started!<br>For any urgent assistance, contact our support team."
+        ]
+    ];
 
-        if (!array_key_exists($status, $config)) {
-            Log::error("Invalid booking status for email: {$status}");
-            return;
-        }
-
-        Mail::to($booking->user->email)->queue(
-            new GuideBookingStatusMail(
-                $booking,
-                $config[$status]['subject'],
-                $config[$status]['template']
-            )
-        );
+    if (!array_key_exists($status, $config)) {
+        Log::error("Invalid booking status for email: {$status}");
+        return;
     }
+
+    Mail::to($booking->user->email)
+        ->send(new GuideBookingStatusMail(
+            $booking,
+            $config[$status]['subject'],
+            $config[$status]['color'],
+            $config[$status]['icon'],
+            $config[$status]['heading'],
+            $config[$status]['subHeading'],
+            $config[$status]['content']
+        ));
+}
 
     public function downloadReceipt(GuideBooking $booking)
     {
-        $booking->load(['guide', 'user']);
+        try {
+            $booking->load(['guide', 'user']);
 
-        $data = [
-            'booking' => $booking,
-            'company' => Config::get('company.info')
-        ];
+            if (is_string($booking->start_time)) {
+                $booking->start_time = Carbon::parse($booking->start_time);
+            }
+            if (is_string($booking->end_time)) {
+                $booking->end_time = Carbon::parse($booking->end_time);
+            }
 
-        $pdf = Pdf::loadView('pdfs.guideReceipt', $data)
-            ->setPaper('a4', 'portrait');
+            $data = [
+                'booking' => $booking,
+                'company' => [
+                    'name' => 'CuriousTra',
+                    'address' => 'Surat, Gujarat, India - 395006',
+                    'email' => 'info.curioustra@gmail.com',
+                    'phone' => '+91 800####4591',
+                    'logo' => public_path('images/logo.png')
+                ]
+            ];
 
-        return $pdf->download("GuideReceipt-{$booking->id}.pdf");
+            $pdf = Pdf::loadView('pdfs.guideReceipt', $data)
+                ->setPaper('a4', 'portrait');
+
+            return $pdf->download("GuideReceipt-{$booking->id}.pdf");
+
+        } catch (\Exception $e) {
+            \Log::error("Receipt generation failed: {$e->getMessage()}");
+            abort(500, 'Failed to generate receipt');
+        }
     }
 
     public function confirmBooking(GuideBooking $booking)

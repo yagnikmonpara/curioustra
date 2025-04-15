@@ -46,8 +46,19 @@ const RatingStars = ({ rating }) => {
 };
 
 const DestinationCard = ({ destination }) => {
-    
     const [isHovered, setIsHovered] = useState(false);
+    const [imageError, setImageError] = useState(false);
+
+    const imageSrc = useMemo(() => {
+        if (imageError || !destination.images?.length) {
+            return '/images/default-destination.png';
+        }
+        
+        const img = destination.images[0];
+        return img.startsWith('http') || img.startsWith('/') 
+            ? img 
+            : `/${img}`;
+    }, [destination.images, imageError]);
 
     return (
         <motion.div
@@ -78,13 +89,11 @@ const DestinationCard = ({ destination }) => {
                 }}
             >
                 <motion.img
-                    src={destination.image || '/images/default-destination.png'}
+                    src={imageSrc}
                     alt={destination.name}
                     className="popular-img"
-                    onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = '/images/default-destination.png';
-                    }}
+                    onError={() => setImageError(true)}
+                    onLoad={() => setImageError(false)}
                     animate={{
                         scale: isHovered ? 1.1 : 1
                     }}

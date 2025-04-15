@@ -6,6 +6,7 @@ import NavLink from '@/Components/NavLink';
 import Dropdown from '@/Components/Dropdown';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import FlashMessage from '@/Components/FlashMessage';
+import styles from './AuthenticatedLayout.module.css';
 
 const AuthenticatedLayout = ({ children }) => {
     const { user } = usePage().props.auth;
@@ -41,49 +42,6 @@ const AuthenticatedLayout = ({ children }) => {
 
     return (
         <>
-        <style jsx>{`
-        .line {
-            display: block;
-            width: 30px; 
-            height: 3px; 
-            background: linear-gradient(135deg, #4A90E2, #50E3C2); /* Updated to a gradient */
-            margin: 6px 0; 
-            transition: all 0.3s ease; 
-        }
-
-        .line.active {
-            background: linear-gradient(135deg, #4A90E2, #50E3C2); /* Active state color */
-            transform: rotate(45deg); 
-        }
-
-        .line.active:nth-child(1) {
-            transform: rotate(45deg) translate(6px, 6px);
-        }
-
-        .line.active:nth-child(2) {
-            opacity: 0;
-        }
-            
-        .line.active:nth-child(3) {
-            transform: rotate(-45deg) translate(6px, -6px);
-        }
-
-        .bg-gradient {
-            background: linear-gradient(135deg, #F5F7FA, #D2E1E8); /* Soft gradient for the main background */
-        }
-
-        .text-primary {
-            color: #2C3E50; /* Darker text color */
-        }
-
-        .hover-bg {
-            background-color: #3498DB; /* Button hover color */
-        }
-        .blur {
-            filter: blur(15px); /* Adjust the blur amount as needed */
-            transition: filter 0.3s ease; /* Smooth transition */
-        }
-        `}</style>
         <Head>
             <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js" defer></script>
             <script noModule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js" defer></script>
@@ -109,9 +67,9 @@ const AuthenticatedLayout = ({ children }) => {
                                 <motion.img 
                                     src="images/logo.png" 
                                     alt="logo" 
-                                    className="w-16 h-16 border-1 p-1"
+                                    className={styles.logo}
                                 />
-                                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
+                                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                     CuriousTra
                                 </span>
                             </Link>
@@ -168,7 +126,7 @@ const AuthenticatedLayout = ({ children }) => {
                                             href={route('profile.edit')}
                                             className="hover:bg-blue-50 dark:hover:bg-gray-700"
                                         >
-                                            <span className="text-blue-600 dark:text-blue-400">👤</span> Profile
+                                            Profile
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route('bookings')}
@@ -182,7 +140,7 @@ const AuthenticatedLayout = ({ children }) => {
                                             as="button"
                                             className="hover:bg-red-50 dark:hover:bg-red-900/20"
                                         >
-                                            <span className="text-red-600">🚪</span> Log Out
+                                            Log Out
                                         </Dropdown.Link>
                                     </motion.div>
                                 </Dropdown.Content>

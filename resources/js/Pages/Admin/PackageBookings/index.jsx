@@ -361,6 +361,12 @@ const AdminPackageBookings = ({ bookings: initialBookings }) => {
                                                 label="In Progress"
                                                 color="text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100"
                                             />
+                                            <StatusButton
+                                                booking={selectedBooking}
+                                                status="cancel"
+                                                label="Cancel"
+                                                color="text-rose-600 hover:text-rose-800 hover:bg-rose-100"
+                                            />
                                         </>
                                     )}
                                     {selectedBooking.status === 'in-progress' && (

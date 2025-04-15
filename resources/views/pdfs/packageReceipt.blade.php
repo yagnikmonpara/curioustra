@@ -82,8 +82,12 @@
 
     <div class="header">
         <div>
+            <!-- @if(file_exists($company['logo']))
             <img src="{{ $company['logo'] }}" class="logo" alt="CuriousTra Logo">
-            <h1 style="color: #0ea5e9; margin: 0.5rem 0; font-size: 24px;">Booking Receipt</h1>
+            @else  -->
+            <h2 style="color: #0ea5e9;">CuriousTra</h2>
+            <!-- @endif -->
+            <h1 style="color: #0ea5e9; margin: 0.5rem 0; font-size: 24px;">Package Booking Receipt</h1>
         </div>
         <div class="company-info">
             <h2 style="margin: 0; color: #0f172a;">{{ $company['name'] }}</h2>
@@ -118,11 +122,11 @@
                     <div style="display: flex; gap: 1rem;">
                         <div>
                             <div style="font-size: 0.9em; color: #64748b;">From</div>
-                            {{ $booking->start_date->format('d M Y') }}
+                            {{ $booking->start_date ? $booking->start_date->format('d M Y') : 'N/A' }}
                         </div>
                         <div>
                             <div style="font-size: 0.9em; color: #64748b;">To</div>
-                            {{ $booking->end_date->format('d M Y') }}
+                            {{ $booking->end_date ? $booking->end_date->format('d M Y') : 'N/A' }}
                         </div>
                     </div>
                 </td>
@@ -168,9 +172,9 @@
             <div>
                 <h3 style="color: #0ea5e9; margin-bottom: 1rem;">Payment Method</h3>
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <img src="{{ public_path('images/razorpay-logo.png') }}" 
+                    <!-- <img src="{{ public_path('images/razorpay-logo.png') }}" 
                          style="height: 30px;" 
-                         alt="Razorpay">
+                         alt="Razorpay"> -->
                     <div>
                         <p style="margin: 0;">•••• 4242 (Visa)</p>
                         <small style="color: #64748b;">Transaction ID: {{ $booking->payment_id }}</small>

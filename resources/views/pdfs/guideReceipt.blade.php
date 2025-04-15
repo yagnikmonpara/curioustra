@@ -92,7 +92,8 @@
 
     <div class="header">
         <div>
-            <img src="{{ $company['logo'] }}" class="logo" alt="CuriousTra Logo">
+            <!-- <img src="{{ $company['logo'] }}" class="logo" alt="CuriousTra Logo"> -->
+            <h2 style="color: #0ea5e9;">CuriousTra</h2>
             <h1 style="color: #0ea5e9; margin: 0.5rem 0; font-size: 24px;">Guide Booking Receipt</h1>
         </div>
         <div class="company-info">
@@ -135,8 +136,16 @@
             <tr>
                 <td>Tour Date & Time</td>
                 <td>
-                    {{ \Carbon\Carbon::parse($booking->booking_date)->format('d M Y') }}<br>
-                    <small style="color: #64748b;">{{ \Carbon\Carbon::parse($booking->booking_time)->format('h:i A') }} ({{ $booking->duration_hours }} hours)</small>
+                    @if($booking->start_time && $booking->end_time)
+                        {{ $booking->start_time->format('d M Y') }}<br>
+                        <small style="color: #64748b;">
+                            {{ $booking->start_time->format('h:i A') }} - 
+                            {{ $booking->end_time->format('h:i A') }}
+                            ({{ $booking->duration_hours }} hours)
+                        </small>
+                    @else
+                        Date/Time not available
+                    @endif
                 </td>
             </tr>
             <tr>
@@ -195,9 +204,10 @@
             <div>
                 <h3 style="color: #0ea5e9; margin-bottom: 1rem;">Payment Method</h3>
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <img src="{{ public_path('images/razorpay-logo.png') }}" 
+                    <!-- <img src="{{ public_path('images/razorpay-logo.png') }}" 
                          style="height: 30px;" 
-                         alt="Razorpay">
+                         alt="Razorpay"> -->
+                    <h1>Razorpay</h1>
                     <div>
                         <p style="margin: 0;">•••• 4242 (Visa)</p>
                         <small style="color: #64748b;">Transaction ID: {{ $booking->payment_id }}</small>

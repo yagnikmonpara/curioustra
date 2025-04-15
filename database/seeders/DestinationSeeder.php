@@ -11,30 +11,6 @@ class DestinationSeeder extends Seeder
     {
         $destinations = [
             [
-                'name' => 'SAN MIGUEL',
-                'location' => 'ITALY',
-                'country' => 'Italy',
-                'description' => 'Fusce hic augue velit wisi ips quibusdam pariatur, iusto.',
-                'images' => ["/storage/destinations/popular-1.png"],
-                'rating' => 5
-            ],
-            [
-                'name' => 'BURJ KHALIFA',
-                'description' => 'Fusce hic augue velit wisi ips quibusdam pariatur, iusto.',
-                'location' => 'DUBAI',
-                'country' => 'UAE',
-                'rating' => 5,
-                'images' => ["/storage/destinations/popular-2.png"],
-            ],
-            [
-                'name' => 'KYOTO TEMPLE',
-                'location' => 'JAPAN',
-                'country' => 'Japan',
-                'description' => 'Fusce hic augue velit wisi ips quibusdam pariatur, iusto.',
-                'images' => ["/storage/destinations/popular-3.png"],
-                'rating' => 5,
-            ],
-            [
                 'name' => 'SANTORINI',
                 'location' => 'GREECE',
                 'country' => 'Greece',

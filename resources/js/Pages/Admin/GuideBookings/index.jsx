@@ -9,7 +9,7 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState({ key: 'booking_date', direction: 'desc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'start_time', direction: 'desc' });
     const [loadingStates, setLoadingStates] = useState({});
     const [error, setError] = useState('');
 
@@ -32,7 +32,6 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
             : (aValue < bValue ? 1 : -1);
     });
 
-    // Handle sorting for any column
     const handleSort = (key) => {
         setSortConfig(prev => ({
             key,
@@ -49,13 +48,12 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
         const searchLower = searchTerm.toLowerCase();
         const results = bookings.filter(booking => {
             const searchString = [
-                booking.user.name,
-                booking.user.email,
-                booking.guide.name,
-                booking.booking_time,
-                booking.duration_hours,
-                booking.total_price,
-                format(parseISO(booking.booking_date), 'MMM d, yyyy h:mm a'),
+                booking.user?.name,
+                booking.user?.email,
+                booking.guide?.name,
+                booking.meeting_location,
+                booking.payment_id,
+                booking.refund_id,
                 ...Object.values(booking.additional_info || {}).map(String)
             ].join(' ').toLowerCase();
 
@@ -64,26 +62,31 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
         setFilteredBookings(results);
     }, [searchTerm, bookings]);
 
-    const getStatusColor = (status) => {
-        const colors = {
-            confirmed: 'bg-green-100 text-green-800',
-            completed: 'bg-blue-100 text-blue-800',
-            cancelled: 'bg-red-100 text-red-800',
-            pending: 'bg-yellow-100 text-yellow-800'
-        };
-        return colors[status] || colors.pending;
+    const statusColors = {
+        pending: 'bg-yellow-100 text-yellow-800',
+        confirmed: 'bg-green-100 text-green-800',
+        'in-progress': 'bg-blue-100 text-blue-800',
+        completed: 'bg-purple-100 text-purple-800',
+        cancelled: 'bg-red-100 text-red-800'
     };
 
     const handleStatusChange = async (booking, newStatus) => {
         setLoadingStates(prev => ({ ...prev, [booking.id]: true }));
         setError('');
         try {
-            const response = router.put(
-                route(`admin.guide-bookings.${newStatus}`, booking.id),
+            const routeMap = {
+                confirmed: 'admin.guide-bookings.confirm',
+                cancelled: 'admin.guide-bookings.cancel',
+                'in-progress': 'admin.guide-bookings.in-progress',
+                completed: 'admin.guide-bookings.complete'
+            };
+            await router.put(
+                route(routeMap[newStatus], booking.id),
                 {},
                 {
                     onSuccess: () => {
-                        const updated = bookings.map(b => b.id === booking.id ? { ...b, status: newStatus } : b
+                        const updated = bookings.map(b => 
+                            b.id === booking.id ? { ...b, status: newStatus } : b
                         );
                         setBookings(updated);
                         setShowDetailModal(false);
@@ -93,30 +96,39 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
                     }
                 }
             );
-
-            if (response?.data?.error) {
-                setError(response.data.error);
-            }
         } catch (err) {
-            console.error(err);
+            console.error('Status change error:', err);
             setError('An error occurred while updating the status.');
         } finally {
             setLoadingStates(prev => ({ ...prev, [booking.id]: false }));
         }
     };
 
-    const StatusButton = ({ booking, status, label, color }) => (
+    const StatusButton = ({ booking, status, label }) => (
         <button
             onClick={() => handleStatusChange(booking, status)}
             disabled={loadingStates[booking?.id]}
-            className={`${color} px-3 py-1 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`px-3 py-1 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                statusColors[status].replace('bg-', 'hover:bg-').replace('text-', 'hover:text-')
+            }`}
         >
             {loadingStates[booking?.id] ? 'Processing...' : label}
         </button>
     );
 
     const formatPrice = (price) => {
-        return `$${price.toLocaleString('en-IN')}`;
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR'
+        }).format(price);
+    };
+
+    const safeParseDate = (dateString) => {
+        try {
+            return dateString ? format(parseISO(dateString), 'MMM d, yyyy h:mm a') : 'N/A';
+        } catch {
+            return 'Invalid date';
+        }
     };
 
     return (
@@ -167,8 +179,8 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
                                             {[
                                                 ['User', 'user.name'],
                                                 ['Guide', 'guide.name'],
-                                                ['Date', 'booking_date'],
-                                                ['Time', 'booking_time'],
+                                                ['Start Time', 'start_time'],
+                                                ['End Time', 'end_time'],
                                                 ['Duration', 'duration_hours'],
                                                 ['Price', 'total_price'],
                                                 ['Status', 'status'],
@@ -191,19 +203,19 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
                                     </thead>
                                     <tbody className="bg-white divide-y divide-sky-100">
                                         {sortedBookings.map(booking => (
-                                            <tr key={booking?.id} className="hover:bg-sky-50 transition-colors">
+                                            <tr key={booking.id} className="hover:bg-sky-50 transition-colors">
                                                 <td className="px-6 py-4 text-sm text-sky-900">
-                                                    <div className="font-medium">{booking.user.name}</div>
-                                                    <div className="text-sky-600 text-xs">{booking.user.email}</div>
+                                                    <div className="font-medium">{booking.user?.name}</div>
+                                                    <div className="text-sky-600 text-xs">{booking.user?.email}</div>
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-sky-900">
-                                                    <div className="font-medium">{booking.guide.name}</div>
+                                                    <div className="font-medium">{booking.guide?.name}</div>
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-sky-800">
-                                                    {format(parseISO(booking.booking_date), 'MMM d, yyyy h:mm a')}
+                                                    {safeParseDate(booking.start_time)}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-sky-800">
-                                                    {booking.booking_time}
+                                                    {safeParseDate(booking.end_time)}
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-sky-800">
                                                     {booking.duration_hours} hours
@@ -212,7 +224,7 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
                                                     {formatPrice(booking.total_price)}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[booking.status]}`}>
                                                         {booking.status}
                                                     </span>
                                                 </td>
@@ -262,32 +274,40 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
                                     <div>
                                         <label className="block text-sm font-medium text-sky-700 mb-1">User</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
-                                            <p className="font-medium">{selectedBooking.user.name}</p>
-                                            <p className="text-sky-600 text-sm">{selectedBooking.user.email}</p>
+                                            <p className="font-medium">{selectedBooking.user?.name}</p>
+                                            <p className="text-sky-600 text-sm">{selectedBooking.user?.email}</p>
                                         </div>
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-medium text-sky-700 mb-1">Guide</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
-                                            <p className="font-medium">{selectedBooking.guide.name}</p>
+                                            <p className="font-medium">{selectedBooking.guide?.name}</p>
+                                            <p className="text-sky-600 text-sm mt-1">
+                                                Rate: {formatPrice(selectedBooking.guide?.price_per_hour)}/hour
+                                            </p>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Booking Date</label>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Start Time</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
-                                            {format(parseISO(selectedBooking.booking_date), 'MMM d, yyyy h:mm a')}
+                                            {safeParseDate(selectedBooking.start_time)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">End Time</label>
+                                        <div className="bg-sky-50 p-3 rounded-lg">
+                                            {safeParseDate(selectedBooking.end_time)}
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Booking Time</label>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Meeting Location</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
-                                            {selectedBooking.booking_time}
+                                            {selectedBooking.meeting_location}
                                         </div>
                                     </div>
-
                                     <div>
                                         <label className="block text-sm font-medium text-sky-700 mb-1">Duration</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
@@ -301,13 +321,34 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
                                             {formatPrice(selectedBooking.total_price)}
                                         </div>
                                     </div>
-
                                     <div>
-                                        <label className="block text-sm font-medium text-sky-700 mb-1">Status</label>
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Payment Status</label>
                                         <div className="bg-sky-50 p-3 rounded-lg">
-                                            <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(selectedBooking.status)}`}>
-                                                {selectedBooking.status}
+                                            <span className={`px-2 py-1 rounded-full text-sm ${
+                                                selectedBooking.payment_status === 'paid' 
+                                                    ? 'bg-green-100 text-green-800' 
+                                                    : 'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                                {selectedBooking.payment_status}
                                             </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-sky-700 mb-1">Transaction Details</label>
+                                        <div className="bg-sky-50 p-3 rounded-lg grid grid-cols-2 gap-3">
+                                            <div className="flex flex-col">
+                                                <span className="text-sky-700 text-sm font-medium">Payment ID:</span>
+                                                <span className="text-sky-900 text-sm break-all">
+                                                    {selectedBooking.payment_id || 'N/A'}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-sky-700 text-sm font-medium">Refund ID:</span>
+                                                <span className="text-sky-900 text-sm break-all">
+                                                    {selectedBooking.refund_id || 'N/A'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -331,15 +372,13 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
                                         <>
                                             <StatusButton
                                                 booking={selectedBooking}
-                                                status="confirm"
-                                                label="Confirm"
-                                                color="text-green-600 hover:text-green-800 hover:bg-green-100"
+                                                status="confirmed"
+                                                label="Confirm Booking"
                                             />
                                             <StatusButton
                                                 booking={selectedBooking}
-                                                status="cancel"
-                                                label="Cancel"
-                                                color="text-rose-600 hover:text-rose-800 hover:bg-rose-100"
+                                                status="cancelled"
+                                                label="Cancel Booking"
                                             />
                                         </>
                                     )}
@@ -348,20 +387,21 @@ const AdminGuideBookings = ({ bookings: initialBookings }) => {
                                             <StatusButton
                                                 booking={selectedBooking}
                                                 status="in-progress"
-                                                label="In Progress"
-                                                color="text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100"
+                                                label="Start Tour"
+                                            />
+                                            <StatusButton
+                                                booking={selectedBooking}
+                                                status="cancelled"
+                                                label="Cancel Booking"
                                             />
                                         </>
                                     )}
                                     {selectedBooking.status === 'in-progress' && (
-                                        <>
-                                            <StatusButton
-                                                booking={selectedBooking}
-                                                status="complete"
-                                                label="Complete"
-                                                color="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                                            />
-                                        </>
+                                        <StatusButton
+                                            booking={selectedBooking}
+                                            status="completed"
+                                            label="Complete Tour"
+                                        />
                                     )}
                                 </div>
 

@@ -27,25 +27,25 @@ const Bookings = ({ packageBookings, cabBookings, guideBookings }) => {
 
     const handleCancel = async (booking) => {
         if (!window.confirm('Are you sure you want to cancel this booking?')) return;
-        
+    
         try {
-            const response = await axios.post(`/packages/${booking.id}/cancel`);
-            console.log('Cancellation successful:', response.data);
-            // switch (booking.type) {
-            //     case 'package':
-            //         await axios.post(route('packages.cancel', booking.id));
-            //         break;
-            //     case 'cab':
-            //         await axios.post(route('cabs.cancel', booking.id));
-            //         break;
-            //     case 'guide':
-            //         await axios.post(route('guides.cancel', booking.id));
-            //         break;
-            //     default:
-            //         alert('Cancellation not available for this booking type');
-            //         return;
-            // }
+            let endpoint;
+            switch (booking.type) {
+                case 'package':
+                    endpoint = route('packages.cancel', { booking: booking.id });
+                    break;
+                case 'cab':
+                    endpoint = route('cabs.cancel', { booking: booking.id });
+                    break;
+                case 'guide':
+                    endpoint = route('guides.cancel', { booking: booking.id });
+                    break;
+                default:
+                    alert('Cancellation not available for this booking type');
+                    return;
+            }
 
+            await axios.post(endpoint);
             router.reload({ only: ['packageBookings', 'cabBookings', 'guideBookings'] });
         } catch (error) {
             alert('Cancellation failed: ' + (error.response?.data?.error || error.message));
@@ -91,7 +91,7 @@ const Bookings = ({ packageBookings, cabBookings, guideBookings }) => {
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
             }, 100);
-    
+
         } catch (error) {
             console.error('Download failed:', error);
             
@@ -220,14 +220,15 @@ const Bookings = ({ packageBookings, cabBookings, guideBookings }) => {
                                     </div>
 
                                     <div className="mt-4 space-y-2">
-                                        {booking.status.toLowerCase() === 'pending' ? (
+                                        {(booking.status.toLowerCase() === 'pending' || booking.status.toLowerCase() === 'confirmed') && (
                                             <button
                                                 onClick={() => handleCancel(booking)}
                                                 className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
                                             >
                                                 Cancel Booking
                                             </button>
-                                        ) : (
+                                        )} 
+                                        {!(booking.status.toLowerCase() === 'pending') && (
                                             <button
                                                 onClick={() => handleDownloadReceipt(booking)}
                                                 className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors"
